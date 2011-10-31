@@ -1,13 +1,13 @@
 #include "filters.h"
 #include "image.h"
 
-#define Y_LOW   0.10f
-#define CB_LOW -0.15f
-#define CR_LOW  0.05f
+#define Y_LOW	38 	/* 0.10f */
+#define CB_LOW	94	/* -0.15f */
+#define CR_LOW	139	/* 0.05f */
 
-#define Y_HIGH  1.00f
-#define CB_HIGH 0.05f
-#define CR_HIGH 0.20f
+#define Y_HIGH	235	/* 1.00f */
+#define CB_HIGH	139	/* 0.05f */
+#define CR_HIGH	173	/* 0.20f */
 
 
 void skinFilter(image_t *inputImage, image_t *outputImage)

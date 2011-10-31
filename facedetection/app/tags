@@ -82,29 +82,29 @@ _detectFace_h_	include/detectFace.h	2;"	d
 _filters_h_	include/filters.h	2;"	d
 _image_h_	include/image.h	2;"	d
 aux_uart_handle	src/main.c	/^static mini_uart_handle_t aux_uart_handle;$/;"	v	file:
-b	include/image.h	/^  uint8_t b;$/;"	m	struct:__anon2
+b	include/image.h	/^	uint8_t b;$/;"	m	struct:__anon2
 bottomRightX	include/detectFace.h	/^  uint16_t bottomRightX;$/;"	m	struct:__anon1
 bottomRightY	include/detectFace.h	/^  uint16_t bottomRightY;$/;"	m	struct:__anon1
-cb	include/image.h	/^  float cb;$/;"	m	struct:__anon3
+cb	include/image.h	/^	uint8_t cb;$/;"	m	struct:__anon3
 computeSingleImage	src/main.c	/^void computeSingleImage(const char *sourcePath, const char *targetPath)$/;"	f
 counterHandle	src/main.c	/^static module_handle_t counterHandle;$/;"	v	file:
-cr	include/image.h	/^  float cr;$/;"	m	struct:__anon3
-data	include/image.h	/^  unsigned char *data;$/;"	m	struct:__anon4
-dataLength	include/image.h	/^  uint32_t dataLength;$/;"	m	struct:__anon4
+cr	include/image.h	/^	uint8_t cr;$/;"	m	struct:__anon3
+data	include/image.h	/^	unsigned char *data;$/;"	m	struct:__anon4
+dataLength	include/image.h	/^	uint32_t dataLength;$/;"	m	struct:__anon4
 detectFace	src/detectFace.c	/^int detectFace(image_t *faceMask, image_t *rawImage, rect_t *resultRect)$/;"	f
 dispHandle	src/main.c	/^static dis7seg_handle_t dispHandle;$/;"	v	file:
 erodeDilateFilter	src/erodeDilateFilter.c	/^void erodeDilateFilter(image_t *inputImage, image_t *outputImage, uint8_t op)$/;"	f
 freeImage	src/main.c	/^void freeImage(image_t *image) $/;"	f
-g	include/image.h	/^  uint8_t g;$/;"	m	struct:__anon2
+g	include/image.h	/^	uint8_t g;$/;"	m	struct:__anon2
 getIndexBelowThreshold	src/detectFace.c	/^int getIndexBelowThreshold(int *hist, int histLen, int start, int step, int threshold) {$/;"	f
 getRGBColorValue	src/image.c	/^rgb_color_t getRGBColorValue(image_t *i, int x, int y)$/;"	f
 getYCbCrColorValue	src/image.c	/^ycbcr_color_t getYCbCrColorValue(image_t *i, int x, int y)$/;"	f
-height	include/image.h	/^  uint32_t height;$/;"	m	struct:__anon4
+height	include/image.h	/^	uint32_t height;$/;"	m	struct:__anon4
 image_t	include/image.h	/^} image_t;$/;"	t	typeref:struct:__anon4
 initializeImage	src/main.c	/^void initializeImage(image_t *template, image_t *image)$/;"	f
 main	src/main.c	/^int main(int argc, char **argv)$/;"	f
 paintRectangle	src/detectFace.c	/^void paintRectangle(image_t *image, rect_t *rectangle)$/;"	f
-r	include/image.h	/^  uint8_t r;$/;"	m	struct:__anon2
+r	include/image.h	/^	uint8_t r;$/;"	m	struct:__anon2
 rect_t	include/detectFace.h	/^} rect_t;$/;"	t	typeref:struct:__anon1
 rgb_color_t	include/image.h	/^} rgb_color_t;$/;"	t	typeref:struct:__anon2
 screenData	src/main.c	/^static volatile uint32_t *screenData;$/;"	v	file:
@@ -113,6 +113,6 @@ skinFilter	src/skinFilter.c	/^void skinFilter(image_t *inputImage, image_t *outp
 topLeftX	include/detectFace.h	/^  uint16_t topLeftX;$/;"	m	struct:__anon1
 topLeftY	include/detectFace.h	/^  uint16_t topLeftY;$/;"	m	struct:__anon1
 transmitResult	src/main.c	/^void transmitResult(rect_t *resultRect)$/;"	f
-width	include/image.h	/^  uint32_t width;$/;"	m	struct:__anon4
-y	include/image.h	/^  float y;$/;"	m	struct:__anon3
+width	include/image.h	/^	uint32_t width;$/;"	m	struct:__anon4
+y	include/image.h	/^	uint8_t y;$/;"	m	struct:__anon3
 ycbcr_color_t	include/image.h	/^} ycbcr_color_t;$/;"	t	typeref:struct:__anon3

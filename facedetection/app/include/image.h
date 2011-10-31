@@ -4,22 +4,22 @@
 #include <stdint.h>
 
 typedef struct {
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
 } rgb_color_t;
 
 typedef struct {
-  float y;
-  float cb;
-  float cr;
+	uint8_t y;
+	uint8_t cb;
+	uint8_t cr;
 } ycbcr_color_t;
 
 typedef struct {
-  uint32_t width;
-  uint32_t height;
-  uint32_t dataLength;
-  unsigned char *data;
+	uint32_t width;
+	uint32_t height;
+	uint32_t dataLength;
+	unsigned char *data;
 } image_t;
 
 rgb_color_t getRGBColorValue(image_t *i, int x, int y);
