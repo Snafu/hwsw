@@ -1,0 +1,118 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+AUX_UART_BADDR	src/main.c	18;"	d	file:
+BACKGROUND_COLOR_B	src/erodeDilateFilter.c	8;"	d	file:
+BACKGROUND_COLOR_G	src/erodeDilateFilter.c	7;"	d	file:
+BACKGROUND_COLOR_R	src/erodeDilateFilter.c	6;"	d	file:
+CB_HIGH	src/skinFilter.c	9;"	d	file:
+CB_LOW	src/skinFilter.c	5;"	d	file:
+COUNTER_BADDR	src/main.c	19;"	d	file:
+CR_HIGH	src/skinFilter.c	10;"	d	file:
+CR_LOW	src/skinFilter.c	6;"	d	file:
+DISP_BADDR	src/main.c	20;"	d	file:
+FILTER_DILATE	include/filters.h	7;"	d
+FILTER_ERODE	include/filters.h	6;"	d
+FOREGROUND_COLOR_B	src/detectFace.c	9;"	d	file:
+FOREGROUND_COLOR_B	src/erodeDilateFilter.c	11;"	d	file:
+FOREGROUND_COLOR_G	src/detectFace.c	8;"	d	file:
+FOREGROUND_COLOR_G	src/erodeDilateFilter.c	10;"	d	file:
+FOREGROUND_COLOR_R	src/detectFace.c	7;"	d	file:
+FOREGROUND_COLOR_R	src/erodeDilateFilter.c	9;"	d	file:
+SCREEN_HEIGHT	src/main.c	23;"	d	file:
+SCREEN_WIDTH	src/main.c	22;"	d	file:
+SDRAM_BANKSIZE_128MB	include/sdram.h	38;"	d
+SDRAM_BANKSIZE_16MB	include/sdram.h	35;"	d
+SDRAM_BANKSIZE_256MB	include/sdram.h	39;"	d
+SDRAM_BANKSIZE_32MB	include/sdram.h	36;"	d
+SDRAM_BANKSIZE_64MB	include/sdram.h	37;"	d
+SDRAM_BANKSIZE_8MB	include/sdram.h	34;"	d
+SDRAM_BASE	include/sdram.h	15;"	d
+SDRAM_BASE_IO	include/sdram.h	16;"	d
+SDRAM_CFG	include/sdram.h	19;"	d
+SDRAM_CMD	include/sdram.h	53;"	d
+SDRAM_CMD_AUTO_REFRESH	include/sdram.h	55;"	d
+SDRAM_CMD_LOAD_CMD_REG	include/sdram.h	56;"	d
+SDRAM_CMD_LOAD_EXT_CMD_REG	include/sdram.h	57;"	d
+SDRAM_CMD_PRE_CHARGE	include/sdram.h	54;"	d
+SDRAM_COLSIZE_1024	include/sdram.h	44;"	d
+SDRAM_COLSIZE_2048_4096	include/sdram.h	45;"	d
+SDRAM_COLSIZE_256	include/sdram.h	42;"	d
+SDRAM_COLSIZE_512	include/sdram.h	43;"	d
+SDRAM_D64_EN	include/sdram.h	50;"	d
+SDRAM_DATA_BYTE	include/sdram.h	23;"	d
+SDRAM_DATA_HALFWORD	include/sdram.h	24;"	d
+SDRAM_DATA_WORD	include/sdram.h	25;"	d
+SDRAM_MOBILE_SDR_EN	include/sdram.h	49;"	d
+SDRAM_PAGEBURST_EN	include/sdram.h	48;"	d
+SDRAM_POWER_CFG	include/sdram.h	20;"	d
+SDRAM_REFRESH_EN	include/sdram.h	28;"	d
+SDRAM_TCD	include/sdram.h	30;"	d
+SDRAM_TRFC	include/sdram.h	31;"	d
+SDRAM_TRP	include/sdram.h	29;"	d
+STEP_SIZE	src/detectFace.c	10;"	d	file:
+SVGA_BASE	include/svga.h	4;"	d
+SVGA_CLUT	include/svga.h	15;"	d
+SVGA_DYN_CLOCK0	include/svga.h	11;"	d
+SVGA_DYN_CLOCK1	include/svga.h	12;"	d
+SVGA_DYN_CLOCK2	include/svga.h	13;"	d
+SVGA_DYN_CLOCK3	include/svga.h	14;"	d
+SVGA_FRAME_BUFFER	include/svga.h	10;"	d
+SVGA_FRONT_PORCH	include/svga.h	7;"	d
+SVGA_HLINELEN	include/svga.h	25;"	d
+SVGA_HPORCH	include/svga.h	22;"	d
+SVGA_HVIDEOLEN	include/svga.h	19;"	d
+SVGA_LINE_LENGTH	include/svga.h	9;"	d
+SVGA_STATUS	include/svga.h	5;"	d
+SVGA_SYNC_LENGTH	include/svga.h	8;"	d
+SVGA_VIDEO_LENGTH	include/svga.h	6;"	d
+SVGA_VLINELEN	include/svga.h	24;"	d
+SVGA_VPORCH	include/svga.h	21;"	d
+SVGA_VVIDEOLEN	include/svga.h	18;"	d
+WINDOW_LENGTH	src/erodeDilateFilter.c	4;"	d	file:
+WINDOW_OFFSET	src/erodeDilateFilter.c	5;"	d	file:
+Y_HIGH	src/skinFilter.c	8;"	d	file:
+Y_LOW	src/skinFilter.c	4;"	d	file:
+__SDRAM_H__	include/sdram.h	10;"	d
+__SVGA_H__	include/svga.h	2;"	d
+_detectFace_h_	include/detectFace.h	2;"	d
+_filters_h_	include/filters.h	2;"	d
+_image_h_	include/image.h	2;"	d
+aux_uart_handle	src/main.c	/^static mini_uart_handle_t aux_uart_handle;$/;"	v	file:
+b	include/image.h	/^  uint8_t b;$/;"	m	struct:__anon2
+bottomRightX	include/detectFace.h	/^  uint16_t bottomRightX;$/;"	m	struct:__anon1
+bottomRightY	include/detectFace.h	/^  uint16_t bottomRightY;$/;"	m	struct:__anon1
+cb	include/image.h	/^  float cb;$/;"	m	struct:__anon3
+computeSingleImage	src/main.c	/^void computeSingleImage(const char *sourcePath, const char *targetPath)$/;"	f
+counterHandle	src/main.c	/^static module_handle_t counterHandle;$/;"	v	file:
+cr	include/image.h	/^  float cr;$/;"	m	struct:__anon3
+data	include/image.h	/^  unsigned char *data;$/;"	m	struct:__anon4
+dataLength	include/image.h	/^  uint32_t dataLength;$/;"	m	struct:__anon4
+detectFace	src/detectFace.c	/^int detectFace(image_t *faceMask, image_t *rawImage, rect_t *resultRect)$/;"	f
+dispHandle	src/main.c	/^static dis7seg_handle_t dispHandle;$/;"	v	file:
+erodeDilateFilter	src/erodeDilateFilter.c	/^void erodeDilateFilter(image_t *inputImage, image_t *outputImage, uint8_t op)$/;"	f
+freeImage	src/main.c	/^void freeImage(image_t *image) $/;"	f
+g	include/image.h	/^  uint8_t g;$/;"	m	struct:__anon2
+getIndexBelowThreshold	src/detectFace.c	/^int getIndexBelowThreshold(int *hist, int histLen, int start, int step, int threshold) {$/;"	f
+getRGBColorValue	src/image.c	/^rgb_color_t getRGBColorValue(image_t *i, int x, int y)$/;"	f
+getYCbCrColorValue	src/image.c	/^ycbcr_color_t getYCbCrColorValue(image_t *i, int x, int y)$/;"	f
+height	include/image.h	/^  uint32_t height;$/;"	m	struct:__anon4
+image_t	include/image.h	/^} image_t;$/;"	t	typeref:struct:__anon4
+initializeImage	src/main.c	/^void initializeImage(image_t *template, image_t *image)$/;"	f
+main	src/main.c	/^int main(int argc, char **argv)$/;"	f
+paintRectangle	src/detectFace.c	/^void paintRectangle(image_t *image, rect_t *rectangle)$/;"	f
+r	include/image.h	/^  uint8_t r;$/;"	m	struct:__anon2
+rect_t	include/detectFace.h	/^} rect_t;$/;"	t	typeref:struct:__anon1
+rgb_color_t	include/image.h	/^} rgb_color_t;$/;"	t	typeref:struct:__anon2
+screenData	src/main.c	/^static volatile uint32_t *screenData;$/;"	v	file:
+sdramBytesAllocated	src/main.c	/^static uint32_t sdramBytesAllocated;$/;"	v	file:
+skinFilter	src/skinFilter.c	/^void skinFilter(image_t *inputImage, image_t *outputImage)$/;"	f
+topLeftX	include/detectFace.h	/^  uint16_t topLeftX;$/;"	m	struct:__anon1
+topLeftY	include/detectFace.h	/^  uint16_t topLeftY;$/;"	m	struct:__anon1
+transmitResult	src/main.c	/^void transmitResult(rect_t *resultRect)$/;"	f
+width	include/image.h	/^  uint32_t width;$/;"	m	struct:__anon4
+y	include/image.h	/^  float y;$/;"	m	struct:__anon3
+ycbcr_color_t	include/image.h	/^} ycbcr_color_t;$/;"	t	typeref:struct:__anon3
