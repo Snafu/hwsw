@@ -1,0 +1,588 @@
+m255
+K3
+13
+cModel Technology
+Z0 d/homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim
+Pallmem
+Z1 DPx4 ieee 14 std_logic_1164 0 22 GH1=`jDDBJ=`LM;:Ak`kf2
+Z2 w1316183776
+Z3 d/homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim
+Z4 8../../libraries/grlib/lib/techmap/maps/allmem.vhd
+Z5 F../../libraries/grlib/lib/techmap/maps/allmem.vhd
+l0
+L29
+Z6 VA<i=33[F_5R;iaJN`b9Gh2
+Z7 OL;C;6.6d;45
+32
+Z8 Mx1 4 ieee 14 std_logic_1164
+Z9 o-work techmap
+Z10 tExplicit 1
+Z11 !s100 oQlXYY2L`e4P;8:6ghJU]2
+Pallpads
+Z12 DPx90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 7 version 0 22 6NNeVWL3aeM9jkNEALB^Z0
+Z13 DPx90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 6 stdlib 0 22 W[RV]lPloQXhThYSHe6_g1
+Z14 DPx90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 6 config 0 22 _N[MfmZZJe3^=Jbje`LLY0
+Z15 DPx16 __model_tech/std 6 textio 0 22 m2KQDRRhmF833<<DjYdL70
+Z16 DPx17 __model_tech/ieee 11 numeric_std 0 22 =NSdli^?T5OD8;4F<blj<3
+Z17 DPx90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 4 amba 0 22 RAGjn>jic`iJ5ecKe>HzM3
+Z18 DPx92 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/techmap 7 gencomp 0 22 ;Emo>hF`_f<8a^9X8WH`U2
+Z19 DPx17 __model_tech/ieee 14 std_logic_1164 0 22 GH1=`jDDBJ=`LM;:Ak`kf2
+32
+Z20 Mx8 17 __model_tech/ieee 14 std_logic_1164
+Z21 Mx7 92 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/techmap 7 gencomp
+Z22 Mx6 90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 4 amba
+Z23 Mx5 17 __model_tech/ieee 11 numeric_std
+Z24 Mx4 16 __model_tech/std 6 textio
+Z25 Mx3 90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 6 config
+Z26 Mx2 90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 6 stdlib
+Z27 Mx1 90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 7 version
+R2
+R3
+Z28 8../../libraries/grlib/lib/techmap/maps/allpads.vhd
+Z29 F../../libraries/grlib/lib/techmap/maps/allpads.vhd
+l0
+L31
+Z30 V1Q92Xm8UPVXR0PIXo16580
+R7
+R9
+R10
+Z31 !s100 KZmP8ede25H3kdm6PeEES0
+Ealtera_syncram
+R2
+R1
+R3
+Z32 8../../libraries/grlib/lib/techmap/altera_mf/memory_altera_mf.vhd
+Z33 F../../libraries/grlib/lib/techmap/altera_mf/memory_altera_mf.vhd
+l0
+L93
+Z34 VZYk8E0;P;^mg;aCC0`K[?0
+R7
+32
+R9
+R10
+Z35 !s100 HjOVFoLQC<BkfN0f5aWGK3
+Abehav
+R1
+Z36 DEx4 work 14 altera_syncram 0 22 ZYk8E0;P;^mg;aCC0`K[?0
+l126
+L105
+Z37 VWU3gP;m0gQW7AfTAWb=oR3
+R7
+32
+R8
+R9
+R10
+Z38 !s100 bgimKEfE50]mW66m>mHB@2
+Ealtera_syncram128bw
+R2
+Z39 DPx9 altera_mf 22 altera_device_families 0 22 [S_L>zRHG]lkA_45d_Yci0
+Z40 DPx9 altera_mf 24 altera_common_conversion 0 22 H11C:meBcdRbl0kYgnEzh2
+Z41 DPx4 ieee 18 std_logic_unsigned 0 22 hEMVMlaNCR^<OOoVNV;m90
+Z42 DPx4 ieee 15 std_logic_arith 0 22 GJbAT?7@hRQU9IQ702DT]2
+Z43 DEx9 altera_mf 10 altsyncram 0 22 cOiV:65LRNoTLgc74HiCh0
+Z44 DPx5 grlib 7 version 0 22 6NNeVWL3aeM9jkNEALB^Z0
+Z45 DPx3 std 6 textio 0 22 m2KQDRRhmF833<<DjYdL70
+Z46 DPx4 ieee 11 numeric_std 0 22 =NSdli^?T5OD8;4F<blj<3
+Z47 DPx5 grlib 6 stdlib 0 22 W[RV]lPloQXhThYSHe6_g1
+R1
+R3
+R32
+R33
+l0
+L150
+Z48 VFmil^`4Ygo0joNK2Rn[Iz2
+R7
+32
+R9
+R10
+Z49 !s100 f2c[Ze_[<n<4VX3kQa02<3
+Abehav
+R39
+R40
+R41
+R42
+R44
+R45
+R46
+R47
+R1
+Z50 DEx4 work 19 altera_syncram128bw 0 22 Fmil^`4Ygo0joNK2Rn[Iz2
+l188
+L162
+Z51 VEEb47WUH_GZ=]T3T9gie=1
+R7
+32
+Z52 Mx9 4 ieee 14 std_logic_1164
+Z53 Mx8 5 grlib 6 stdlib
+Z54 Mx7 4 ieee 11 numeric_std
+Z55 Mx6 3 std 6 textio
+Z56 Mx5 5 grlib 7 version
+Z57 Mx4 4 ieee 15 std_logic_arith
+Z58 Mx3 4 ieee 18 std_logic_unsigned
+Z59 Mx2 9 altera_mf 24 altera_common_conversion
+Z60 Mx1 9 altera_mf 22 altera_device_families
+R9
+R10
+Z61 !s100 S;<IRZf67BTYhaL6NQaDW3
+Ealtera_syncram256bw
+R2
+R39
+R40
+R41
+R42
+R43
+R44
+R45
+R46
+R47
+R1
+R3
+R32
+R33
+l0
+L215
+Z62 VBYhjghW1m]5bB``oC:=2H3
+R7
+32
+R9
+R10
+Z63 !s100 MhQOdA2IBK:=gZQQ;A_L12
+Abehav
+R39
+R40
+R41
+R42
+R44
+R45
+R46
+R47
+R1
+Z64 DEx4 work 19 altera_syncram256bw 0 22 BYhjghW1m]5bB``oC:=2H3
+l253
+L227
+Z65 V9Kf62<7c9YPKnlT`8J?;H1
+R7
+32
+R52
+R53
+R54
+R55
+R56
+R57
+R58
+R59
+R60
+R9
+R10
+Z66 !s100 `jk4iA8^jfOhD`5_1@b4]3
+Ealtera_syncram_dp
+R2
+R39
+R40
+R45
+R41
+R42
+R43
+R1
+R3
+R32
+R33
+l0
+L34
+Z67 V[X6:81o8=HRdgd78>ReeX0
+R7
+32
+R9
+R10
+Z68 !s100 YDziTK>0l7QXFKGF2Zm`S3
+Abehav
+Z69 DEx89 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/work 10 altsyncram 0 22 cOiV:65LRNoTLgc74HiCh0
+Z70 DPx89 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/work 22 altera_device_families 0 22 [S_L>zRHG]lkA_45d_Yci0
+Z71 DPx89 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/work 24 altera_common_conversion 0 22 H11C:meBcdRbl0kYgnEzh2
+R15
+Z72 DPx17 __model_tech/ieee 18 std_logic_unsigned 0 22 hEMVMlaNCR^<OOoVNV;m90
+Z73 DPx17 __model_tech/ieee 15 std_logic_arith 0 22 GJbAT?7@hRQU9IQ702DT]2
+R19
+Z74 DEx92 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/techmap 17 altera_syncram_dp 0 22 [X6:81o8=HRdgd78>ReeX0
+32
+Z75 Mx6 17 __model_tech/ieee 14 std_logic_1164
+Z76 Mx5 17 __model_tech/ieee 15 std_logic_arith
+Z77 Mx4 17 __model_tech/ieee 18 std_logic_unsigned
+Z78 Mx3 16 __model_tech/std 6 textio
+Z79 Mx2 89 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/work 24 altera_common_conversion
+Z80 Mx1 89 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/work 22 altera_device_families
+l76
+L53
+Z81 V=ci12:Mm]z0QeF8?PAV7n2
+R7
+R9
+R10
+Z82 !s100 3@?E[N7^3`X@=J3[QQ:FY2
+Pgencomp
+R12
+R13
+R14
+R15
+R16
+R17
+R19
+32
+Z83 Mx7 17 __model_tech/ieee 14 std_logic_1164
+R22
+R23
+R24
+R25
+R26
+R27
+R2
+R3
+Z84 8../../libraries/grlib/lib/techmap/gencomp/gencomp.vhd
+Z85 F../../libraries/grlib/lib/techmap/gencomp/gencomp.vhd
+l0
+L31
+Z86 V;Emo>hF`_f<8a^9X8WH`U2
+R7
+R9
+R10
+Z87 !s100 1]SgOPDFhK4`[g@<6>6On2
+Einpad
+R2
+Z88 DPx7 techmap 7 allpads 0 22 1Q92Xm8UPVXR0PIXo16580
+R44
+R47
+Z89 DPx5 grlib 6 config 0 22 _N[MfmZZJe3^=Jbje`LLY0
+R45
+R46
+Z90 DPx5 grlib 4 amba 0 22 RAGjn>jic`iJ5ecKe>HzM3
+Z91 DPx7 techmap 7 gencomp 0 22 ;Emo>hF`_f<8a^9X8WH`U2
+R1
+R3
+Z92 8../../libraries/grlib/lib/techmap/maps/inpad.vhd
+Z93 F../../libraries/grlib/lib/techmap/maps/inpad.vhd
+l0
+L32
+Z94 VfBRjKdYhz>0gJWGXz72jA1
+R7
+32
+R9
+R10
+Z95 !s100 H7M;];TOWP[8dhRdf5k?Y2
+Artl
+R88
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+Z96 DEx4 work 5 inpad 0 22 fBRjKdYhz>0gJWGXz72jA1
+l40
+L39
+Z97 Vi`GVDYG:k6Vj=HHb2e9LQ0
+R7
+32
+R52
+Z98 Mx8 7 techmap 7 gencomp
+Z99 Mx7 5 grlib 4 amba
+Z100 Mx6 4 ieee 11 numeric_std
+Z101 Mx5 3 std 6 textio
+Z102 Mx4 5 grlib 6 config
+Z103 Mx3 5 grlib 6 stdlib
+Z104 Mx2 5 grlib 7 version
+Z105 Mx1 7 techmap 7 allpads
+R9
+R10
+Z106 !s100 :dgbzMhjM[8_4JznJoRWc2
+Einpadv
+R2
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+R3
+R92
+R93
+l0
+L108
+Z107 VfS9[]cb12bG^TB:EU9W6W1
+R7
+32
+R9
+R10
+Z108 !s100 I53GEjU<=6Q^cVJERC6d61
+Artl
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+Z109 DEx4 work 6 inpadv 0 22 fS9[]cb12bG^TB:EU9W6W1
+l116
+L115
+Z110 Ve;Gj=Vd>FZ_I8:58hQkWk2
+R7
+32
+Z111 Mx8 4 ieee 14 std_logic_1164
+Z112 Mx7 7 techmap 7 gencomp
+Z113 Mx6 5 grlib 4 amba
+Z114 Mx5 4 ieee 11 numeric_std
+Z115 Mx4 3 std 6 textio
+Z116 Mx3 5 grlib 6 config
+Z117 Mx2 5 grlib 6 stdlib
+Z118 Mx1 5 grlib 7 version
+R9
+R10
+Z119 !s100 DK94:eaPX4OBk2_9PfGE>2
+Eiopad
+R2
+R88
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+R3
+Z120 8../../libraries/grlib/lib/techmap/maps/iopad.vhd
+Z121 F../../libraries/grlib/lib/techmap/maps/iopad.vhd
+l0
+L32
+Z122 V0m]N7Um@;F=8K@M05N_In1
+R7
+32
+R9
+R10
+Z123 !s100 c0:ZPm]2[ULZFP]dGzDFe3
+Artl
+R88
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+Z124 DEx4 work 5 iopad 0 22 0m]N7Um@;F=8K@M05N_In1
+l41
+L39
+Z125 V5=DH:=Lm?>IP^eVbLA0ok1
+R7
+32
+R52
+R98
+R99
+R100
+R101
+R102
+R103
+R104
+R105
+R9
+R10
+Z126 !s100 i`4Ah9YHDFVeVfCGAO^La0
+Eiopadv
+R2
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+R3
+R120
+R121
+l0
+L137
+Z127 Vd2gLf[GhVKkL<z2D1o6iM2
+R7
+32
+R9
+R10
+Z128 !s100 J14MoFMmN^Yja]zk14Bdo2
+Artl
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+Z129 DEx4 work 6 iopadv 0 22 d2gLf[GhVKkL<z2D1o6iM2
+l148
+L147
+Z130 V5zBb769D>EdaYNmA:RC@]1
+R7
+32
+R111
+R112
+R113
+R114
+R115
+R116
+R117
+R118
+R9
+R10
+Z131 !s100 aZb7jNg>f>Tj8]W]cd4Ke3
+Eiopadvv
+R2
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+R3
+R120
+R121
+l0
+L160
+Z132 VeW;_7J^JN0`R3=MI=Si^`2
+R7
+32
+R9
+R10
+Z133 !s100 3dML[GTHgn^RkiWG;;UTn3
+Artl
+Z134 DPx92 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/techmap 7 allpads 0 22 1Q92Xm8UPVXR0PIXo16580
+Z135 DEx92 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/techmap 5 iopad 0 22 0m]N7Um@;F=8K@M05N_In1
+R12
+R13
+R14
+R15
+R16
+R17
+R18
+R19
+Z136 DEx92 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/techmap 7 iopadvv 0 22 eW;_7J^JN0`R3=MI=Si^`2
+32
+Z137 Mx9 17 __model_tech/ieee 14 std_logic_1164
+Z138 Mx8 92 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/techmap 7 gencomp
+Z139 Mx7 90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 4 amba
+Z140 Mx6 17 __model_tech/ieee 11 numeric_std
+Z141 Mx5 16 __model_tech/std 6 textio
+Z142 Mx4 90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 6 config
+Z143 Mx3 90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 6 stdlib
+Z144 Mx2 90 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/grlib 7 version
+Z145 Mx1 92 /homes/lechner/Lehre/WS11_12/HWSW/scarts-hwsw-backup/workspace/hwsw_de2-115/modelsim/techmap 7 allpads
+l171
+L170
+Z146 V6i_a[[5ZPcNiSfF:_09lX2
+R7
+R9
+R10
+Z147 !s100 >EH`LNBZ]B6;f2k9WVizi2
+Eoutpad
+R2
+R88
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+R3
+Z148 8../../libraries/grlib/lib/techmap/maps/outpad.vhd
+Z149 F../../libraries/grlib/lib/techmap/maps/outpad.vhd
+l0
+L32
+Z150 Vh<^eo7;3`XFP;WC`h1oOO3
+R7
+32
+R9
+R10
+Z151 !s100 afiSKea66?aBlLclDzXZ^2
+Artl
+R88
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+Z152 DEx4 work 6 outpad 0 22 h<^eo7;3`XFP;WC`h1oOO3
+l40
+L38
+Z153 VnbC_8[KWEoz2]m;<o]ZaW0
+R7
+32
+R52
+R98
+R99
+R100
+R101
+R102
+R103
+R104
+R105
+R9
+R10
+Z154 !s100 dR7:;W0JJOEi_ge:<<lQE3
+Eoutpadv
+R2
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+R3
+R148
+R149
+l0
+L115
+Z155 VfUZRz3PCejzYO9`fdnD1<1
+R7
+32
+R9
+R10
+Z156 !s100 9U438f=AKAkHZcORPhX4S1
+Artl
+R44
+R47
+R89
+R45
+R46
+R90
+R91
+R1
+Z157 DEx4 work 7 outpadv 0 22 fUZRz3PCejzYO9`fdnD1<1
+l123
+L122
+Z158 V506aMNDeX[]gg3@jK8YDT3
+R7
+32
+R111
+R112
+R113
+R114
+R115
+R116
+R117
+R118
+R9
+R10
+Z159 !s100 KgaH5HX9D]?4[l?bPFfd@0
