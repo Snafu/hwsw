@@ -35,7 +35,7 @@ entity dispctrl is
     pmask       : integer := 16#fff#;
     hindex      : integer := 0;
     hirq        : integer := 0;
-    ahbaccsz    : integer := 32;
+    ahbaccsz    : integer := 32
     );
   
   port (
@@ -45,7 +45,7 @@ entity dispctrl is
     apbo      : out apb_slv_out_type;
     ahbi      : in  ahb_mst_in_type;
     ahbo      : out ahb_mst_out_type;
-    clk_sel   : out std_logic_vector(1 downto 0);
+    clk_sel   : out std_logic_vector(1 downto 0)
     );
 
 end ;
@@ -53,30 +53,32 @@ end ;
 architecture rtl of dispctrl is
   
   constant REVISION : amba_version_type := 0; 
+  constant VENDOR_HWSW: amba_vendor_type := 0;
+  constant HWSW_DISPCTRL: amba_device_type := 0;
   constant PCONFIG : apb_config_type := (
      0 => ahb_device_reg ( VENDOR_HWSW, HWSW_DISPCTRL, 0, REVISION, 0),
      1 => apb_iobar(paddr, pmask));
     
-  type register_type is std_logic_vector(31 downto 0);
 
   type state_type is (running, not_running, reset);
   type job_type is (idle, busy);
 
   type control_type is record
-    int_reg				: register_type;
-	 color_a				: register_type;
-	 color_b				: register_type;
+    int_reg				: std_logic_vector(31 downto 0);
+	 color_a				: std_logic_vector(31 downto 0);
+	 color_b				: std_logic_vector(31 downto 0);
     state				: state_type;
     enable				: std_logic;
     reset				: std_logic;
-    startaddr			: register_type;
-	 endaddr:			: register_type;
+	 updated				: std_logic;
+    startaddr			: std_logic_vector(31 downto 0);
+	 endaddr				: std_logic_vector(31 downto 0);
   end record;
   
   type work_type is record
     state				: job_type;
     color				: std_logic_vector(23 downto 0);
-    addr					: register_type;
+    addr					: std_logic_vector(31 downto 0);
   end record;
  
   
@@ -91,8 +93,8 @@ begin
 
   vcc <= '1';
 
-  ahb_master : ahbmst generic map (hindex, hirq, VENDOR_GAISLER,
-	GAISLER_DISPCTRL, 0, 3, 1)
+  ahb_master : ahbmst generic map (hindex, hirq, VENDOR_HWSW,
+	HWSW_DISPCTRL, 0, 3, 1)
   port map (rst, clk, dmai, dmao, ahbi, ahbo);     
 
   apbo.pirq    <= (others => '0');
@@ -115,21 +117,25 @@ begin
       -- FB start address
       if apbwrite = '1' then
         v.startaddr := apbi.pwdata;
+		  v.updated := '1';
       end if;
     when "0001" =>
       -- FB end address
       if apbwrite = '1' then
         v.endaddr := apbi.pwdata;
+		  v.updated := '1';
       end if;
     when "0010" =>
       -- Color A register
       if apbwrite = '1' then
         v.color_a := apbi.pwdata(23 downto 0);
+		  v.updated := '1';
       end if;
 	 when "0011" =>
 	   -- Color B register
       if apbwrite = '1' then
         v.color_b := apbi.pwdata(23 downto 0);
+		  v.updated := '1';
       end if;
     when others =>
     end case;
@@ -156,8 +162,10 @@ begin
     if r.reset = '1' or rst = '0' then
       v.state     := not_running;
       v.enable    := '0';
-		v.startaddr := (others => 0);
-		v.endaddr	:= (others => 0);
+		v.color_a	:= 16#deadf0#;
+		v.startaddr := 16#babe0a#;
+		v.endaddr	:= 16#babe0e#;
+		v.updated := '0';
       v.reset     := '0';
     end if; 
 
@@ -169,21 +177,27 @@ begin
   -------------------------------------
   ram_proc : process(r,w,dmai,dmao)
     variable k			: work_type;
+	 variable v			: control_type;
   begin
-    if w.state = idle then
+    k := w;
+	 v := r;
+    if w.state = idle and r.updated = '1' then
 		k.state := busy;
 		k.addr := v.startaddr;
-		k.color := color_a;
+		k.color := v.color_a;
+		v.updated := '0';
 	 end if;
 	 
-	 dmai.address := k.addr;
-	 dmai.wdata := k.color;
-	 dmai.start := '1';
+	 dmai.address <= k.addr;
+	 dmai.wdata <= k.color;
+	 dmai.start <= '1';
 	 
-	 if dmao.ready = '1' and k.addr < v.endaddr then
-	   dmai.addr <= dmai.addr + 1;
-	 elsif dmao.redy = '1' and k.addr = v.endaddr then
-	   k.state = idle;
+	 if dmao.ready = '1' and k.addr < r.endaddr then
+	   k.addr := k.addr + 1;
+		dmai.address <= k.addr + 1;
+	 elsif dmao.ready = '1' and k.addr = r.endaddr then
+	   k.state := idle;
+		dmai.start <= '0';
 	 end if;
 	 
 	 win <= k;

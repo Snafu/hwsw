@@ -114,6 +114,9 @@ architecture behaviour of top is
   signal vga_clk_int    : std_logic;
   signal vga_clk_sel    : std_logic_vector(1 downto 0);
   signal svga_ahbmo     : ahb_mst_out_type;
+  
+  -- signals for DISPLAY Controller
+  signal disp_ahbmo		: ahb_mst_out_type;
 
   -- signals for AUX UART
   signal aux_uart_sel      : std_ulogic;
@@ -176,7 +179,7 @@ begin
     generic map(
       defmast => 0,                  -- default master
       split   => 0,                  -- split support
-      nahbm   => 2,                  -- number of masters
+      nahbm   => 3,                  -- number of masters
       nahbs   => AHB_SLAVE_COUNT,    -- number of slaves
       fixbrst => 1                   -- support fix-length bursts
       )
@@ -190,7 +193,7 @@ begin
       );
 
 
-  process(grlib_ahbmi, scarts_ahbmo, svga_ahbmo)
+  process(grlib_ahbmi, scarts_ahbmo, svga_ahbmo, disp_ahbmo)
   begin  -- process
     ahbmi.hgrant  <=  grlib_ahbmi.hgrant(0);
     ahbmi.hready  <=  grlib_ahbmi.hready;
