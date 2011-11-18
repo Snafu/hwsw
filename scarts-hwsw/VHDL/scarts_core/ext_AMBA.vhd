@@ -114,8 +114,87 @@ architecture behaviour of ext_AMBA is
   signal r, r_next : reg_type;
   signal rstint : std_ulogic;
 
+
+  -- Module I/O registers
+  signal extsel_reg, extsel_reg_next : std_logic;
+  signal transmode_reg, transmode_reg_next : std_logic;
+  signal exti_reg, exti_reg_next : module_in_type;
+  signal addr_high_reg, addr_high_reg_next : std_logic_vector(31 downto 15);
+  signal scarts_hold_int : std_logic;
+  signal exto_reg, exto_reg_next : module_out_type;
+  signal gIRQ_reg, gIRQ_reg_next : std_logic;
+  
+  
+  type IOSTATE_TYPE is (IOSTATE_IDLE, IOSTATE_PROCESSING, IOSTATE_PAUSE);
+  signal iostate, iostate_next : IOSTATE_TYPE;
+  
+  
 begin
 
+  exto <= exto_reg;
+  gIRQ <= gIRQ_reg;
+
+  process (clk, rstint)
+  begin  -- process
+    if rising_edge(clk) then
+      if rstint = RST_ACT then
+        iostate <= IOSTATE_IDLE;
+        extsel_reg <= '0';
+        transmode_reg <= '0';
+        exti_reg <= (RST_ACT, '0', (others => '0'), (others => '0'), (others => '0'));
+        addr_high_reg <= (others => '0');
+        exto_reg <= ((others => '0'), '0');
+        gIRQ_reg <= '0';
+      else
+        iostate <= iostate_next;
+        extsel_reg <= extsel_reg_next;
+        transmode_reg <= transmode_reg_next;
+        exti_reg <= exti_reg_next;
+        addr_high_reg <= addr_high_reg_next;
+        exto_reg <= exto_reg_next;
+        gIRQ_reg <= gIRQ_reg_next;
+      end if;
+    end if;
+  end process;
+
+  process(iostate, extsel, transmode, exti, addr_high, scarts_hold_int,
+          extsel_reg, transmode_reg, exti_reg, addr_high_reg)
+  begin  -- process
+    iostate_next <= iostate;
+    scarts_hold <= '0';
+    extsel_reg_next <= extsel_reg;
+    transmode_reg_next <= transmode_reg;
+    exti_reg_next <= exti_reg;
+    addr_high_reg_next <= addr_high_reg;
+    
+    
+    case iostate is
+      when IOSTATE_IDLE =>
+        if extsel = '1' or transmode = '1' then
+          iostate_next <= IOSTATE_PROCESSING;
+          extsel_reg_next <= extsel;
+          transmode_reg_next <= transmode;
+          exti_reg_next <= exti;
+          addr_high_reg_next <= addr_high;
+          scarts_hold <= '1';
+        end if;
+      when IOSTATE_PROCESSING =>
+        scarts_hold <= '1';
+        if scarts_hold_int = '0' then
+          iostate_next <= IOSTATE_PAUSE;
+          extsel_reg_next <= '0';
+          transmode_reg_next <= '0';
+          exti_reg_next <= (RST_ACT, '0', (others => '0'), (others => '0'), (others => '0'));
+          addr_high_reg_next <= (others => '0');
+        end if;
+      when IOSTATE_PAUSE =>
+        iostate_next <= IOSTATE_IDLE;
+      when others => null;
+    end case;
+  end process;
+  
+
+  
   -- Instance of AMBA-Statemachine
   -- direct PortMap of AMBA-Signals without possibility 
   --   of manipulation in this Designfile
@@ -139,7 +218,7 @@ begin
   AtD_addr(7 downto 2) <= BAtS.sMADDR(7 downto 2);
   AtD_write_en <= '1';
   AtD_byte_en(3 downto 0) <= BAtS.sByteEn(3 downto 0) when (r.transmode = '0') else (others => '0');
-  BStA.sMRDATA <= DtA_data_out when (r.transmode = '0') else exti.data;
+  BStA.sMRDATA <= DtA_data_out when (r.transmode = '0') else exti_reg.data;
 
 
   BStA.sHBUSREQ <= r_next.SMCS.lsHBUSREQ;
@@ -177,7 +256,7 @@ begin
     end if;
   end process;
 
-  comb : process(r, exti, extsel, rst, BAtS, transmode, addr_high)
+  comb : process(r, exti_reg, extsel_reg, rst, BAtS, transmode_reg, addr_high_reg)
     variable v : reg_type;
 
   begin
@@ -189,117 +268,117 @@ begin
     for i in BAtS.sIRQ'left downto BAtS.sIRQ'right loop
       v.ifacereg(CONFIGREG_CUST)(i) := r.ifacereg(CONFIGREG_CUST)(i) or BAtS.sIRQ(i);
     end loop;
-    gIRQ <= r.ifacereg(CONFIGREG_CUST)(0) or r.ifacereg(CONFIGREG_CUST)(1) or
+    gIRQ_reg_next <= r.ifacereg(CONFIGREG_CUST)(0) or r.ifacereg(CONFIGREG_CUST)(1) or
             r.ifacereg(CONFIGREG_CUST)(2) or r.ifacereg(CONFIGREG_CUST)(3) or
             r.ifacereg(CONFIGREG_CUST)(4) or r.ifacereg(CONFIGREG_CUST)(5) or
             r.ifacereg(CONFIGREG_CUST)(6) or r.ifacereg(CONFIGREG_CUST)(7);
 
     --write
-    if ((extsel = '1') and (exti.write_en = '1') and (transmode = '0')) then
-      case exti.addr(4 downto 2) is
+    if ((extsel_reg = '1') and (exti_reg.write_en = '1') and (transmode_reg = '0')) then
+      case exti_reg.addr(4 downto 2) is
         when "000" =>
           -- first 16 bit only
-          if ((exti.byte_en(0) = '1') or (exti.byte_en(1) = '1')) then
+          if ((exti_reg.byte_en(0) = '1') or (exti_reg.byte_en(1) = '1')) then
             v.ifacereg(STATUSREG)(STA_INT) := '1';
             v.ifacereg(CONFIGREG)(CONF_INTA) :='0';
           else
-            if ((exti.byte_en(2) = '1')) then
-              v.ifacereg(2) := exti.data(23 downto 16);
+            if ((exti_reg.byte_en(2) = '1')) then
+              v.ifacereg(2) := exti_reg.data(23 downto 16);
             end if;
-            if ((exti.byte_en(3) = '1')) then
-              v.ifacereg(3) := exti.data(31 downto 24);
+            if ((exti_reg.byte_en(3) = '1')) then
+              v.ifacereg(3) := exti_reg.data(31 downto 24);
             end if;
           end if;
         when "001" =>
-          if ((exti.byte_en(0) = '1')) then
-            v.ifacereg(4) := exti.data(7 downto 0);
+          if ((exti_reg.byte_en(0) = '1')) then
+            v.ifacereg(4) := exti_reg.data(7 downto 0);
           end if;
-          if ((exti.byte_en(1) = '1')) then
-            v.ifacereg(5) := exti.data(15 downto 8);
+          if ((exti_reg.byte_en(1) = '1')) then
+            v.ifacereg(5) := exti_reg.data(15 downto 8);
           end if;
-          if ((exti.byte_en(2) = '1')) then
-            v.ifacereg(6) := exti.data(23 downto 16);
+          if ((exti_reg.byte_en(2) = '1')) then
+            v.ifacereg(6) := exti_reg.data(23 downto 16);
           end if;
-          if ((exti.byte_en(3) = '1')) then
-            v.ifacereg(7) := exti.data(31 downto 24);
+          if ((exti_reg.byte_en(3) = '1')) then
+            v.ifacereg(7) := exti_reg.data(31 downto 24);
           end if;
         when "010" =>
-          if ((exti.byte_en(0) = '1')) then
-            v.ifacereg(8) := exti.data(7 downto 0);
+          if ((exti_reg.byte_en(0) = '1')) then
+            v.ifacereg(8) := exti_reg.data(7 downto 0);
           end if;
-          if ((exti.byte_en(1) = '1')) then
-            v.ifacereg(9) := exti.data(15 downto 8);
+          if ((exti_reg.byte_en(1) = '1')) then
+            v.ifacereg(9) := exti_reg.data(15 downto 8);
           end if;
-          if ((exti.byte_en(2) = '1')) then
-            v.ifacereg(10) := exti.data(23 downto 16);
+          if ((exti_reg.byte_en(2) = '1')) then
+            v.ifacereg(10) := exti_reg.data(23 downto 16);
           end if;
-          if ((exti.byte_en(3) = '1')) then
-            v.ifacereg(11) := exti.data(31 downto 24);
+          if ((exti_reg.byte_en(3) = '1')) then
+            v.ifacereg(11) := exti_reg.data(31 downto 24);
           end if;
         when "011" =>
-          if ((exti.byte_en(0) = '1')) then
-            v.ifacereg(12) := exti.data(7 downto 0);
+          if ((exti_reg.byte_en(0) = '1')) then
+            v.ifacereg(12) := exti_reg.data(7 downto 0);
           end if;
-          if ((exti.byte_en(1) = '1')) then
-            v.ifacereg(13) := exti.data(15 downto 8);
+          if ((exti_reg.byte_en(1) = '1')) then
+            v.ifacereg(13) := exti_reg.data(15 downto 8);
           end if;
-          if ((exti.byte_en(2) = '1')) then
-            v.ifacereg(14) := exti.data(23 downto 16);
+          if ((exti_reg.byte_en(2) = '1')) then
+            v.ifacereg(14) := exti_reg.data(23 downto 16);
           end if;
-          if ((exti.byte_en(3) = '1')) then
-            v.ifacereg(15) := exti.data(31 downto 24);
+          if ((exti_reg.byte_en(3) = '1')) then
+            v.ifacereg(15) := exti_reg.data(31 downto 24);
           end if;
         when "100" =>
-          if ((exti.byte_en(0) = '1')) then
-            v.ifacereg(16) := exti.data(7 downto 0);
+          if ((exti_reg.byte_en(0) = '1')) then
+            v.ifacereg(16) := exti_reg.data(7 downto 0);
           end if;
-          if ((exti.byte_en(1) = '1')) then
-            v.ifacereg(17) := exti.data(15 downto 8);
+          if ((exti_reg.byte_en(1) = '1')) then
+            v.ifacereg(17) := exti_reg.data(15 downto 8);
           end if;
-          if ((exti.byte_en(2) = '1')) then
-            v.ifacereg(18) := exti.data(23 downto 16);
+          if ((exti_reg.byte_en(2) = '1')) then
+            v.ifacereg(18) := exti_reg.data(23 downto 16);
           end if;
-          if ((exti.byte_en(3) = '1')) then
-            v.ifacereg(19) := exti.data(31 downto 24);
+          if ((exti_reg.byte_en(3) = '1')) then
+            v.ifacereg(19) := exti_reg.data(31 downto 24);
           end if;
         when "101" =>
-          if ((exti.byte_en(0) = '1')) then
-            v.ifacereg(20) := exti.data(7 downto 0);
+          if ((exti_reg.byte_en(0) = '1')) then
+            v.ifacereg(20) := exti_reg.data(7 downto 0);
           end if;
-          if ((exti.byte_en(1) = '1')) then
-            v.ifacereg(21) := exti.data(15 downto 8);
+          if ((exti_reg.byte_en(1) = '1')) then
+            v.ifacereg(21) := exti_reg.data(15 downto 8);
           end if;
-          if ((exti.byte_en(2) = '1')) then
-            v.ifacereg(22) := exti.data(23 downto 16);
+          if ((exti_reg.byte_en(2) = '1')) then
+            v.ifacereg(22) := exti_reg.data(23 downto 16);
           end if;
-          if ((exti.byte_en(3) = '1')) then
-            v.ifacereg(23) := exti.data(31 downto 24);
+          if ((exti_reg.byte_en(3) = '1')) then
+            v.ifacereg(23) := exti_reg.data(31 downto 24);
           end if;
         when "110" =>
-          if ((exti.byte_en(0) = '1')) then
-            v.ifacereg(24) := exti.data(7 downto 0);
+          if ((exti_reg.byte_en(0) = '1')) then
+            v.ifacereg(24) := exti_reg.data(7 downto 0);
           end if;
-          if ((exti.byte_en(1) = '1')) then
-            v.ifacereg(25) := exti.data(15 downto 8);
+          if ((exti_reg.byte_en(1) = '1')) then
+            v.ifacereg(25) := exti_reg.data(15 downto 8);
           end if;
-          if ((exti.byte_en(2) = '1')) then
-            v.ifacereg(26) := exti.data(23 downto 16);
+          if ((exti_reg.byte_en(2) = '1')) then
+            v.ifacereg(26) := exti_reg.data(23 downto 16);
           end if;
-          if ((exti.byte_en(3) = '1')) then
-            v.ifacereg(27) := exti.data(31 downto 24);
+          if ((exti_reg.byte_en(3) = '1')) then
+            v.ifacereg(27) := exti_reg.data(31 downto 24);
           end if;
         when "111" =>
-          if ((exti.byte_en(0) = '1')) then
-            v.ifacereg(28) := exti.data(7 downto 0);
+          if ((exti_reg.byte_en(0) = '1')) then
+            v.ifacereg(28) := exti_reg.data(7 downto 0);
           end if;
-          if ((exti.byte_en(1) = '1')) then
-            v.ifacereg(29) := exti.data(15 downto 8);
+          if ((exti_reg.byte_en(1) = '1')) then
+            v.ifacereg(29) := exti_reg.data(15 downto 8);
           end if;
-          if ((exti.byte_en(2) = '1')) then
-            v.ifacereg(30) := exti.data(23 downto 16);
+          if ((exti_reg.byte_en(2) = '1')) then
+            v.ifacereg(30) := exti_reg.data(23 downto 16);
           end if;
-          if ((exti.byte_en(3) = '1')) then
-            v.ifacereg(31) := exti.data(31 downto 24);
+          if ((exti_reg.byte_en(3) = '1')) then
+            v.ifacereg(31) := exti_reg.data(31 downto 24);
           end if;
         when others =>
           null;
@@ -307,29 +386,29 @@ begin
     end if;
 
     --read
-    exto.data <= (others => '0');
-    if ((extsel = '1') and (exti.write_en = '0') and (transmode = '0')) then
-      case exti.addr(4 downto 2) is
+    exto_reg_next.data <= (others => '0');
+    if ((extsel_reg = '1') and (exti_reg.write_en = '0') and (transmode_reg = '0')) then
+      case exti_reg.addr(4 downto 2) is
         when "000" =>
-          exto.data <= r.ifacereg(3) & r.ifacereg(2) & r.ifacereg(1) & r.ifacereg(0);
+          exto_reg_next.data <= r.ifacereg(3) & r.ifacereg(2) & r.ifacereg(1) & r.ifacereg(0);
         when "001" =>
           if (r.ifacereg(CONFIGREG)(CONF_ID) = '1') then
-            exto.data <= MODULE_VER & MODULE_ID;
+            exto_reg_next.data <= MODULE_VER & MODULE_ID;
           else
-            exto.data <= r.ifacereg(7) & r.ifacereg(6) & r.ifacereg(5) & r.ifacereg(4);
+            exto_reg_next.data <= r.ifacereg(7) & r.ifacereg(6) & r.ifacereg(5) & r.ifacereg(4);
           end if;
         when "010" =>
-          exto.data <= r.ifacereg(11) & r.ifacereg(10) & r.ifacereg(9) & r.ifacereg(8);
+          exto_reg_next.data <= r.ifacereg(11) & r.ifacereg(10) & r.ifacereg(9) & r.ifacereg(8);
         when "011" =>
-          exto.data <= r.ifacereg(15) & r.ifacereg(14) & r.ifacereg(13) & r.ifacereg(12);
+          exto_reg_next.data <= r.ifacereg(15) & r.ifacereg(14) & r.ifacereg(13) & r.ifacereg(12);
         when "100" =>
-          exto.data <= r.ifacereg(19) & r.ifacereg(18) & r.ifacereg(17) & r.ifacereg(16);
+          exto_reg_next.data <= r.ifacereg(19) & r.ifacereg(18) & r.ifacereg(17) & r.ifacereg(16);
         when "101" =>
-          exto.data <= r.ifacereg(23) & r.ifacereg(22) & r.ifacereg(21) & r.ifacereg(20);
+          exto_reg_next.data <= r.ifacereg(23) & r.ifacereg(22) & r.ifacereg(21) & r.ifacereg(20);
         when "110" =>
-          exto.data <= r.ifacereg(27) & r.ifacereg(26) & r.ifacereg(25) & r.ifacereg(24);
+          exto_reg_next.data <= r.ifacereg(27) & r.ifacereg(26) & r.ifacereg(25) & r.ifacereg(24);
         when "111" =>
-          exto.data <= r.ifacereg(31) & r.ifacereg(30) & r.ifacereg(29) & r.ifacereg(28);
+          exto_reg_next.data <= r.ifacereg(31) & r.ifacereg(30) & r.ifacereg(29) & r.ifacereg(28);
         when others =>
           null;
       end case;
@@ -358,22 +437,22 @@ begin
     if r.ifacereg(STATUSREG)(STA_INT) = '1' and r.ifacereg(CONFIGREG)(CONF_INTA) = '0' then
       v.ifacereg(STATUSREG)(STA_INT) := '0';
     end if;
-    exto.intreq <= r.ifacereg(STATUSREG)(STA_INT);
+    exto_reg_next.intreq <= r.ifacereg(STATUSREG)(STA_INT);
     
 
     -- Module Specific part
     
-    if (transmode = '1') then
-      scarts_hold <= '1';
+    if (transmode_reg = '1') then
+      scarts_hold_int <= '1';
     else
-      scarts_hold <= '0';
+      scarts_hold_int <= '0';
     end if;
     
     ambadramlock <= '0';
     if r.workinprogress = '0' then
       -- transmode --> highest priority if nothing is in process
       --   set flag for transmode
-      if (transmode = '1') then
+      if (transmode_reg = '1') then
         -- clear statusbits to prevent wrong information
         v.ifacereg(STATUSREG_CUST)(STA_SUCCESS_T) := '0';
         v.ifacereg(STATUSREG_CUST)(STA_ERROR_T) := '0';
@@ -382,8 +461,8 @@ begin
         -- generate Statemachinecontrolsignals
         v.SMCS.lsHBUSREQ := '1';
         v.SMCS.lsBADDR(5 downto 0) := (others => '0');
-        v.SMCS.lsHADDR := addr_high(31 downto 15) & exti.addr(14 downto 0);
-        case exti.byte_en is
+        v.SMCS.lsHADDR := addr_high_reg(31 downto 15) & exti_reg.addr(14 downto 0);
+        case exti_reg.byte_en is
           when "0001" =>
             v.SMCS.lsHSIZE := HSIZE_BYTE;
           when "0010" =>
@@ -402,7 +481,7 @@ begin
             v.SMCS.lsHSIZE := HSIZE_WORD;
         end case;
         v.SMCS.lsWAIT := '0';
-        v.SMCS.lsHWRITE := exti.write_en;
+        v.SMCS.lsHWRITE := exti_reg.write_en;
       elsif (r.ifacereg(SLOT1_CONFIG)(CFG_START) = '1') then
         v.workinprogress := '1';
         v.Reg1inprogress := '1';
@@ -443,7 +522,7 @@ begin
       elsif BAtS.sERROR = '1' then
         if (r.transmode = '1') then
           v.transmode := '0';
-          scarts_hold <= '0';
+          scarts_hold_int <= '0';
           v.workinprogress := '0';
           v.ifacereg(STATUSREG_CUST)(STA_ERROR_T) := '1';
         else
@@ -464,10 +543,10 @@ begin
       elsif BAtS.sFinished = '1' then
         if (r.transmode = '1') then
           v.transmode := '0';
-          scarts_hold <= '0';
+          scarts_hold_int <= '0';
           v.workinprogress := '0';
           v.ifacereg(STATUSREG_CUST)(STA_SUCCESS_T) := '1';
-          exto.data <= BAtS.sMWDATA;
+          exto_reg_next.data <= BAtS.sMWDATA;
         else
           if r.Reg1inprogress = '1' then
             v.Reg1inprogress := '0';
@@ -477,7 +556,7 @@ begin
             v.ifacereg(STATUSREG_CUST)(STA_SUCCESS_1) := '1';
 					-- generate Interrupt
             if r.ifacereg(SLOT1_CONFIG)(CFG_MASKINT) = '0' then
-              exto.intreq <= '1';
+              exto_reg_next.intreq <= '1';
             end if;
           else
             v.Reg2inprogress := '0';
@@ -487,7 +566,7 @@ begin
             v.ifacereg(STATUSREG_CUST)(STA_SUCCESS_2) := '1';
 					-- generate Interrupt
             if r.ifacereg(SLOT2_CONFIG)(CFG_MASKINT) = '0' then
-              exto.intreq <= '1';
+              exto_reg_next.intreq <= '1';
             end if;
           end if;
         end if;

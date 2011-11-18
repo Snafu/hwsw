@@ -202,7 +202,10 @@ begin
 			v.S.BusRequest := '1';
 			if (AMBAI.HGRANT = '1') then
 				v.St := ACTIVE;
-				v.A.HTRANS := HTRANS_IDLE;
+                                -- removed assignment to htrans to remove comb
+                                -- loop (jl)
+				--v.A.HTRANS := HTRANS_IDLE;
+                                
 --				v.S.BusRequest := '0';
 			else
 				v.St := HOLD;
@@ -297,6 +300,9 @@ begin
 					end if;
 				when HRESP_RETRY =>
 					v.A.HADDR := r.A.HADDR + 4;
+                                        -- state change to hold => set
+                                        -- htrans_idle (added by jl)
+                                        v.A.HTRANS := HTRANS_IDLE; 
 					v.St := HOLD;
 				when HRESP_ERROR =>
 					v.A.HADDR := (others => '0');
