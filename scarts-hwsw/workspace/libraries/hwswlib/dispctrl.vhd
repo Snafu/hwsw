@@ -26,7 +26,7 @@ use techmap.gencomp.all;
 library gaisler;
 use gaisler.misc.all;
  
-entity svgactrl is
+entity dispctrl is
 
   generic(
     memtech     : integer := DEFMEMTECH;
@@ -57,28 +57,33 @@ architecture rtl of dispctrl is
      0 => ahb_device_reg ( VENDOR_HWSW, HWSW_DISPCTRL, 0, REVISION, 0),
      1 => apb_iobar(paddr, pmask));
     
-  type register_type is array (1 to 5) of std_logic_vector(31 downto 0);
+  type register_type is std_logic_vector(31 downto 0);
 
   type state_type is (running, not_running, reset);
+  type job_type is (idle, busy);
 
   type control_type is record
     int_reg				: register_type;
+	 color_a				: register_type;
+	 color_b				: register_type;
     state				: state_type;
     enable				: std_logic;
     reset				: std_logic;
-    address				: std_logic_vector(31 downto 0);
-	color_a				: std_logic_vector(7 downto 0);
-	color_b				: std_logic_vector(7 downto 0);
-	data:				: std_logic_vector(31 downto 0);
+    startaddr			: register_type;
+	 endaddr:			: register_type;
+  end record;
+  
+  type work_type is record
+    state				: job_type;
+    color				: std_logic_vector(23 downto 0);
+    addr					: register_type;
   end record;
  
   
   signal r,rin			: control_type;
+  signal w,win			: work_type;
   signal dmai			: ahb_dma_in_type;
   signal dmao			: ahb_dma_out_type;
-  signal color_a		: std_logic_vector(7 downto 0);
-  signal color_b		: std_logic_vector(7 downto 0);
-  signal ramaddress		: std_logic_vector(31 downto 0);
   
   signal vcc			: std_logic;
 
@@ -95,33 +100,94 @@ begin
   apbo.pconfig <= PCONFIG;
   
   control_proc : process(r,rst,apbi,dmao)
-    variable v        : control_type;
-    variable apbwrite : std_logic;
+    variable v				: control_type;
+	 variable k				: work_type;
+    variable apbwrite	: std_logic;
   begin
-    v := c;
+    v := r;
+	 
     ---------------------------------------------------------------------------
     -- Control. Handles the APB accesses and stores the internal registers
     ---------------------------------------------------------------------------
     apbwrite :=  apbi.psel(pindex) and apbi.pwrite and apbi.penable;
     case apbi.paddr(5 downto 2)  is
     when "0000" =>
-      -- RAM register
+      -- FB start address
       if apbwrite = '1' then
-        v.address := apbi.pwdata;
+        v.startaddr := apbi.pwdata;
       end if;
     when "0001" =>
-      -- Color register
+      -- FB end address
       if apbwrite = '1' then
-        v.color_a := apbi.pwdata(7 downto 0);
-	  	v.color_b := apbi.pwdata(15 downto 8);
+        v.endaddr := apbi.pwdata;
+      end if;
+    when "0010" =>
+      -- Color A register
+      if apbwrite = '1' then
+        v.color_a := apbi.pwdata(23 downto 0);
+      end if;
+	 when "0011" =>
+	   -- Color B register
+      if apbwrite = '1' then
+        v.color_b := apbi.pwdata(23 downto 0);
       end if;
     when others =>
     end case;
+	 
+    ---------------------------------------------------------------------------
+    -- Control state machine
+    ---------------------------------------------------------------------------
+    case r.state is
+    when running => 
+       if r.enable = '0' then
+         v.state := not_running;
+       end if;
+    when not_running => 
+       if r.enable = '1' then
+         v.state := reset;
+       end if;
+    when reset =>
+       v.state := running;
+    end case;         
 
-	ramaddress <= v.address;
-	color_a <= v.color_a;
-	color_b <= v.color_b;
+    ---------------------------------------------------------------------------
+    -- Control reset
+    ---------------------------------------------------------------------------
+    if r.reset = '1' or rst = '0' then
+      v.state     := not_running;
+      v.enable    := '0';
+		v.startaddr := (others => 0);
+		v.endaddr	:= (others => 0);
+      v.reset     := '0';
+    end if; 
 
+	 win <= k;
+  end process;
+  
+  -------------------------------------
+  -- Write to RAM
+  -------------------------------------
+  ram_proc : process(r,w,dmai,dmao)
+    variable k			: work_type;
+  begin
+    if w.state = idle then
+		k.state := busy;
+		k.addr := v.startaddr;
+		k.color := color_a;
+	 end if;
+	 
+	 dmai.address := k.addr;
+	 dmai.wdata := k.color;
+	 dmai.start := '1';
+	 
+	 if dmao.ready = '1' and k.addr < v.endaddr then
+	   dmai.addr <= dmai.addr + 1;
+	 elsif dmao.redy = '1' and k.addr = v.endaddr then
+	   k.state = idle;
+	 end if;
+	 
+	 win <= k;
+  
   end process;
 
 
@@ -132,6 +198,7 @@ begin
   begin
     if rising_edge(clk) then
       r <= rin;
+		w <= win;
     end if;
   end process;
   
