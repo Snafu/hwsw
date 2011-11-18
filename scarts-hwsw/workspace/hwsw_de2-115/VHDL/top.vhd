@@ -36,6 +36,9 @@ library gaisler;
 use gaisler.misc.all;
 use gaisler.memctrl.all;
 
+--library hwswlib;
+use work.hwswlib.all;
+
 entity top is
   port(
     db_clk      : in  std_ulogic;
@@ -360,6 +363,25 @@ begin
     ltm_grest <= '1';
   
 
+  -----------------------------------------------------------------------------
+  -- DISPLAY controller
+  -----------------------------------------------------------------------------
+  
+  dispctrl0 : dispctrl
+    generic map
+    (
+	   pindex => 2,
+		hindex => 2
+    )
+    port map
+    (
+      rst => syncrst,
+      clk => clk,
+      apbi => apbi,
+      apbo => apbo(1),
+      ahbi => grlib_ahbmi,
+      ahbo => disp_ahbmo
+    );  
   
 
   -----------------------------------------------------------------------------

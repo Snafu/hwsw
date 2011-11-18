@@ -25,11 +25,14 @@ library techmap;
 use techmap.gencomp.all;
 library gaisler;
 use gaisler.misc.all;
+
+library hwswlib;
+use hwswlib.all;
+ 
  
 entity dispctrl is
 
   generic(
-    memtech     : integer := DEFMEMTECH;
     pindex      : integer := 0;
     paddr       : integer := 0;
     pmask       : integer := 16#fff#;
@@ -44,8 +47,7 @@ entity dispctrl is
     apbi      : in apb_slv_in_type;
     apbo      : out apb_slv_out_type;
     ahbi      : in  ahb_mst_in_type;
-    ahbo      : out ahb_mst_out_type;
-    clk_sel   : out std_logic_vector(1 downto 0)
+    ahbo      : out ahb_mst_out_type
     );
 
 end ;
@@ -77,7 +79,7 @@ architecture rtl of dispctrl is
   
   type work_type is record
     state				: job_type;
-    color				: std_logic_vector(23 downto 0);
+    color				: std_logic_vector(31 downto 0);
     addr					: std_logic_vector(31 downto 0);
   end record;
  
@@ -128,13 +130,13 @@ begin
     when "0010" =>
       -- Color A register
       if apbwrite = '1' then
-        v.color_a := apbi.pwdata(23 downto 0);
+        v.color_a := apbi.pwdata;
 		  v.updated := '1';
       end if;
 	 when "0011" =>
 	   -- Color B register
       if apbwrite = '1' then
-        v.color_b := apbi.pwdata(23 downto 0);
+        v.color_b := apbi.pwdata;
 		  v.updated := '1';
       end if;
     when others =>
@@ -162,14 +164,14 @@ begin
     if r.reset = '1' or rst = '0' then
       v.state     := not_running;
       v.enable    := '0';
-		v.color_a	:= 16#deadf0#;
-		v.startaddr := 16#babe0a#;
-		v.endaddr	:= 16#babe0e#;
+		v.color_a	:= x"00deadf0";
+		v.startaddr := x"00babe0a";
+		v.endaddr	:= x"00babe0e";
 		v.updated := '0';
       v.reset     := '0';
     end if; 
 
-	 win <= k;
+	 rin <= v;
   end process;
   
   -------------------------------------
