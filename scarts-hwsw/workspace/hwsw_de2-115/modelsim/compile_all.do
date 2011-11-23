@@ -10,7 +10,7 @@ vmap stratixii work
 vlib altera_mf
 vmap altera_mf work
 
-set ALTERA_LIB_PATH /opt/altera/10.0/quartus/eda/sim_lib
+set ALTERA_LIB_PATH /opt/altera/10.0sp1/quartus/eda/sim_lib
 
 vcom  -work altera_mf $ALTERA_LIB_PATH/altera_mf_components.vhd
 vcom  -work altera_mf $ALTERA_LIB_PATH/altera_mf.vhd

@@ -77,6 +77,7 @@ vcom  -work gaisler ../../libraries/grlib/lib/gaisler/misc/svgactrl.vhd
 vcom  -work gaisler ../../libraries/grlib/lib/gaisler/memctrl/memctrl.vhd
 vcom  -work gaisler ../../libraries/grlib/lib/gaisler/memctrl/sdctrl.vhd
 
+vcom  -work work ../../libraries/hwswlib/hwswlib.vhd
 vcom  -work work ../../libraries/hwswlib/dispctrl.vhd
 
 vcom  -work work ../../../VHDL/ext_modules/ext_Dis7Seg/pkg_Dis7Seg.vhd
