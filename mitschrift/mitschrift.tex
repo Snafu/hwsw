@@ -1,0 +1,97 @@
+
+SYSTEM C
+
+				entwurfssprachen am bsp system c
+
+allgemeines
+
+	warum systemc:
+
+	systemdesign \& verifikation HW / SW
+	modellierung von systemblöcken
+	überblick über interaktion der funktionsblöcke
+	entwicklung von embedd. apps bevor prototyp vorhanden ist
+	design/verifikation unabghängig von detailierter HW/SW implementierung
+
+	höherer abstraktionslevel durch system c
+		--> einfachere tradeoffanalyse(performance/funktionalität)
+		--> einfacheres design/redesign(produktivitätssteigerung)
+
+geschichte
+
+	1997 scenic(vorgänger systemC
+	1999 open systemC inititive(ARM, Synopsis,...)
+	2005	IEEE standard IEEE 1666-2005 systemc2.1
+
+sprachkonstrukte
+
+	systemc = c++ class library
+	
+	module
+		c++ klasse – sc\_module
+		grundlegende einheit des design
+		hierarchisches design(modul innerhalb von modulen)
+
+	processes(cooperative threading)
+funktion
+sc\_thread(einfache ausführung)
+sc\_cthread(clocked thread, synthetisierbar – veraltet)
+sc\_method(wird dauernd ausgeführt, kein wait-status sondern nexttrigger)
+
+	ports/interfaces/channels/exports
+
+	sensitivity, events(notification)
+		bei welcher signaländerung wird ein process gestartet
+
+	hardwareorientierte typen(mehrwertige logik, bitvektoren)
+
+	hw-eigenschaften werden auf c++ konzepte abgebildet
+	
+	processes -> funktionen
+	interfaces -> virtuelle funktion
+	interrupts -> exception handling
+	module -> klasse
+	architecture -> 
+
+beispiele
+
+	hello world – beispiel
+	
+
+vor/nachteile
+
+	vorteile
+		unterstützung von design in versch. Abstraktionslevel
+		design von HW/SW in gleicher umgebung
+		leichteres debugging(SW statt HW)
+		verifikation ist leichter(high level modell referenz)
+		systemC ist standardisiert
+
+	nachteile
+		grosser sptrachumfang(viel ballast)
+		relativ neues konzept:
+tools nicht ausgereift
+wenig fachkräfte
+wenig vorhandene projekte zur orientierung
+
+	tools
+synopsis(zb. Platform architect, VCS)
+mentor graphics(modelsim)
+	
+	hw – hersteller
+transaction level versionene von ARM11, AMBA
+
+	haupteinsatzgebiet von systemC ist an unis: forschung im vordergrund, nicht entwicklung
+	
+sw-sprachen
+
+	besonderheiten
+		hw-erweiterungen unter verwendung schon vorhandener sprachkonzepte
+	vorteile
+		schnelle entwicklung
+
+	automatisiertes partitioning
+
+	systemc versucht zu erkennen was syncron, was asyncron
+		asyncron -> hardwareorientierte
+		syncron -> software 
