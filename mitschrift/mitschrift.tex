@@ -7,7 +7,7 @@
 	Warum SystemC: \\
   \begin{itemize}
   	\item Systemdesign \& Verifikation HW / SW
-  	\item Modellierung von Systemblöcken
+  	\item Modellierung von Systemblöcken, die getrennt entwickel- und testbar sind
   	\item Überblick über Interaktion der Funktionsblöcke
   	\item Entwicklung von embedd. Apps bevor Prototyp vorhanden ist
   	\item Design/Verifikation unabghängig von detailierter HW / SW Implementierung
@@ -16,12 +16,15 @@
 			--> einfachere Tradeoffanalyse (Performance / Funktionalität) \\
 			--> einfacheres Design / Redesign (Produktivitätssteigerung)
   \end{itemize}
+  
+  Der Entwicklungsprozess durchläuft eine Designschleife, wobei nachdem ein Design entwickelt wurde nach Fehlern gesucht wird.
+  Diese Fehler weden in einem neuen Design behoben, worauf wieder nach Fehlern gesucht wird. Dieser Prozess wiederholt sich, bis keine Fehler mehr erkennbar sind.
 
 \section{Geschichte}
 	\begin{itemize}
 	 \item 1997 Scenic (Vorgänger SystemC)
-	 \item 1999 Open SystemC Inititive (ARM, Synopsis,...)
-	 \item 2005 IEEE Standard IEEE 1666-2005 SystemC2.1
+	 \item 1999 Open SystemC Inititive (ARM, Synopsis, ...)
+	 \item 2005 IEEE Standard IEEE 1666-2005 SystemC 2.1
 	\end{itemize}
 
 	
@@ -31,7 +34,7 @@
 	\subsection*{Module}
 		\begin{itemize}
 		  \item C++ Klasse sc\_module
-			\item Grundlegende Einheit des Design
+			\item Grundlegende Einheit des Designs
 			\item Hierarchisches Design (Modul innerhalb von Modulen)
 		\end{itemize}
 
@@ -40,36 +43,37 @@
 			\item Enthalten die Funktion
 			\item sc\_thread für einmalige Ausführung
 			\item sc\_cthread (clocked thread, synthetisierbar - veraltet)
-			\item sc\_method wird dauernd ausgeführt, kein wait-Status sondern next-Trigger
+			\item sc\_method wird dauernd ausgeführt, kein wait-Status sondern next-Trigger (Sensitivity List)
+			\item Simulation Kernel sorgt für Threading / Scheduling beim Testen
 		\end{itemize}
 
-	Ports/Interfaces/Channels/Exports
-
-	Sensitivity, Events (Notification)
-		bei welcher Signaländerung wird ein Process gestartet
-
-	Hardwareorientierte Typen (mehrwertige Logik, Bitvektoren)
-
-	\subsection{FIXME}
-	 HW-Eigenschaften werden folgendermassen auf C++ Konzepte abgebildet
+	Die Schnittstellen der Module (Ports) verwenden Interfaces um mit Channels zu kommunizieren.
+	Channels sind z.B. Buffer, FIFOs, Mutex bzw Semaphoren.
+	
+	
+	Sensitivity List bzw Events (Notifications) regeln,	bei welcher Signaländerung ein Process ausgeführt wird.
+	Hardwareorientierte Typen (mehrwertige Logik, Bitvektoren) werden über C++ Templates realisiert.\\
+	
+	
+	HW-Eigenschaften werden folgendermassen auf C++ Konzepte abgebildet
 	\begin{itemize} 
 	  \item Processes -> Funktionen
 	  \item Interfaces -> Virtuelle Funktion
 	  \item Interrupts -> Exception handling
 	  \item Module -> Klasse
-	  \item Architecture -> ... FIXME
+	  \item Architecture -> Gesamtdesign
 	  \end{itemize}
 
 \section{Beispiele}
 
-	Anhand eines einfachen Hello World - Beispiels wurde die Funktionsweise eines sc\_thread demonstriert.
+	Anhand eines einfachen Hello World - Beispiels wurde die Funktionsweise eines sc\_thread mit Simulation demonstriert.
 
 \section{Vor- \& Nachteile}
 \subsection{Vorteile}
 \begin{itemize}
  \item Unterstützung von Design in verschiedenen Abstraktionsleveln
  \item Design von HW/SW in einheitlicher Umgebung
- \item Leichteres debugging (SW statt HW)
+ \item Abstraktion vereinfacht das Debugging (SW statt HW)
  \item Verifikation wird vereinfacht (high level modell referenz)
  \item SystemC ist standardisiert
 \end{itemize}
@@ -89,9 +93,10 @@
 \begin{itemize}
  \item Platform architect, VCS von Synopsis
  \item Modelsim von Mentor Graphics
+ \item Simulation und Verifikation möglich, Synthese jedoch derzeit nicht
 \end{itemize}
 
-\subsection{HW - Hersteller}
+\subsection{HW - Hersteller / Realisierte Projekt}
 \begin{itemize}
  \item ARM11
  \item AMBA
@@ -99,18 +104,16 @@
 
 \section{Verwendung}
 \begin{itemize}
- \item Haupteinsatzgebiet von systemC ist an Unis
+ \item Haupteinsatzgebiet von SystemC ist an Universitäten
  \item Forschung im Vordergrund
  \item Entwicklung von kommerziellen Produkten steht nicht im Vordergrund
 \end{itemize}
 
-\section{SW-Sprachen}
-
-\subsection{Besonderheiten}
+\section{Besonderheiten}
 \begin{itemize}
  \item HW-Erweiterungen unter Verwendung schon vorhandener Sprachkonzepte
  \item Automatische Partionierung
- \item Abbildung syncroner Komponenten in Software
- \item Abbildung asyncroner Komponenten in Hardware
+ \item Abbildung synchroner Komponenten in Software
+ \item Abbildung asynchroner Komponenten in Hardware
 \end{itemize}
 
