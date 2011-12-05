@@ -50,24 +50,25 @@
 
 	Hardwareorientierte Typen (mehrwertige Logik, Bitvektoren)
 
-	HW-Eigenschaften werden auf C++ Konzepte abgebildet.
-	
-	Processes -> Funktionen
-	Interfaces -> Virtuelle Funktion
-	Interrupts -> Exception handling
-	Module -> Klasse
-	Architecture -> 
+	\subsection{FIXME}
+	 HW-Eigenschaften werden folgendermassen auf C++ Konzepte abgebildet
+	\begin{itemize} 
+	  \item Processes -> Funktionen
+	  \item Interfaces -> Virtuelle Funktion
+	  \item Interrupts -> Exception handling
+	  \item Module -> Klasse
+	  \item Architecture -> ... FIXME
+	  \end{itemize}
 
 \section{Beispiele}
 
 	Anhand eines einfachen Hello World - Beispiels wurde die Funktionsweise eines sc\_thread demonstriert.
-	
 
 \section{Vor- \& Nachteile}
 \subsection{Vorteile}
 \begin{itemize}
  \item Unterstützung von Design in verschiedenen Abstraktionsleveln
- \item Design von HW/SW in gleicher Umgebung
+ \item Design von HW/SW in einheitlicher Umgebung
  \item Leichteres debugging (SW statt HW)
  \item Verifikation wird vereinfacht (high level modell referenz)
  \item SystemC ist standardisiert
@@ -75,31 +76,41 @@
 
 \subsection{Nachteile}
 \begin{itemize}
- \item Grosser Sprachumfang (viel ballast)
+ \item Grosser Sprachumfang (viel Ballast)
  \item Relativ neues Konzept
  \item Tools noch nicht ausgereift
  \item Wenig Fachkräfte
  \item Wenig vorhandene Projekte zur Orientierung
 \end{itemize}
 
-	tools
-synopsis(zb. Platform architect, VCS)
-mentor graphics(modelsim)
-	
-	hw   hersteller
-transaction level versionene von ARM11, AMBA
 
-	haupteinsatzgebiet von systemC ist an unis: forschung im vordergrund, nicht entwicklung
-	
-sw-sprachen
 
-	besonderheiten
-		hw-erweiterungen unter verwendung schon vorhandener sprachkonzepte
-	vorteile
-		schnelle entwicklung
+\subsection{vorhandene Tools}
+\begin{itemize}
+ \item Platform architect, VCS von Synopsis
+ \item Modelsim von Mentor Graphics
+\end{itemize}
 
-	automatisiertes partitioning
+\subsection{HW - Hersteller}
+\begin{itemize}
+ \item ARM11
+ \item AMBA
+\end{itemize}
 
-	systemc versucht zu erkennen was syncron, was asyncron
-		asyncron -> hardwareorientierte
-		syncron -> software 
+\section{Verwendung}
+\begin{itemize}
+ \item Haupteinsatzgebiet von systemC ist an Unis
+ \item Forschung im Vordergrund
+ \item Entwicklung von kommerziellen Produkten steht nicht im Vordergrund
+\end{itemize}
+
+\section{SW-Sprachen}
+
+\subsection{Besonderheiten}
+\begin{itemize}
+ \item HW-Erweiterungen unter Verwendung schon vorhandener Sprachkonzepte
+ \item Automatische Partionierung
+ \item Abbildung syncroner Komponenten in Software
+ \item Abbildung asyncroner Komponenten in Hardware
+\end{itemize}
+
