@@ -1,87 +1,92 @@
 
-SYSTEM C
+%SYSTEM C
 
-				entwurfssprachen am bsp system c
+%				entwurfssprachen am bsp system c
 
 \section{Allgemeines}
-	warum systemc:
+	Warum SystemC: \\
+  \begin{itemize}
+  	\item Systemdesign \& Verifikation HW / SW
+  	\item Modellierung von Systemblöcken
+  	\item Überblick über Interaktion der Funktionsblöcke
+  	\item Entwicklung von embedd. Apps bevor Prototyp vorhanden ist
+  	\item Design/Verifikation unabghängig von detailierter HW / SW Implementierung
 
-	systemdesign \& verifikation HW / SW
-	modellierung von systemblÃ¶cken
-	Ã¼berblick Ã¼ber interaktion der funktionsblÃ¶cke
-	entwicklung von embedd. apps bevor prototyp vorhanden ist
-	design/verifikation unabghÃ¤ngig von detailierter HW/SW implementierung
-
-	hÃ¶herer abstraktionslevel durch system c
-		--> einfachere tradeoffanalyse(performance/funktionalitÃ¤t)
-		--> einfacheres design/redesign(produktivitÃ¤tssteigerung)
+  	\item Höherer Abstraktionslevel durch SystemC \\
+			--> einfachere Tradeoffanalyse (Performance / Funktionalität) \\
+			--> einfacheres Design / Redesign (Produktivitätssteigerung)
+  \end{itemize}
 
 \section{Geschichte}
-\begin{itemize}
- \item 1997 scenic(vorgÃ¤nger systemC
- \item 1999 open systemC inititive(ARM, Synopsis,...)
- \item 2005 IEEE standard IEEE 1666-2005 systemc2.1
-\end{itemize}
+	\begin{itemize}
+	 \item 1997 Scenic (Vorgänger SystemC)
+	 \item 1999 Open SystemC Inititive (ARM, Synopsis,...)
+	 \item 2005 IEEE Standard IEEE 1666-2005 SystemC2.1
+	\end{itemize}
 
 	
 \section{Sprachkonstrukte}
-	systemc = c++ class library
+	SystemC ist eine C++ class library
 	
-	module
-		c++ klasse â€“ sc\_module
-		grundlegende einheit des design
-		hierarchisches design(modul innerhalb von modulen)
+	\subsection*{Module}
+		\begin{itemize}
+		  \item C++ Klasse sc\_module
+			\item Grundlegende Einheit des Design
+			\item Hierarchisches Design (Modul innerhalb von Modulen)
+		\end{itemize}
 
-	processes(cooperative threading)
-funktion
-sc\_thread(einfache ausfÃ¼hrung)
-sc\_cthread(clocked thread, synthetisierbar â€“ veraltet)
-sc\_method(wird dauernd ausgefÃ¼hrt, kein wait-status sondern nexttrigger)
+	\subsection*{Processes (cooperative threading)}
+		\begin{itemize}
+			\item Enthalten die Funktion
+			\item sc\_thread für einmalige Ausführung
+			\item sc\_cthread (clocked thread, synthetisierbar - veraltet)
+			\item sc\_method wird dauernd ausgeführt, kein wait-Status sondern next-Trigger
+		\end{itemize}
 
-	ports/interfaces/channels/exports
+	Ports/Interfaces/Channels/Exports
 
-	sensitivity, events(notification)
-		bei welcher signalÃ¤nderung wird ein process gestartet
+	Sensitivity, Events (Notification)
+		bei welcher Signaländerung wird ein Process gestartet
 
-	hardwareorientierte typen(mehrwertige logik, bitvektoren)
+	Hardwareorientierte Typen (mehrwertige Logik, Bitvektoren)
 
-	hw-eigenschaften werden auf c++ konzepte abgebildet
+	HW-Eigenschaften werden auf C++ Konzepte abgebildet.
 	
-	processes -> funktionen
-	interfaces -> virtuelle funktion
-	interrupts -> exception handling
-	module -> klasse
-	architecture -> 
+	Processes -> Funktionen
+	Interfaces -> Virtuelle Funktion
+	Interrupts -> Exception handling
+	Module -> Klasse
+	Architecture -> 
 
 \section{Beispiele}
 
-	hello world â€“ beispiel
+	Anhand eines einfachen Hello World - Beispiels wurde die Funktionsweise eines sc\_thread demonstriert.
 	
 
 \section{Vor- \& Nachteile}
 \subsection{Vorteile}
 \begin{itemize}
- \item unterstÃ¼tzung von design in versch. Abstraktionslevel
- \item design von HW/SW in gleicher umgebung
- \item leichteres debugging(SW statt HW)
- \item verifikation ist leichter(high level modell referenz)
- \item systemC ist standardisiert
+ \item Unterstützung von Design in verschiedenen Abstraktionsleveln
+ \item Design von HW/SW in gleicher Umgebung
+ \item Leichteres debugging (SW statt HW)
+ \item Verifikation wird vereinfacht (high level modell referenz)
+ \item SystemC ist standardisiert
 \end{itemize}
 
 \subsection{Nachteile}
 \begin{itemize}
- \item grosser sprachumfang(viel ballast)
- \item relativ neues konzept:
- \item tools nicht ausgereift
- \item wenig fachkrÃ¤fte
- \item wenig vorhandene projekte zur orientierung
+ \item Grosser Sprachumfang (viel ballast)
+ \item Relativ neues Konzept
+ \item Tools noch nicht ausgereift
+ \item Wenig Fachkräfte
+ \item Wenig vorhandene Projekte zur Orientierung
 \end{itemize}
 
 	tools
 synopsis(zb. Platform architect, VCS)
 mentor graphics(modelsim)
 	
-	hw â€“ hersteller
+	hw   hersteller
 transaction level versionene von ARM11, AMBA
 
 	haupteinsatzgebiet von systemC ist an unis: forschung im vordergrund, nicht entwicklung
