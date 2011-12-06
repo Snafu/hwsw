@@ -15,3 +15,8 @@ scarts-hwsw/workspace/hwsw_de2-115/quartus/db/
 scarts-hwsw/workspace/hwsw_de2-115/quartus/incremental_db/
 scarts-hwsw/workspace/hwsw_de2-115/quartus/simulation/
 scarts-hwsw/workspace/hwsw_de2-115/modelsim/*/
+*.aux
+*.log
+*.out
+*.pdf
+*.toc

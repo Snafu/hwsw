@@ -1,0 +1,102 @@
+\NeedsTeXFormat{LaTeX2e}
+\documentclass[12pt,a4paper,titlepage]{article} 
+\usepackage[T1]{fontenc}
+\usepackage{graphicx} 
+\usepackage[ngerman]{babel}
+\usepackage{epsfig} 
+\usepackage{subfigure} 
+\usepackage{babel} 
+\usepackage{epic} 
+\usepackage{amsmath} 
+\usepackage{float}
+%\usepackage[utf8]{inputenc}
+\usepackage[ansinew]{inputenc}
+%\usepackage{fancyunits}
+\usepackage{hyperref}\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\usepackage{listings}
+\usepackage{eurosym}
+\usepackage{verbatim}
+\lstset{backgroundcolor=\color[gray]{.9},
+         basicstyle=\scriptsize,
+         numbers=left,
+	 breaklines=true
+}
+\selectlanguage{ngerman} \frenchspacing \sloppy 
+\usepackage{amsmath}
+\usepackage{pdflscape}
+\usepackage{tikz}
+\usepackage{tikz-timing}[2009/12/09]
+\usepackage{units}
+\usepackage{tabularx}
+%\usepackage{bytefield}
+\usepackage{wrapfig} 
+
+\usetikzlibrary{arrows,decorations.pathmorphing,backgrounds,fit,positioning,shapes.symbols,chains}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usetikzlibrary{shapes,arrows}
+\usepackage{amsmath,bm,times}
+\newcommand{\mx}[1]{\mathbf{\bm{#1}}} % Matrix command
+\newcommand{\vc}[1]{\mathbf{\bm{#1}}} % Vector command
+
+
+
+
+% separate page numbering for title page and table of contents
+\pagenumbering{roman}
+
+
+% no indents
+\parindent 0pt
+
+% sans serif
+\renewcommand*\familydefault{\sfdefault}
+
+% custom date
+\usepackage{datetime}
+\newdateformat{customdate}{\monthname{ }\THEYEAR}
+
+% add html links to footnoted urls
+%\usepackage{html}
+\renewcommand{\htmladdnormallinkfoot}[2]{#1{\footnote{\htmlurl{#2}}}}
+
+
+\title{HW/SW-Codesign VU WS11/12 Mitschrift System C}
+\author{Harald Glanzer, Christopher Gabriel, Robert Annessi, Wolfgang G.}
+% configure pdf attachments
+\usepackage{attachfile}
+\attachfilesetup{author=\author,icon=Paperclip,mimetype=text/plain,color=1 0 0,appearance=false}
+
+
+% new line after paragraph
+\makeatletter
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+  {-3.25ex\@plus -1ex \@minus -.2ex}%
+  {1.5ex \@plus .2ex}%
+  {\normalfont\normalsize\bfseries}}
+\makeatother
+
+\newtheorem{req}{Req}
+
+\date{November 2011}
+
+\begin{document} 
+
+%\input{chapters/000_deckblatt}
+
+\maketitle
+
+%\input{abstract}
+
+\thispagestyle{empty}
+\tableofcontents
+\thispagestyle{empty}
+\newpage
+
+
+\pagenumbering{arabic}
+
+\input{mitschrift}
+
+%\bibliographystyle{plain}
+%{\small\bibliography{../bibliography}}
+\end{document}
