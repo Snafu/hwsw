@@ -222,7 +222,7 @@ begin
     grlib_ahbmo(0).hindex   <=  0;
 
     grlib_ahbmo(2)          <=  svga_ahbmo;
-	 grlib_ahbmo(3)			 <=  disp_ahbmo;
+	 grlib_ahbmo(1)			 <=  disp_ahbmo;
   end process;
 
 
@@ -372,7 +372,7 @@ begin
     generic map
     (
 	   pindex => 1,
-		hindex => 3
+		hindex => 1
     )
     port map
     (
