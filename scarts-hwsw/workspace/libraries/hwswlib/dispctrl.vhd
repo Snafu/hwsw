@@ -65,32 +65,35 @@ architecture rtl of dispctrl is
   type state_type is (running, not_running, reset);
   type job_type is (idle, busy);
 
-  signal int_reg,int_reg_in			: std_logic_vector(31 downto 0);
+  signal int_reg,int_reg_in				: std_logic_vector(31 downto 0);
   signal data,data_in					: std_logic_vector(31 downto 0);
-  signal startaddr,startaddr_in		: std_logic_vector(31 downto 0);
-  signal endaddr,endaddr_in			: std_logic_vector(31 downto 0);
+  signal startaddr,startaddr_in			: std_logic_vector(31 downto 0);
+  signal endaddr,endaddr_in				: std_logic_vector(31 downto 0);
   signal write_en,write_en_in			: std_logic;
-  signal write_done,write_done_in	: std_logic;
-  signal tmpaddr,tmpaddr_next : std_logic_vector(31 downto 0);
-  signal ready : std_logic;
-  signal counter,counter_next : integer;
- 
+  signal write_done,write_done_in		: std_logic;
+  signal ready							: std_logic;
   
-  signal dmai			: ahb_dma_in_type;
-  signal dmao			: ahb_dma_out_type;
-  
-  signal vcc			: std_logic;
-  
-  type wstates is (idle, initwrite, waitready, interburst, contwrite, done);
-  
-  signal wstate,wstate_next : wstates;
+  signal dmai	: ahb_dma_in_type;
+  signal dmao	: ahb_dma_out_type;
 
+  type write_t is record
+  	address 	: std_logic_vector(31 downto 0);
+	data		: std_logic_vector(31 downto 0);
+	start		: std_logic;
+	newburst	: std_logic;
+	done		: std_logic;
+  end record;
+  
+  signal r,rin	: write_t;
+  
+  signal vcc	: std_logic;
+  
 begin
 
   vcc <= '1';
 
   ahb_master : ahbmst generic map (hindex, hirq, VENDOR_HWSW,
-	HWSW_DISPCTRL, 0, 3, 1)
+	HWSW_DISPCTRL, 0, 3, 0)
   port map (rst, clk, dmai, dmao, ahbi, ahbo);     
 
 --  apbo.pirq    <= (others => '0');
@@ -138,12 +141,10 @@ begin
     -- Control reset
     ---------------------------------------------------------------------------
     if rst = '0' then
-		--data_in	<= x"00deadf0";
-		--startaddr_in <= x"00babe0a";
-		--endaddr_in	<= x"00babe0e";
 		data_in <= x"0000FF00";
 		startaddr_in <= x"E0000000";
 		endaddr_in	<= x"E0177000";
+		--endaddr_in	<= x"E0000408";
 		write_en_in <= '0';
 	 else
 		write_en_in <= '1';
@@ -156,77 +157,54 @@ begin
   -------------------------------------
   -- Write to RAM
   -------------------------------------
-  write_proc : process(rst,wstate,wstate_next,dmai,dmao,write_en,tmpaddr,tmpaddr_next,startaddr,endaddr,data)
-	--variable counter: integer := 0;
+  write_proc : process(rst,r,dmai,dmao,write_en)
+  	variable v	: write_t;
   begin
-		ready <= dmao.ready;
-	 if rst = '0' then
-		wstate_next <= idle;
-	 else
-	 
-		case wstate is
-		
-		when idle =>
-			if write_en = '1' then
-				--tmpaddr := startaddr;
-				tmpaddr_next <= startaddr;
-				
-				wstate_next <= initwrite;
-				counter_next <= 0;
+	ready <= dmao.ready;
+	v := r;
+	
+ 	v.start := '0';
+	if rst = '0' or write_en = '0' then
+		v.newburst := '0';
+		v.done := '0';
+	elsif write_en = '1' and r.done = '0' then
+		v.start := '1';
+		if r.start = '0' then
+			v.data := data;
+			v.newburst := '0';
+			if r.newburst = '0' then
+				v.address := startaddr;
 			end if;
-		
-		when initwrite =>
-			dmai.burst <= '1';
-			dmai.irq <= '0';
-			dmai.size <= "010";
-			dmai.write <= '1';
-			dmai.busy <= '0';
-			dmai.wdata <= data;
-			dmai.address <= tmpaddr;
-			dmai.start <= '1';
-			tmpaddr_next <= tmpaddr + "100";
-			counter_next <= 1;
-			
-			wstate_next <= contwrite;
-				
-		when contwrite =>
-			if dmao.ready = '1' then
-				if counter = 8 and tmpaddr <= endaddr then
-					dmai.start <= '0';
-					dmai.address <= tmpaddr;
-					counter_next <= 0;
-					
-					wstate_next <= initwrite;
-				elsif tmpaddr > endaddr then
-				--if tmpaddr > endaddr then
-					dmai.start <= '0';
-					dmai.wdata <= (others => '0');
-					dmai.address <= (others => '0');
-					write_done_in <= '1';
-					
-					wstate_next <= done;
-				else
-					dmai.wdata <= data;
-					--dmai.address <= tmpaddr;
-					tmpaddr_next <= tmpaddr + "100";
-					counter_next <= counter + 1;
-				end if;
+		end if;
+		if r.start = '1' and dmao.ready = '1' then
+			v.newburst := '0';
+			v.address := v.address + "100";
+			if v.address > endaddr then
+				v.start := '0';
+				v.address := (others => '0');
+				v.data := (others => '0');
+				v.done := '1';
+			elsif v.address(9 downto 0) = (9 downto 0 => '0') then
+				v.newburst := '1';
+				v.start := '0';
 			end if;
-		
-		when interburst =>
-			wstate_next <= initwrite;
-		
-		when done =>
-			if write_en = '0' then
-				wstate_next <= idle;
-			end if;
-		
-		when others =>
-		end case;
+		end if;
+	end if;
 		 
-	 end if;
+		
+	rin <= v;
+	dmai.burst <= '1';
+	dmai.irq <= '0';
+	dmai.size <= "010";
+	dmai.write <= '1';
+	dmai.busy <= '0';
+	dmai.wdata <= r.data;
+	dmai.address <= r.address;
+	dmai.start <= r.start;
+	write_done_in <= r.done;
 	 
   end process;
+  
 
 
   -----------------------------------------------------------------------------
@@ -235,17 +213,14 @@ begin
   reg_proc : process(clk)
   begin
     if rising_edge(clk) then
+		r <= rin;
 		data <= data_in;
 		startaddr <= startaddr_in;
 		endaddr <= endaddr_in;
 		write_en <= write_en_in;
 		write_done <= write_done_in;
-		wstate <= wstate_next;
-		tmpaddr <= tmpaddr_next;
-		counter <= counter_next;
     end if;
   end process;
-  
   
 
 
