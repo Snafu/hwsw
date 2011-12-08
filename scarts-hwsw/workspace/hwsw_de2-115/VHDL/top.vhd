@@ -221,8 +221,8 @@ begin
     grlib_ahbmo(0).hconfig  <=  AMBA_MASTER_CONFIG;
     grlib_ahbmo(0).hindex   <=  0;
 
-    grlib_ahbmo(2)          <=  svga_ahbmo;
-	 grlib_ahbmo(1)			 <=  disp_ahbmo;
+    grlib_ahbmo(1)          <=  svga_ahbmo;
+	 grlib_ahbmo(2)			 <=  disp_ahbmo;
   end process;
 
 
@@ -337,7 +337,7 @@ begin
       pindex => 0,
       paddr => 16#001#,
       pmask => 16#fff#,
-      hindex => 2,
+      hindex => 1,
       memtech => 7
     )
     port map
@@ -372,7 +372,7 @@ begin
     generic map
     (
 	   pindex => 1,
-		hindex => 1
+		hindex => 2
     )
     port map
     (

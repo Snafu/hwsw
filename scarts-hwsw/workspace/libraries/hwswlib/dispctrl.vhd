@@ -71,12 +71,19 @@ architecture rtl of dispctrl is
   signal endaddr,endaddr_in			: std_logic_vector(31 downto 0);
   signal write_en,write_en_in			: std_logic;
   signal write_done,write_done_in	: std_logic;
+  signal tmpaddr,tmpaddr_next : std_logic_vector(31 downto 0);
+  signal ready : std_logic;
+  signal counter,counter_next : integer;
  
   
   signal dmai			: ahb_dma_in_type;
   signal dmao			: ahb_dma_out_type;
   
   signal vcc			: std_logic;
+  
+  type wstates is (idle, initwrite, waitready, interburst, contwrite, done);
+  
+  signal wstate,wstate_next : wstates;
 
 begin
 
@@ -131,17 +138,15 @@ begin
     -- Control reset
     ---------------------------------------------------------------------------
     if rst = '0' then
-		data_in	<= x"00deadf0";
-		startaddr_in <= x"00babe0a";
-		endaddr_in	<= x"00babe0e";
+		--data_in	<= x"00deadf0";
+		--startaddr_in <= x"00babe0a";
+		--endaddr_in	<= x"00babe0e";
+		data_in <= x"0000FF00";
+		startaddr_in <= x"E0000000";
+		endaddr_in	<= x"E0177000";
 		write_en_in <= '0';
 	 else
-		if write_done = '1' and write_en = '0' then
-			write_en_in <= '1';
-		elsif write_done = '1' then
-			write_en_in <= '0';
-		end if;
-		
+		write_en_in <= '1';
 	 end if;
 	 
 	 
@@ -151,35 +156,73 @@ begin
   -------------------------------------
   -- Write to RAM
   -------------------------------------
-  write_proc : process(rst,dmai,dmao,write_en,startaddr,endaddr,data)
-	variable counter : integer := 0;
+  write_proc : process(rst,wstate,wstate_next,dmai,dmao,write_en,tmpaddr,tmpaddr_next,startaddr,endaddr,data)
+	--variable counter: integer := 0;
   begin
-  
+		ready <= dmao.ready;
 	 if rst = '0' then
-		write_done_in <= '1';
-	 elsif write_en = '1' then
+		wstate_next <= idle;
+	 else
 	 
-		if write_done = '1' then
-			write_done_in <= '0';
+		case wstate is
 		
-			dmai.burst <= '0';
+		when idle =>
+			if write_en = '1' then
+				--tmpaddr := startaddr;
+				tmpaddr_next <= startaddr;
+				
+				wstate_next <= initwrite;
+				counter_next <= 0;
+			end if;
+		
+		when initwrite =>
+			dmai.burst <= '1';
 			dmai.irq <= '0';
 			dmai.size <= "010";
 			dmai.write <= '1';
 			dmai.busy <= '0';
 			dmai.wdata <= data;
-			dmai.address <= startaddr;
-		
+			dmai.address <= tmpaddr;
 			dmai.start <= '1';
-		else
+			tmpaddr_next <= tmpaddr + "100";
+			counter_next <= 1;
+			
+			wstate_next <= contwrite;
+				
+		when contwrite =>
 			if dmao.ready = '1' then
-				dmai.start <= '0';
-				dmai.wdata <= (others => '0');
-				dmai.address <= (others => '0');
-				write_done_in <= '1';
-				counter := 0;
+				if counter = 8 and tmpaddr <= endaddr then
+					dmai.start <= '0';
+					dmai.address <= tmpaddr;
+					counter_next <= 0;
+					
+					wstate_next <= initwrite;
+				elsif tmpaddr > endaddr then
+				--if tmpaddr > endaddr then
+					dmai.start <= '0';
+					dmai.wdata <= (others => '0');
+					dmai.address <= (others => '0');
+					write_done_in <= '1';
+					
+					wstate_next <= done;
+				else
+					dmai.wdata <= data;
+					--dmai.address <= tmpaddr;
+					tmpaddr_next <= tmpaddr + "100";
+					counter_next <= counter + 1;
+				end if;
 			end if;
-		end if;
+		
+		when interburst =>
+			wstate_next <= initwrite;
+		
+		when done =>
+			if write_en = '0' then
+				wstate_next <= idle;
+			end if;
+		
+		when others =>
+		end case;
 		 
 	 end if;
 	 
@@ -197,6 +240,9 @@ begin
 		endaddr <= endaddr_in;
 		write_en <= write_en_in;
 		write_done <= write_done_in;
+		wstate <= wstate_next;
+		tmpaddr <= tmpaddr_next;
+		counter <= counter_next;
     end if;
   end process;
   
