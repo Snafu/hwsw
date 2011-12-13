@@ -372,6 +372,8 @@ begin
     generic map
     (
 	   pindex => 1,
+		paddr => 16#002#,
+      pmask => 16#fff#,
 		hindex => 2
     )
     port map

@@ -14,10 +14,13 @@
 #include <drivers/dis7seg.h>
 #include <drivers/mini_uart.h>
 #include "svga.h"
+#include "dispctrl.h"
 
 #define AUX_UART_BADDR ((uint32_t)-352)
 #define COUNTER_BADDR ((uint32_t)-320)
 #define DISP_BADDR    ((uint32_t)-288)
+#define LEDS (*(volatile int *const) (0xFFFFFEE0+7))
+#define WAIT_TIME	0x1ff00
 
 #define SCREEN_WIDTH  800
 #define SCREEN_HEIGHT 480
@@ -54,6 +57,7 @@ void freeImage(image_t *image)
 {
 	free(image->data);
 }
+
 
 int main(int argc, char **argv)
 {
@@ -104,6 +108,65 @@ int main(int argc, char **argv)
 	sdramBytesAllocated += SCREEN_WIDTH*SCREEN_HEIGHT*4;
 	screenData = (volatile uint32_t *)SDRAM_BASE;
 	memset((void *)screenData, 0, (SCREEN_WIDTH*SCREEN_HEIGHT*4));
+
+
+	// DISPCTRL initialization
+	dis7seg_displayHexUInt32(&dispHandle, 0, DISPCTRL_STATUS);  
+	
+	uint32_t i;
+	uint32_t j;
+	// red -> yellow
+	for(i = 0; i < 0xff; i++)
+	{
+		DISPCTRL_COLOR = 0x00ff0000 + (i<<8);
+		DISPCTRL_STATUS = 0;
+		DISPCTRL_STATUS = DISPCTRL_UPDATE;
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	}
+	// yello -> green
+	for(i = 0; i < 0xff; i++)
+	{
+		DISPCTRL_COLOR = 0x00ffff00 - (i<<16);
+		DISPCTRL_STATUS = 0;
+		DISPCTRL_STATUS = DISPCTRL_UPDATE;
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	}
+	// green -> cyan
+	for(i = 0; i < 0xff; i++)
+	{
+		DISPCTRL_COLOR = 0x0000ff00 + i;
+		DISPCTRL_STATUS = 0;
+		DISPCTRL_STATUS = DISPCTRL_UPDATE;
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	}
+	// cyan -> blue
+	for(i = 0; i < 0xff; i++)
+	{
+		DISPCTRL_COLOR = 0x0000ffff - (i<<8);
+		DISPCTRL_STATUS = 0;
+		DISPCTRL_STATUS = DISPCTRL_UPDATE;
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	}
+	// blue -> violet
+	for(i = 0; i < 0xff; i++)
+	{
+		DISPCTRL_COLOR = 0x000000ff + (i<<16);
+		DISPCTRL_STATUS = 0;
+		DISPCTRL_STATUS = DISPCTRL_UPDATE;
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	}
+	// violet -> red
+	for(i = 0; i < 0xff; i++)
+	{
+		DISPCTRL_COLOR = 0x00ff00ff - i;
+		DISPCTRL_STATUS = 0;
+		DISPCTRL_STATUS = DISPCTRL_UPDATE;
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	}
+
+
+
+
 
 
 #endif

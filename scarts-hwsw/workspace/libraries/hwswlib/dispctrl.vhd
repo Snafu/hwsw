@@ -57,9 +57,9 @@ architecture rtl of dispctrl is
   constant REVISION : amba_version_type := 0; 
   constant VENDOR_HWSW: amba_vendor_type := 16#08#;
   constant HWSW_DISPCTRL: amba_device_type := 16#13#;
---  constant PCONFIG : apb_config_type := (
---     0 => ahb_device_reg ( VENDOR_HWSW, HWSW_DISPCTRL, 0, REVISION, 0),
---     1 => apb_iobar(paddr, pmask));
+  constant PCONFIG : apb_config_type := (
+     0 => ahb_device_reg ( VENDOR_HWSW, HWSW_DISPCTRL, 0, REVISION, 0),
+     1 => apb_iobar(paddr, pmask));
     
 
   type state_type is (running, not_running, reset);
@@ -71,17 +71,17 @@ architecture rtl of dispctrl is
   signal endaddr,endaddr_in				: std_logic_vector(31 downto 0);
   signal write_en,write_en_in			: std_logic;
   signal write_done,write_done_in		: std_logic;
-  signal ready							: std_logic;
+  signal ahbready							: std_logic;
   
   signal dmai	: ahb_dma_in_type;
   signal dmao	: ahb_dma_out_type;
 
   type write_t is record
-  	address 	: std_logic_vector(31 downto 0);
-	data		: std_logic_vector(31 downto 0);
-	start		: std_logic;
-	newburst	: std_logic;
-	done		: std_logic;
+		address 	: std_logic_vector(31 downto 0);
+		data		: std_logic_vector(31 downto 0);
+		start		: std_logic;
+		newburst	: std_logic;
+		done		: std_logic;
   end record;
   
   signal r,rin	: write_t;
@@ -96,113 +96,108 @@ begin
 	HWSW_DISPCTRL, 0, 3, 0)
   port map (rst, clk, dmai, dmao, ahbi, ahbo);     
 
---  apbo.pirq    <= (others => '0');
---  apbo.pindex  <= pindex;
---  apbo.pconfig <= PCONFIG;
+  apbo.pirq    <= (others => '0');
+  apbo.pindex  <= pindex;
+  apbo.pconfig <= PCONFIG;
   
-  control_proc : process(rst,apbi,dmao,dmai,write_done,write_en)
+  control_proc : process(rst,apbi,dmao,dmai,r,write_en,data)
     variable apbwrite	: std_logic;
-  begin
-	 
---    ---------------------------------------------------------------------------
---    -- Control. Handles the APB accesses and stores the internal registers
---    ---------------------------------------------------------------------------
---    apbwrite :=  apbi.psel(pindex) and apbi.pwrite and apbi.penable;
---    case apbi.paddr(5 downto 2)  is
---    when "0000" =>
---      -- FB start address
---      if apbwrite = '1' then
---        v.startaddr := apbi.pwdata;
---		  v.updated := '1';
---      end if;
---    when "0001" =>
---      -- FB end address
---      if apbwrite = '1' then
---        v.endaddr := apbi.pwdata;
---		  v.updated := '1';
---      end if;
---    when "0010" =>
---      -- Color A register
---      if apbwrite = '1' then
---        v.color_a := apbi.pwdata;
---		  v.updated := '1';
---      end if;
---	 when "0011" =>
---	   -- Color B register
---      if apbwrite = '1' then
---        v.color_b := apbi.pwdata;
---		  v.updated := '1';
---      end if;
---    when others =>
---    end case;
-	         
-
-    ---------------------------------------------------------------------------
-    -- Control reset
-    ---------------------------------------------------------------------------
-    if rst = '0' then
-		data_in <= x"0000FF00";
-		startaddr_in <= x"E0000000";
-		endaddr_in	<= x"E0177000";
-		--endaddr_in	<= x"E0000408";
-		write_en_in <= '0';
-	 else
-		write_en_in <= '1';
-	 end if;
-	 
-	 
-
-  end process;
-  
-  -------------------------------------
-  -- Write to RAM
-  -------------------------------------
-  write_proc : process(rst,r,dmai,dmao,write_en)
+    variable apbrdata : std_logic_vector(31 downto 0);
   	variable v	: write_t;
   begin
-	ready <= dmao.ready;
-	v := r;
-	
- 	v.start := '0';
-	if rst = '0' or write_en = '0' then
-		v.newburst := '0';
-		v.done := '0';
-	elsif write_en = '1' and r.done = '0' then
-		v.start := '1';
-		if r.start = '0' then
-			v.data := data;
-			v.newburst := '0';
-			if r.newburst = '0' then
-				v.address := startaddr;
-			end if;
-		end if;
-		if r.start = '1' and dmao.ready = '1' then
-			v.newburst := '0';
-			v.address := v.address + "100";
-			if v.address > endaddr then
-				v.start := '0';
-				v.address := (others => '0');
-				v.data := (others => '0');
-				v.done := '1';
-			elsif v.address(9 downto 0) = (9 downto 0 => '0') then
-				v.newburst := '1';
-				v.start := '0';
-			end if;
-		end if;
-	end if;
 		 
+		v := r;
+
+	  ---------------------------------------------------------------------------
+	  -- Control. Handles the APB accesses and stores the internal registers
+	  ---------------------------------------------------------------------------
+	  apbwrite :=  apbi.psel(pindex) and apbi.pwrite and apbi.penable;
+	  case apbi.paddr(5 downto 2)  is
+	  when "0000" =>
+	    -- FB start address
+	    if apbwrite = '1' then
+				if apbi.pwdata(0) = '1' then
+			  	write_en_in <= '1';
+				else
+					write_en_in <= '0';
+	    	end if;
+				--apbrdata := (0 => write_en, others => '0');
+			end if;
+			apbrdata := x"DEADBABE";
+--	  when "0001" =>
+--	    -- FB end address
+--	    if apbwrite = '1' then
+--	      v.endaddr := apbi.pwdata;
+--				v.updated := '1';
+--	  	end if;
+	  when "0001" =>
+	    -- Color register
+	    if apbwrite = '1' then
+	    	data_in <= apbi.pwdata;
+	    end if;
+			apbrdata := data;
+	  when others =>
+	  end case;
+		         
+	
+	  ---------------------------------------------------------------------------
+	  -- Control reset
+	  ---------------------------------------------------------------------------
+	  if rst = '0' then
+			data_in <= x"000FF000";
+			startaddr_in <= x"E0000000";
+			endaddr_in	<= x"E0176FFC";
+			write_en_in <= '0';
+		end if;
+
+
+		---------------------------------------------------------------------------
+		-- Do write
+		---------------------------------------------------------------------------
+		 
+		ahbready <= dmao.ready;
 		
-	rin <= v;
-	dmai.burst <= '1';
-	dmai.irq <= '0';
-	dmai.size <= "010";
-	dmai.write <= '1';
-	dmai.busy <= '0';
-	dmai.wdata <= r.data;
-	dmai.address <= r.address;
-	dmai.start <= r.start;
-	write_done_in <= r.done;
-	 
+	 	v.start := '0';
+		if rst = '0' or write_en = '0' then
+			v.newburst := '0';
+			v.done := '0';
+		elsif write_en = '1' and r.done = '0' then
+			v.start := '1';
+			if r.start = '0' then
+				v.newburst := '0';
+				if r.newburst = '0' then
+					v.address := startaddr;
+					v.data := data;
+				end if;
+			end if;
+			if r.start = '1' and dmao.ready = '1' then
+				v.newburst := '0';
+				v.address := v.address + "100";
+				if v.address > endaddr then
+					v.start := '0';
+					v.address := (others => '0');
+					v.data := (others => '0');
+					v.done := '1';
+				elsif v.address(7 downto 0) = (7 downto 0 => '0') then
+					v.newburst := '1';
+					v.start := '0';
+				end if;
+			end if;
+		end if;
+			 
+			
+		rin <= v;
+    apbo.prdata <= apbrdata;
+		dmai.burst <= '1';
+		dmai.irq <= '0';
+		dmai.size <= "010";
+		dmai.write <= '1';
+		dmai.busy <= '0';
+		dmai.wdata <= r.data;
+		dmai.address <= r.address;
+		dmai.start <= r.start;
+		write_done_in <= r.done;
+		 
   end process;
   
 
