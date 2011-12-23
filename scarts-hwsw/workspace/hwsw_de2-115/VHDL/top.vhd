@@ -18,6 +18,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
 
 use work.top_pkg.all;
 use work.scarts_pkg.all;
@@ -120,6 +121,12 @@ architecture behaviour of top is
   
   -- signals for DISPLAY Controller
   signal disp_ahbmo		: ahb_mst_out_type;
+  
+  -- signals for i2cmst
+	signal i2ci_pin			:	i2c_in_type;
+	signal i2co_pin			:	i2c_out_type;
+	
+	signal i2c_config_sel	:	std_logic;
 
   -- signals for AUX UART
   signal aux_uart_sel      : std_ulogic;
@@ -368,6 +375,26 @@ begin
   -- DISPLAY controller
   -----------------------------------------------------------------------------
   
+  is2c0 : i2cmaster
+    generic map
+    (
+	pindex	=> 2,
+	paddr		=> 16#003#,
+	pmask		=> 16#fff#,
+	pirq		=> 0,
+	oepol		=> 0
+    )
+    port map
+    (
+	   clk	=>	clk,
+		rst	=>	rst,
+		apbi	=>	apbi,
+      apbo	=>	apbo(2),
+		i2ci	=>	i2ci_pin,
+		i2co	=>	i2co_pin,
+		i2c_config_sel	=> i2c_config_sel
+	 );
+
   dispctrl0 : dispctrl
     generic map
     (
@@ -435,6 +462,7 @@ begin
     dis7segsel <= '0';
     counter_segsel <= '0';
     aux_uart_sel <= '0';
+	 i2c_config_sel <= '0';
     
     if scarts_o.extsel = '1' then
       case scarts_o.addr(14 downto 5) is
@@ -447,6 +475,9 @@ begin
         when "1111110101" => -- (-352)
           -- AUX UART
           aux_uart_sel <= '1';
+		  when "1111110100" => -- (-384)
+			-- I2C config data
+				i2c_config_sel <= '1'; 
         when others =>
           null;
       end case;

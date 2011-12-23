@@ -64,8 +64,8 @@ use grlib.stdlib.all;
 library gaisler;
 use gaisler.misc.all;
 
-library opencores;
-use opencores.i2coc.all;
+--library opencores;
+--use opencores.i2coc.all;
 
 entity i2cmst is
   generic (

@@ -26,10 +26,14 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+
+
 library grlib;
 use grlib.amba.all;
 use grlib.devices.all;
 use grlib.stdlib.all;
+use gaisler.misc.all;
+
 library techmap;
 use techmap.gencomp.all;
 library gaisler;
@@ -55,6 +59,31 @@ package hwswlib is
 		 ahbo      : out ahb_mst_out_type
 		 );
 	end component;
+	
+	component i2cmaster
+	generic(
+		-- APB generics
+		pindex  : integer := 0;                -- slave bus index
+		paddr   : integer := 0;
+		pmask   : integer := 16#fff#;
+		pirq    : integer := 0;                -- interrupt index
+		oepol   : integer range 0 to 1 := 0;   -- output enable polarity
+		
+		constant CAM_ADDRESS_RD		: integer := 16#BB#;
+		constant CAM_ADDRESS_WR		: integer := 16#BA#);
+	port (
+		rst       : in std_logic;           -- Synchronous reset
+		clk       : in std_logic;
+		-- APB signals
+		apbi  : in  apb_slv_in_type;
+		apbo  : out apb_slv_out_type;
+
+		-- I2C signals
+		i2ci  : in  i2c_in_type;
+		i2co  : out i2c_out_type;
+		i2c_config_sel	:	in	std_logic);
+	end component;
+
 	
 end;
 

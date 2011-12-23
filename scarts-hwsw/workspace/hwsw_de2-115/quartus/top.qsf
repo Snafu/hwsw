@@ -296,6 +296,10 @@ set_global_assignment -name MISC_FILE "/homes/lechner/Lehre/WS11_12/HWSW/scarts-
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_location_assignment PIN_D27 -to aux_uart_tx
 set_location_assignment PIN_E27 -to aux_uart_rx
+set_global_assignment -name MISC_FILE "/homes/w0727156/Desktop/Desktop/GIT/hwsw/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.qsf"
+
+set_global_assignment -name MISC_FILE "/homes/w0727156/Desktop/GIT/hwsw/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.dpf"
+set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/i2cmaster.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/hwswlib.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/grlib/lib/gaisler/misc/svgactrl.vhd
 set_global_assignment -name VHDL_FILE ../../../VHDL/common/scarts_amba_pkg.vhd
@@ -358,5 +362,4 @@ set_global_assignment -name VHDL_FILE ../VHDL/top.vhd
 set_global_assignment -name SDC_FILE top.sdc
 set_global_assignment -name QIP_FILE ../VHDL/altera_pll.qip
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/dispctrl.vhd
-set_global_assignment -name MISC_FILE "/homes/w0725226/hwsw/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.dpf"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
