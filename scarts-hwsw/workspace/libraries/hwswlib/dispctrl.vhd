@@ -65,7 +65,10 @@ architecture rtl of dispctrl is
   type state_type is (running, not_running, reset);
   type job_type is (idle, busy);
 
-  signal int_reg,int_reg_in				: std_logic_vector(31 downto 0);
+	signal top,top_in		: std_logic_vector(9 downto 0);
+	signal left,left_in		: std_logic_vector(9 downto 0);
+	signal bottom,bottom_in		: std_logic_vector(9 downto 0);
+	signal right,right_in		: std_logic_vector(9 downto 0);
   signal data,data_in					: std_logic_vector(31 downto 0);
   signal startaddr,startaddr_in			: std_logic_vector(31 downto 0);
   signal endaddr,endaddr_in				: std_logic_vector(31 downto 0);
@@ -77,6 +80,12 @@ architecture rtl of dispctrl is
   signal dmao	: ahb_dma_out_type;
 
   type write_t is record
+		top			: std_logic_vector(9 downto 0);
+		left			: std_logic_vector(9 downto 0);
+		bottom			: std_logic_vector(9 downto 0);
+		right			: std_logic_vector(9 downto 0);
+		colcnt	: integer range 0 to 799;
+		rowcnt	: integer range 0 to 49;
 		address 	: std_logic_vector(31 downto 0);
 		data		: std_logic_vector(31 downto 0);
 		start		: std_logic;
@@ -136,6 +145,20 @@ begin
 	    	data_in <= apbi.pwdata;
 	    end if;
 			apbrdata := data;
+		when "0010" =>
+			-- TopLeft address
+			if apbwrite = '1' then
+				top_in <= apbi.pwdata(25 downto 16);
+				left_in <= apbi.pwdata(9 downto 0);
+			end if;
+			apbrdata := (25 downto 16 => top, 9 downto 0 => left, others => '0');
+		when "0011" =>
+			-- BottomRight address
+			if apbwrite = '1' then
+				bottom_in <= apbi.pwdata(25 downto 16);
+				right_in <= apbi.pwdata(9 downto 0);
+			end if;
+			apbrdata := (25 downto 16 => bottom, 9 downto 0 => right, others => '0')
 	  when others =>
 	  end case;
 		         
@@ -168,17 +191,29 @@ begin
 				if r.newburst = '0' then
 					v.address := startaddr;
 					v.data := data;
+					v.colcnt := 0;
+					v.rowcnt := 0;
+					v.top := top;
+					v.left := left;
+					v.bottom := bottom;
+					v.right := right;
 				end if;
 			end if;
 			if r.start = '1' and dmao.ready = '1' then
 				v.newburst := '0';
 				v.address := v.address + "100";
+				if v.colcnt = 799 then
+					v.colcnt := 0;
+					v.rowcnt := v.rowcnt + 1;
+				else
+					v.colcnt := v.colcnt + 1;
+				end if;
 				if v.address > endaddr then
 					v.start := '0';
 					v.address := (others => '0');
 					v.data := (others => '0');
 					v.done := '1';
-				elsif v.address(7 downto 0) = (7 downto 0 => '0') then
+				elsif v.address(3 downto 0) = (3 downto 0 => '0') then
 					v.newburst := '1';
 					v.start := '0';
 				end if;
@@ -193,7 +228,12 @@ begin
 		dmai.size <= "010";
 		dmai.write <= '1';
 		dmai.busy <= '0';
-		dmai.wdata <= r.data;
+		if ((r.colcnt = r.top or r.colcnt = r.bottom) and (r.rowcnt >= r.left and r.rowcnt <= r.right)) or
+			 ((r.colcnt >= r.top and r.colcnt <= r.bottom) and (r.rowcnt = r.left or r.rowcnt = r.right)) then
+			dmai.wdata <= x"0000ff00";
+		else
+			dmai.wdata <= r.data;
+		end if;
 		dmai.address <= r.address;
 		dmai.start <= r.start;
 		write_done_in <= r.done;
@@ -208,12 +248,16 @@ begin
   reg_proc : process(clk)
   begin
     if rising_edge(clk) then
-		r <= rin;
-		data <= data_in;
-		startaddr <= startaddr_in;
-		endaddr <= endaddr_in;
-		write_en <= write_en_in;
-		write_done <= write_done_in;
+			r <= rin;
+			data <= data_in;
+			startaddr <= startaddr_in;
+			endaddr <= endaddr_in;
+			write_en <= write_en_in;
+			write_done <= write_done_in;
+			top <= top_in;
+			left <= left_in;
+			right <= right_in;
+			bottom <= bottom_in;
     end if;
   end process;
   
