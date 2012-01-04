@@ -120,15 +120,18 @@ int main(int argc, char **argv)
   // wait until program has been started on target
   sleep(2);
 
+	// hglanzer - disabled
+/*
   printf("Downloading image \"%s\", filesize: %d bytes.\n", argv[2], filesize);
 
-  
+ 
+ 
   // send image file size
   write(serialfd, &filesize, sizeof(filesize));
   // send image data
   write(serialfd, imageData, filesize);
   free(imageData);
-  
+*/  
   options.c_lflag |= (ICANON);
   options.c_cc[VMIN]     = 0;
   tcsetattr(serialfd, TCSANOW, &options);

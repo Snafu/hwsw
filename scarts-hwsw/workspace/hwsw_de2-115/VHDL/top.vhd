@@ -39,6 +39,7 @@ use gaisler.memctrl.all;
 
 --library hwswlib;
 use work.hwswlib.all;
+use work.i2clib.all;
 
 entity top is
   port(
@@ -70,7 +71,14 @@ entity top is
     ltm_grest   : out std_logic;
     -- AUX UART
     aux_uart_rx : in  std_logic;
-    aux_uart_tx : out std_logic
+    aux_uart_tx : out std_logic;
+	 -- I2C
+	 i2c_scl		:	out std_logic;
+	 i2c_sda		:	out std_logic;
+	 i2c_trigger:	out std_logic;
+	 
+	 -- TESTSIGNALE
+	 clk_test	:	out std_logic
   );
 end top;
 
@@ -123,10 +131,11 @@ architecture behaviour of top is
   signal disp_ahbmo		: ahb_mst_out_type;
   
   -- signals for i2cmst
-	signal i2ci_pin			:	i2c_in_type;
+	--signal i2ci_pin			:	i2c_in_type;
 	signal i2co_pin			:	i2c_out_type;
 	
 	signal i2c_config_sel	:	std_logic;
+	
 
   -- signals for AUX UART
   signal aux_uart_sel      : std_ulogic;
@@ -390,11 +399,18 @@ begin
 		rst	=>	rst,
 		apbi	=>	apbi,
       apbo	=>	apbo(2),
-		i2ci	=>	i2ci_pin,
+		--i2ci	=>	i2ci_pin,
+	
 		i2co	=>	i2co_pin,
 		i2c_config_sel	=> i2c_config_sel
 	 );
 
+	-- I2C output pins
+	i2c_scl <= i2co_pin.scl;
+	i2c_sda <= i2co_pin.sda;
+	i2c_trigger <= i2c_config_sel;
+	clk_test <= clk;
+		 
   dispctrl0 : dispctrl
     generic map
     (

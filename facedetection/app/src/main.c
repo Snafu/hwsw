@@ -16,6 +16,17 @@
 #include "svga.h"
 #include "dispctrl.h"
 
+/*
+	#define DISPCTRL_BASE (0xF0000200)
+	#define DISPCTRL_STATUS (*(volatile int *const) (DISPCTRL_BASE))
+	#define DISPCTRL_COLOR (*(volatile int *const) (DISPCTRL_BASE+4))
+ * */
+
+
+#define I2CCONFIG_BADDR ((uint32_t)-384)
+#define I2CCONFIG_STATUS (*(volatile int *const) (I2CCONFIG_BADDR))
+#define I2CCONFIG_DATA   (*(volatile int *const) (I2CCONFIG_BADDR+4))
+
 #define AUX_UART_BADDR ((uint32_t)-352)
 #define COUNTER_BADDR ((uint32_t)-320)
 #define DISP_BADDR    ((uint32_t)-288)
@@ -110,6 +121,8 @@ int main(int argc, char **argv)
 	memset((void *)screenData, 0, (SCREEN_WIDTH*SCREEN_HEIGHT*4));
 
 
+mini_uart_write(&aux_uart_handle, (char *)"DISPCTRL INIT", sizeof("DISPCTRL INIT"));
+
 	// DISPCTRL initialization
 	dis7seg_displayHexUInt32(&dispHandle, 0, DISPCTRL_STATUS);  
 	
@@ -123,6 +136,18 @@ int main(int argc, char **argv)
 		DISPCTRL_STATUS = DISPCTRL_UPDATE;
 		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
 	}
+
+mini_uart_write(&aux_uart_handle, (char *)"I2C WRITE", sizeof("I2C WRITE"));
+
+	// i2c - test
+
+	while(1)
+	{
+		I2CCONFIG_STATUS= 0xCCAA33;
+		I2CCONFIG_DATA	= 0xCCAA33;
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	};
+/*
 	// yello -> green
 	for(i = 0; i < 0xff; i++)
 	{
@@ -163,7 +188,7 @@ int main(int argc, char **argv)
 		DISPCTRL_STATUS = DISPCTRL_UPDATE;
 		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
 	}
-
+*/
 
 
 

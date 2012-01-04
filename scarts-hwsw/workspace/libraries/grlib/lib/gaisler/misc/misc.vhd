@@ -836,84 +836,20 @@ package misc is
   -- I2C types and components
   -----------------------------------------------------------------------------
 
-  type i2c_in_type is record
-      scl : std_ulogic;
-      sda : std_ulogic;
-  end record;
+--  type i2c_in_type is record
+--     scl : std_ulogic;
+--      sda : std_ulogic;
+--  end record;
 
-  type i2c_out_type is record
-      scl    : std_ulogic;
-      scloen : std_ulogic;
-      sda    : std_ulogic;
-      sdaoen : std_ulogic;
-      enable : std_ulogic;
-  end record;
+--  type i2c_out_type is record
+--      scl    : std_ulogic;
+--      scloen : std_ulogic;
+--      sda    : std_ulogic;
+--      sdaoen : std_ulogic;
+--      enable : std_ulogic;
+--  end record;
 
-  -- AMBA wrapper for OC I2C-master
-  component i2cmst
-    generic (
-      pindex : integer;
-      paddr  : integer;
-      pmask  : integer;
-      pirq   : integer;
-      oepol  : integer range 0 to 1 := 0;
-      filter : integer range 2 to 512 := 2
-      );
-    port (
-      rstn   : in  std_ulogic;
-      clk    : in  std_ulogic;
-      apbi   : in  apb_slv_in_type;
-      apbo   : out apb_slv_out_type;
-      i2ci   : in  i2c_in_type;
-      i2co   : out i2c_out_type
-    );
-  end component;
-
-  component i2cmst_gen
-    generic (
-      oepol  : integer range 0 to 1 := 0;
-      filter : integer range 2 to 512 := 2);
-    port (
-      rstn        : in  std_ulogic;
-      clk         : in  std_ulogic;
-      psel        : in  std_ulogic;
-      penable     : in  std_ulogic;
-      paddr       : in  std_logic_vector(31 downto 0);
-      pwrite      : in  std_ulogic;
-      pwdata      : in  std_logic_vector(31 downto 0);
-      prdata      : out std_logic_vector(31 downto 0);
-      irq         : out std_logic;
-      i2ci_scl    : in  std_ulogic;
-      i2ci_sda    : in  std_ulogic;
-      i2co_scl    : out std_ulogic;
-      i2co_scloen : out std_ulogic;
-      i2co_sda    : out std_ulogic;
-      i2co_sdaoen : out std_ulogic;
-      i2co_enable : out std_ulogic
-      );
-  end component;
-
-  component i2cslv
-    generic (
-      pindex  : integer := 0;
-      paddr   : integer := 0;
-      pmask   : integer := 16#fff#;
-      pirq    : integer := 0;
-      hardaddr : integer range 0 to 1 := 0;
-      tenbit   : integer range 0 to 1 := 0;
-      i2caddr  : integer range 0 to 1023 := 0;
-      oepol    : integer range 0 to 1 := 0;
-      filter   : integer range 2 to 512 := 2
-      );
-    port (
-      rstn    : in  std_ulogic;
-      clk     : in  std_ulogic;
-      apbi    : in  apb_slv_in_type;
-      apbo    : out apb_slv_out_type;
-      i2ci    : in  i2c_in_type;
-      i2co    : out i2c_out_type
-      );
-  end component;
+ 
 
   -----------------------------------------------------------------------------
   -- SPI controller
