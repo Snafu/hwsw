@@ -35,8 +35,6 @@ entity i2cmaster is
 		apbi  : in  apb_slv_in_type;
 		apbo  : out apb_slv_out_type;
 
-i2c_debug : out std_logic;
-		
 		-- I2C signals
 		--i2ci  : in  i2c_in_type;
 		i2co  	: out i2c_out_type;
@@ -86,15 +84,20 @@ end record;
 	
 	signal sda_buf				: std_logic;
 	signal sda_buf_next		: std_logic;
+	
+	signal data_buffer		: std_logic_vector(23 downto 0);
+	signal data_buffer_next	: std_logic_vector(23 downto 0);
 		
 begin
-	
+		
 process(clk, rst)
 	begin
 				
 		if(rst = '0')
 		then
 			-- reset all values
+			data_buffer <= "000000000000000000000000";
+			
 			sdc_counter <= 0;
 			sda_data <= "00000000";
 			sda_buf <= BUS_IDLE;
@@ -108,6 +111,8 @@ process(clk, rst)
 			-- set new values
 			if(clk'event and clk = '1')
 			then
+				data_buffer <= data_buffer_next;
+			
 				sdc_counter <= sdc_counter_next;
 				sda_data <= sda_data_next;
 				sda_buf <= sda_buf_next;
@@ -124,8 +129,13 @@ process(clk, rst)
 	end process;
 	
 	
-	process(i2c_config_sel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, apbi)
+	process(i2c_config_sel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, apbi, data_buffer)
+	
+	variable apbwrite	: std_logic;
+	
 	begin
+		
+		data_buffer_next <= data_buffer;
 		
 		sdc_sig <= BUS_IDLE;
 		sda_sig <= sda_buf;
@@ -141,9 +151,16 @@ process(clk, rst)
 		i2c_state_next <= i2c_state;
 		i2c_bytestate_next <= i2c_bytestate;
 	
+		apbwrite :=  apbi.psel(2) and apbi.pwrite and apbi.penable;
 	
-i2c_debug <= '0';
-		
+		if( apbwrite = '1')
+		then
+			if(apbi.paddr(5 downto 2) = "0000" )
+			then
+				data_buffer_next <= apbi.pwdata(23 downto 0);
+			end if;
+		end if;
+	
 		if(i2c_state /= IDLE)
 		then		
 		if(sdc_counter < COUNTER_LOW)
@@ -252,12 +269,11 @@ i2c_debug <= '0';
 					
 			when SEND_SLAVE_ADRESS		=>
 				if(i2c_bytestate = WAIT_ACK and sdc_counter = COUNTER_NEXTSTATE)
-				then			
-					--sda_data_next <= "00101011";
-					--sda_sig <= '1';
-					
-					sda_sig <= apbi.pwdata(7);
-					sda_data_next <= apbi.pwdata(7 downto 0);
+				then								
+					--sda_sig <= apbi.pwdata(7);
+					--sda_data_next <= apbi.pwdata(7 downto 0);
+					sda_sig <= data_buffer(7);
+					sda_data_next <= data_buffer(7 downto 0);
 					
 					i2c_bytestate_next <= B0;
 					i2c_state_next <= SEND_REGISTER_ADRESS;
@@ -266,11 +282,10 @@ i2c_debug <= '0';
 			when SEND_REGISTER_ADRESS	=>
 				if(i2c_bytestate = WAIT_ACK and sdc_counter = COUNTER_NEXTSTATE)
 				then
-					--sda_data_next <= "10101010";
-					--sda_sig <= '0';
-					
-					sda_sig <= apbi.pwdata(15);
-					sda_data_next <= apbi.pwdata(15 downto 8);
+					--sda_sig <= apbi.pwdata(15);
+					--sda_data_next <= apbi.pwdata(15 downto 8);			
+					sda_sig <= data_buffer(15);
+					sda_data_next <= data_buffer(15 downto 8);
 					
 					i2c_bytestate_next <= B0;
 					i2c_state_next <= SEND_DATA_LOW;
@@ -279,11 +294,10 @@ i2c_debug <= '0';
 			when SEND_DATA_LOW			=>
 				if(i2c_bytestate = WAIT_ACK and sdc_counter = COUNTER_NEXTSTATE)
 				then
-					--sda_data_next <= "01010101";
-					--sda_sig <= '1';	
-					
-					sda_sig <= apbi.pwdata(23);
-					sda_data_next <= apbi.pwdata(23 downto 16);
+					--sda_sig <= apbi.pwdata(23);
+					--sda_data_next <= apbi.pwdata(23 downto 16);
+					sda_sig <= data_buffer(23);
+					sda_data_next <= data_buffer(23 downto 16);
 	
 					i2c_bytestate_next <= B0;
 					i2c_state_next <= SEND_DATA_HIGH;
@@ -307,7 +321,7 @@ i2c_debug <= '0';
 			
 		end case;
 		
-		-- if we get a proper flank, start statemachine
+		-- if we get a proper flank and are idle, start statemachine
 		if(i2c_config_sel_old /= i2c_config_sel and i2c_config_sel = '1' and i2c_state = IDLE)
 		then
 			i2c_state_next <= START_CLK;
