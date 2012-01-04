@@ -84,8 +84,8 @@ architecture rtl of dispctrl is
 		left			: std_logic_vector(9 downto 0);
 		bottom			: std_logic_vector(9 downto 0);
 		right			: std_logic_vector(9 downto 0);
-		colcnt	: integer range 0 to 799;
-		rowcnt	: integer range 0 to 49;
+		colcnt	: std_logic_vector(9 downto 0);
+		rowcnt	: std_logic_vector(9 downto 0);
 		address 	: std_logic_vector(31 downto 0);
 		data		: std_logic_vector(31 downto 0);
 		start		: std_logic;
@@ -133,12 +133,6 @@ begin
 				--apbrdata := (0 => write_en, others => '0');
 			end if;
 			apbrdata := x"DEADBABE";
---	  when "0001" =>
---	    -- FB end address
---	    if apbwrite = '1' then
---	      v.endaddr := apbi.pwdata;
---				v.updated := '1';
---	  	end if;
 	  when "0001" =>
 	    -- Color register
 	    if apbwrite = '1' then
@@ -151,22 +145,14 @@ begin
 				top_in <= apbi.pwdata(25 downto 16);
 				left_in <= apbi.pwdata(9 downto 0);
 			end if;
-			
-			-- 
-			--		FIXME
-			--
-			--apbrdata := (25 downto 16 => top, 9 downto 0 => left, others => '0');
+			apbrdata := "000000" & top & "000000" & left;
 		when "0011" =>
 			-- BottomRight address
 			if apbwrite = '1' then
 				bottom_in <= apbi.pwdata(25 downto 16);
 				right_in <= apbi.pwdata(9 downto 0);
 			end if;
-			
-			-- 
-			--		FIXME
-			--
-			--apbrdata := (25 downto 16 => bottom, 9 downto 0 => right, others => '0');
+			apbrdata := "000000" & bottom & "000000" & right;
 	  when others =>
 	  end case;
 		         
@@ -199,8 +185,8 @@ begin
 				if r.newburst = '0' then
 					v.address := startaddr;
 					v.data := data;
-					v.colcnt := 0;
-					v.rowcnt := 0;
+					v.colcnt := "0000000000";
+					v.rowcnt := "0000000000";
 					v.top := top;
 					v.left := left;
 					v.bottom := bottom;
@@ -210,11 +196,11 @@ begin
 			if r.start = '1' and dmao.ready = '1' then
 				v.newburst := '0';
 				v.address := v.address + "100";
-				if v.colcnt = 799 then
-					v.colcnt := 0;
-					v.rowcnt := v.rowcnt + 1;
+				if v.colcnt = conv_std_logic_vector(799,10) then
+					v.colcnt := "0000000000";
+					v.rowcnt := v.rowcnt + '1';
 				else
-					v.colcnt := v.colcnt + 1;
+					v.colcnt := v.colcnt + '1';
 				end if;
 				if v.address > endaddr then
 					v.start := '0';
@@ -236,19 +222,12 @@ begin
 		dmai.size <= "010";
 		dmai.write <= '1';
 		dmai.busy <= '0';
-		
-		
-		--
-		--		FIXME
-		--
-		--if ((r.colcnt = r.top or r.colcnt = r.bottom) and (r.rowcnt >= r.left and r.rowcnt <= r.right)) or
-		--	 ((r.colcnt >= r.top and r.colcnt <= r.bottom) and (r.rowcnt = r.left or r.rowcnt = r.right)) then
-		--	dmai.wdata <= x"0000ff00";
-		--else
-		--	dmai.wdata <= r.data;
-		--end if;
-		
-		
+		if ((r.colcnt = r.top or r.colcnt = r.bottom) and (r.rowcnt >= r.left and r.rowcnt <= r.right)) or
+			 ((r.colcnt >= r.top and r.colcnt <= r.bottom) and (r.rowcnt = r.left or r.rowcnt = r.right)) then
+			dmai.wdata <= x"0000ff00";
+		else
+			dmai.wdata <= r.data;
+		end if;
 		dmai.address <= r.address;
 		dmai.start <= r.start;
 		write_done_in <= r.done;
