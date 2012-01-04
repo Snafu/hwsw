@@ -151,14 +151,22 @@ begin
 				top_in <= apbi.pwdata(25 downto 16);
 				left_in <= apbi.pwdata(9 downto 0);
 			end if;
-			apbrdata := (25 downto 16 => top, 9 downto 0 => left, others => '0');
+			
+			-- 
+			--		FIXME
+			--
+			--apbrdata := (25 downto 16 => top, 9 downto 0 => left, others => '0');
 		when "0011" =>
 			-- BottomRight address
 			if apbwrite = '1' then
 				bottom_in <= apbi.pwdata(25 downto 16);
 				right_in <= apbi.pwdata(9 downto 0);
 			end if;
-			apbrdata := (25 downto 16 => bottom, 9 downto 0 => right, others => '0')
+			
+			-- 
+			--		FIXME
+			--
+			--apbrdata := (25 downto 16 => bottom, 9 downto 0 => right, others => '0');
 	  when others =>
 	  end case;
 		         
@@ -228,12 +236,19 @@ begin
 		dmai.size <= "010";
 		dmai.write <= '1';
 		dmai.busy <= '0';
-		if ((r.colcnt = r.top or r.colcnt = r.bottom) and (r.rowcnt >= r.left and r.rowcnt <= r.right)) or
-			 ((r.colcnt >= r.top and r.colcnt <= r.bottom) and (r.rowcnt = r.left or r.rowcnt = r.right)) then
-			dmai.wdata <= x"0000ff00";
-		else
-			dmai.wdata <= r.data;
-		end if;
+		
+		
+		--
+		--		FIXME
+		--
+		--if ((r.colcnt = r.top or r.colcnt = r.bottom) and (r.rowcnt >= r.left and r.rowcnt <= r.right)) or
+		--	 ((r.colcnt >= r.top and r.colcnt <= r.bottom) and (r.rowcnt = r.left or r.rowcnt = r.right)) then
+		--	dmai.wdata <= x"0000ff00";
+		--else
+		--	dmai.wdata <= r.data;
+		--end if;
+		
+		
 		dmai.address <= r.address;
 		dmai.start <= r.start;
 		write_done_in <= r.done;

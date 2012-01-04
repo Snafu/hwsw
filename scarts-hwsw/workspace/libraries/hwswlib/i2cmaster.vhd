@@ -124,7 +124,7 @@ process(clk, rst)
 	end process;
 	
 	
-	process(i2c_config_sel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig)
+	process(i2c_config_sel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, apbi)
 	begin
 		
 		sdc_sig <= BUS_IDLE;
