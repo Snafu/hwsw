@@ -11,9 +11,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
---library grlib;
---use grlib.amba.all;
-
 use work.scarts_pkg.all;
 
 library work;
@@ -21,23 +18,12 @@ use work.i2clib.all;
 
 entity i2cmaster is
 	generic(
---		-- APB generics
---		pindex  : integer := 0;                -- slave bus index
---		paddr   : integer := 0;
---		pmask   : integer := 16#fff#;
---		pirq    : integer := 0;                -- interrupt index
---		oepol   : integer range 0 to 1 := 0;   -- output enable polarity
 		constant CAM_ADDRESS_RD	: std_logic_vector(7 downto 0) := "10111011";	-- 0xBB
 		constant CAM_ADDRESS_WR	: std_logic_vector(7 downto 0) := "10111010";	-- 0xBA
 		constant BUS_IDLE			: std_logic := '1');
 	port (
 		rst				: in std_logic;           -- Synchronous reset
 		clk				: in std_logic;
-		
-		-- CHANGED TO EXTENSION MODULE!
-		-- APB signals
-		--apbi			: in  apb_slv_in_type;
-		--apbo			: out apb_slv_out_type;
 		
 		extsel			: in	std_logic;
 		exti				: in  module_in_type;
@@ -137,7 +123,7 @@ process(clk, rst)
 	end process;
 	
 	
-	process(extsel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, data_buffer)
+	process(extsel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, data_buffer, exti)
 	
 	variable apbwrite	: std_logic;
 	
