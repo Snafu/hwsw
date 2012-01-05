@@ -33,7 +33,7 @@ entity i2cmaster is
 		clk       : in std_logic;
 		-- APB signals
 		apbi  : in  apb_slv_in_type;
-		apbo  : out apb_slv_out_type;
+		--apbo  : out apb_slv_out_type;
 
 		-- I2C signals
 		--i2ci  : in  i2c_in_type;
@@ -135,11 +135,14 @@ process(clk, rst)
 	
 	begin
 		
+		-- used for buffering the 32bit word from APB
+		-- which is only valid for a short time
 		data_buffer_next <= data_buffer;
 		
 		sdc_sig <= BUS_IDLE;
 		sda_sig <= sda_buf;
 		
+		-- this signals are NOT used
 		i2co.scloen <= '0';
 		i2co.sdaoen <= '0';
 		i2co.enable <= '0';

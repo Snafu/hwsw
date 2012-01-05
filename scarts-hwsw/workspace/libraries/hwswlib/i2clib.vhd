@@ -59,7 +59,7 @@ package i2clib is
 		clk       : in std_logic;
 		-- APB signals
 		apbi  : in  apb_slv_in_type;
-		apbo  : out apb_slv_out_type;	
+		--apbo  : out apb_slv_out_type;	
 		-- I2C signals
 		--i2ci  : in  i2c_in_type;
 		i2co  : out i2c_out_type;

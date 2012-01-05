@@ -398,7 +398,7 @@ begin
 	   clk	=>	clk,
 		rst	=>	rst,
 		apbi	=>	apbi,
-      apbo	=>	apbo(2),
+      --apbo	=>	apbo(2),
 		--i2ci	=>	i2ci_pin,
 	
 		i2co	=>	i2co_pin,
