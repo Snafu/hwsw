@@ -75,6 +75,8 @@ entity top is
 	 -- I2C
 	 i2c_scl		:	out std_logic;
 	 i2c_sda		:	out std_logic;
+	 i2c_scl_dbg:	out std_logic;
+	 i2c_sda_dbg:	out std_logic;
 	 i2c_trigger:	out std_logic;
 	 
 	 -- TESTSIGNALE
@@ -390,9 +392,6 @@ begin
 			clk	=>	clk,
 			rst	=>	rst,
 			
-			--apbi	=>	apbi,
-			--apbo	=>	apbo(2),
-
 			extsel     => i2c_config_sel,			
 			exti       => exti,
 			--exto       => dis7segexto,
@@ -404,6 +403,8 @@ begin
 	-- I2C output pins
 	i2c_scl <= i2co_pin.scl;
 	i2c_sda <= i2co_pin.sda;
+	i2c_scl_dbg <= i2co_pin.scl;
+	i2c_sda_dbg <= i2co_pin.sda;
 	i2c_trigger <= i2c_config_sel;
 	clk_test <= clk;
 	
