@@ -11,34 +11,42 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
-library grlib;
-use grlib.amba.all;
+--library grlib;
+--use grlib.amba.all;
+
+use work.scarts_pkg.all;
 
 library work;
 use work.i2clib.all;
 
 entity i2cmaster is
 	generic(
-		-- APB generics
-		pindex  : integer := 0;                -- slave bus index
-		paddr   : integer := 0;
-		pmask   : integer := 16#fff#;
-		pirq    : integer := 0;                -- interrupt index
-		oepol   : integer range 0 to 1 := 0;   -- output enable polarity
+--		-- APB generics
+--		pindex  : integer := 0;                -- slave bus index
+--		paddr   : integer := 0;
+--		pmask   : integer := 16#fff#;
+--		pirq    : integer := 0;                -- interrupt index
+--		oepol   : integer range 0 to 1 := 0;   -- output enable polarity
 		constant CAM_ADDRESS_RD	: std_logic_vector(7 downto 0) := "10111011";	-- 0xBB
 		constant CAM_ADDRESS_WR	: std_logic_vector(7 downto 0) := "10111010";	-- 0xBA
 		constant BUS_IDLE			: std_logic := '1');
 	port (
-		rst       : in std_logic;           -- Synchronous reset
-		clk       : in std_logic;
+		rst				: in std_logic;           -- Synchronous reset
+		clk				: in std_logic;
+		
+		-- CHANGED TO EXTENSION MODULE!
 		-- APB signals
-		apbi  : in  apb_slv_in_type;
-		--apbo  : out apb_slv_out_type;
-
+		--apbi			: in  apb_slv_in_type;
+		--apbo			: out apb_slv_out_type;
+		
+		extsel			: in	std_logic;
+		exti				: in  module_in_type;
+		--exto			: out module_out_type;
+		
 		-- I2C signals
-		--i2ci  : in  i2c_in_type;
-		i2co  	: out i2c_out_type;
-		i2c_config_sel	:	in	std_logic);
+		--i2ci			: in  i2c_in_type;
+		i2co				: out i2c_out_type
+		);
 end;
 
 architecture rtl of i2cmaster is
@@ -129,7 +137,7 @@ process(clk, rst)
 	end process;
 	
 	
-	process(i2c_config_sel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, apbi, data_buffer)
+	process(extsel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, data_buffer)
 	
 	variable apbwrite	: std_logic;
 	
@@ -150,19 +158,18 @@ process(clk, rst)
 		sdc_counter_next <= sdc_counter + 1;
 		sda_data_next <= sda_data;
 
-		i2c_config_sel_old_next <= i2c_config_sel;
+		i2c_config_sel_old_next <= extsel;
 		i2c_state_next <= i2c_state;
 		i2c_bytestate_next <= i2c_bytestate;
 	
-		apbwrite :=  apbi.psel(2) and apbi.pwrite and apbi.penable;
-	
-		if( apbwrite = '1')
-		then
-			if(apbi.paddr(5 downto 2) = "0000" )
-			then
-				data_buffer_next <= apbi.pwdata(23 downto 0);
-			end if;
-		end if;
+		--apbwrite :=  apbi.psel(2) and apbi.pwrite and apbi.penable;
+		--if( apbwrite = '1')
+		--then
+		--	if(apbi.paddr(5 downto 2) = "0000" )
+		--	then
+		--		data_buffer_next <= apbi.pwdata(23 downto 0);
+		--	end if;
+		--end if;
 	
 		if(i2c_state /= IDLE)
 		then		
@@ -325,9 +332,10 @@ process(clk, rst)
 		end case;
 		
 		-- if we get a proper flank and are idle, start statemachine
-		if(i2c_config_sel_old /= i2c_config_sel and i2c_config_sel = '1' and i2c_state = IDLE)
+		if(i2c_config_sel_old /= extsel and extsel = '1' and i2c_state = IDLE)
 		then
 			i2c_state_next <= START_CLK;
+			data_buffer_next <= exti.data(23 downto 0);			
 		end if;
 	
 		sda_buf_next <= sda_sig;

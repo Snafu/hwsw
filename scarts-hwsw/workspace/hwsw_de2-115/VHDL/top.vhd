@@ -134,7 +134,7 @@ architecture behaviour of top is
 	--signal i2ci_pin			:	i2c_in_type;
 	signal i2co_pin			:	i2c_out_type;
 	
-	signal i2c_config_sel	:	std_logic;
+	signal i2c_config_sel	:	std_logic	:= '0';
 	
 
   -- signals for AUX UART
@@ -279,7 +279,7 @@ begin
     ioaddr => 16#000#,
     -- send no initialization command sequence on reset release
     pwron => 0,
-    -- bdrive & vdrive active low (default)
+    -- bdrive & vdrive active low (default
     oepol => 0,
     -- use 32 bit mode
     sdbits => 32,
@@ -381,36 +381,37 @@ begin
   
 
   -----------------------------------------------------------------------------
-  -- DISPLAY controller
+  -- I2C MASTER / Extension Module
   -----------------------------------------------------------------------------
   
-  is2c0 : i2cmaster
-    generic map
-    (
-	pindex	=> 2,
-	paddr		=> 16#003#,
-	pmask		=> 16#fff#,
-	pirq		=> 0,
-	oepol		=> 0
-    )
-    port map
-    (
-	   clk	=>	clk,
-		rst	=>	rst,
-		apbi	=>	apbi,
-      --apbo	=>	apbo(2),
-		--i2ci	=>	i2ci_pin,
-	
-		i2co	=>	i2co_pin,
-		i2c_config_sel	=> i2c_config_sel
-	 );
+	is2c0 : i2cmaster
+		port map
+		(
+			clk	=>	clk,
+			rst	=>	rst,
+			
+			--apbi	=>	apbi,
+			--apbo	=>	apbo(2),
+
+			extsel     => i2c_config_sel,			
+			exti       => exti,
+			--exto       => dis7segexto,
+			
+			--i2ci	=>	i2ci_pin,
+			i2co	=>	i2co_pin
+		);
 
 	-- I2C output pins
 	i2c_scl <= i2co_pin.scl;
 	i2c_sda <= i2co_pin.sda;
 	i2c_trigger <= i2c_config_sel;
 	clk_test <= clk;
-		 
+	
+	-----------------------------------------------------------------------------
+	-- DISPLAY controller
+	-----------------------------------------------------------------------------
+	
+	
   dispctrl0 : dispctrl
     generic map
     (
@@ -492,7 +493,7 @@ begin
           -- AUX UART
           aux_uart_sel <= '1';
 		  when "1111110100" => -- (-384)
-			-- I2C config data
+			-- I2C config 
 				i2c_config_sel <= '1'; 
         when others =>
           null;
