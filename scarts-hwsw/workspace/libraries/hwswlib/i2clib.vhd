@@ -26,12 +26,18 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+
 use work.scarts_pkg.all;
 
---library grlib;
---use grlib.amba.all;
-
 package i2clib is
+
+-- type module_in_type is record
+--   reset     : std_ulogic;
+--    write_en  : std_ulogic;
+--    byte_en   : std_logic_vector(3 downto 0);
+--    data      : std_logic_vector(31 downto 0);
+--    addr      : std_logic_vector(14 downto 0);
+--  end record;
 
 	type i2c_in_type is record
       scl : std_ulogic;

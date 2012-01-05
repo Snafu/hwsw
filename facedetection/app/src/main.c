@@ -122,15 +122,20 @@ int main(int argc, char **argv)
 	uint32_t j;
 	
 	i2c_write(0x10,0x51);
-	for(j = 0; j < 3000; j++) asm volatile("nop\n\t");
+	for(j = 0; j < 1300; j++) asm volatile("nop\n\t");
+
+	//i2c_write(0x11,0x3004);
 	i2c_write(0x11,0x1e04);
-	for(j = 0; j < 3000; j++) asm volatile("nop\n\t");
+	for(j = 0; j < 1300; j++) asm volatile("nop\n\t");
+
 	i2c_write(0x12,0x01);
-	for(j = 0; j < 3000; j++) asm volatile("nop\n\t");
+	for(j = 0; j < 1300; j++) asm volatile("nop\n\t");
+
 	i2c_write(0x10,0x53);
-	for(j = 0; j < 3000; j++) asm volatile("nop\n\t");
+	for(j = 0; j < 1300; j++) asm volatile("nop\n\t");
+
 	i2c_write(0x0a,0x8000);
-	for(j = 0; j < 3000; j++) asm volatile("nop\n\t");
+	for(j = 0; j < 1300; j++) asm volatile("nop\n\t");
 
 /*
 	// red -> yellow

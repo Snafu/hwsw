@@ -37,24 +37,38 @@ end;
 
 architecture rtl of i2cmaster is
 
-type i2c_in_type is record
+	type module_in_type is record
+		reset     : std_ulogic;
+		write_en  : std_ulogic;
+		byte_en   : std_logic_vector(3 downto 0);
+		data      : std_logic_vector(31 downto 0);
+		addr      : std_logic_vector(14 downto 0);
+	end record;
+
+	type i2c_in_type is record
       scl : std_ulogic;
       sda : std_ulogic;
-end record;
+	end record;
 
-type i2c_out_type is record
+	type i2c_out_type is record
       scl    : std_ulogic;
       scloen : std_ulogic;
       sda    : std_ulogic;
       sdaoen : std_ulogic;
       enable : std_ulogic;
-end record;
+	end record;
 
+	--constant COUNTER_NEXTSTATE		:	integer	:=	0;
+	--constant COUNTER_LOW				:	integer	:=	300;
+	--constant	COUNTER_STARTSTOPBIT	:	integer	:=	400;
+	--constant	COUNTER_RESET			:	integer	:=	500;
+	
 	constant COUNTER_NEXTSTATE		:	integer	:=	0;
-	constant COUNTER_LOW				:	integer	:=	300;
-	constant	COUNTER_STARTSTOPBIT	:	integer	:=	400;
-	constant	COUNTER_RESET			:	integer	:=	500;
-
+	constant COUNTER_SETBIT 		:	integer	:= 50;		-- NOT USED YET
+	constant COUNTER_LOW				:	integer	:=	124;
+	constant	COUNTER_STARTSTOPBIT	:	integer	:=	190;
+	constant	COUNTER_RESET			:	integer	:=	249;
+	
 	type I2C_STATE_TYPE is (IDLE, START_CLK, SEND_STARTBIT, SEND_SLAVE_ADRESS, SEND_REGISTER_ADRESS, SEND_DATA_LOW, SEND_DATA_HIGH, SEND_FINISHED, STOP_CLK);
 	type I2C_BYTESTATE_TYPE is (IDLE, B0, B1, B2, B3, B4, B5, B6, B7, WAIT_ACK);
 	
@@ -188,57 +202,117 @@ process(clk, rst)
 			when B0			=>
 				if(i2c_bytestate /= IDLE and sdc_counter = COUNTER_NEXTSTATE)
 				then
-					sda_sig <= sda_data(6);
+					--sda_sig <= sda_data(6);
 					i2c_bytestate_next <= B1;
 				end if;
+				
+				if(sdc_counter = COUNTER_SETBIT)
+				then
+					sda_sig <= sda_data(7);
+				end if;
+				
 			when B1			=>
 				if(sdc_counter = COUNTER_NEXTSTATE)
 				then
-					sda_sig <= sda_data(5);
+					--sda_sig <= sda_data(5);
 					i2c_bytestate_next <= B2;
 				end if;
+				
+				if(sdc_counter = COUNTER_SETBIT)
+				then
+					sda_sig <= sda_data(6);
+				end if;
+				
 			when B2			=>
 				if(sdc_counter = COUNTER_NEXTSTATE)
 				then
-					sda_sig <= sda_data(4);
+					--sda_sig <= sda_data(4);
 					i2c_bytestate_next <= B3;
 				end if;
+				
+				if(sdc_counter = COUNTER_SETBIT)
+				then
+					sda_sig <= sda_data(5);
+				end if;
+				
 			when B3			=>
 				if(sdc_counter = COUNTER_NEXTSTATE)
 				then
-					sda_sig <= sda_data(3);
+					--sda_sig <= sda_data(3);
 					i2c_bytestate_next <= B4;
 				end if;
+				
+				if(sdc_counter = COUNTER_SETBIT)
+				then
+					sda_sig <= sda_data(4);
+				end if;
+				
 			when B4			=>
 				if(sdc_counter = COUNTER_NEXTSTATE)
 				then
-					sda_sig <= sda_data(2);
+					--sda_sig <= sda_data(2);
 					i2c_bytestate_next <= B5;
 				end if;
+				
+				if(sdc_counter = COUNTER_SETBIT)
+				then
+					sda_sig <= sda_data(3);
+				end if;
+				
 			when B5			=>
 				if(sdc_counter = COUNTER_NEXTSTATE)
 				then
-					sda_sig <= sda_data(1);
+					--sda_sig <= sda_data(1);
 					i2c_bytestate_next <= B6;
 				end if;
+				
+				if(sdc_counter = COUNTER_SETBIT)
+				then
+					sda_sig <= sda_data(2);
+				end if;
+				
 			when B6			=>
 				if(sdc_counter = COUNTER_NEXTSTATE)
 				then
-					sda_sig <= sda_data(0);
+					--sda_sig <= sda_data(0);
 					i2c_bytestate_next <= B7;
 				end if;
+				
+				if(sdc_counter = COUNTER_SETBIT)
+				then
+					sda_sig <= sda_data(1);
+				end if;
+				
 			when B7			=>
 				if(sdc_counter = COUNTER_NEXTSTATE)
 				then
-					sda_sig <= BUS_IDLE;
 					i2c_bytestate_next <= WAIT_ACK;
+					--sda_sig <= 'Z';
 				end if;
+				
+				if(sdc_counter = COUNTER_SETBIT)
+				then
+					sda_sig <= sda_data(0);
+				end if;
+				
 			when WAIT_ACK	=>
-				sda_sig <= 'Z';
 				if(sdc_counter = COUNTER_NEXTSTATE)
 				then
 					i2c_bytestate_next <= IDLE;
-					sda_sig <= '0';
+					
+					-- pull LOW so that STOPBIT can be sent
+					
+					--sda_sig <= '0';
+				end if;
+				
+				if(sdc_counter = COUNTER_SETBIT)
+				then
+					if(i2c_state = SEND_FINISHED)
+					then
+						sda_sig <= '0';
+					else
+						sda_sig <= 'Z';
+					end if;
 				end if;
 		end case;
 					
@@ -254,22 +328,17 @@ process(clk, rst)
 			when SEND_STARTBIT			=>
 				if(sdc_counter = COUNTER_NEXTSTATE)
 				then
-					i2c_state_next <= SEND_SLAVE_ADRESS;
-					-- speichere hier:	1. das neue datenwort
-					--							2. setze SOFORT das zu sendende MSB 
+					i2c_state_next <= SEND_SLAVE_ADRESS; 
 					sda_data_next <= CAM_ADDRESS_WR;
-					sda_sig <= CAM_ADDRESS_WR(7);
 		
 					i2c_bytestate_next <= B0;
 				end if;
-					
+									
 			when SEND_SLAVE_ADRESS		=>
 				if(i2c_bytestate = WAIT_ACK and sdc_counter = COUNTER_NEXTSTATE)
 				then								
-					--sda_sig <= apbi.pwdata(7);
-					--sda_data_next <= apbi.pwdata(7 downto 0);
-					sda_sig <= data_buffer(7);
-					sda_data_next <= data_buffer(7 downto 0);
+					--sda_sig <= data_buffer(23);
+					sda_data_next <= data_buffer(23 downto 16);
 					
 					i2c_bytestate_next <= B0;
 					i2c_state_next <= SEND_REGISTER_ADRESS;
@@ -278,28 +347,24 @@ process(clk, rst)
 			when SEND_REGISTER_ADRESS	=>
 				if(i2c_bytestate = WAIT_ACK and sdc_counter = COUNTER_NEXTSTATE)
 				then
-					--sda_sig <= apbi.pwdata(15);
-					--sda_data_next <= apbi.pwdata(15 downto 8);			
-					sda_sig <= data_buffer(15);
+					--sda_sig <= data_buffer(15);
 					sda_data_next <= data_buffer(15 downto 8);
 					
 					i2c_bytestate_next <= B0;
-					i2c_state_next <= SEND_DATA_LOW;
-				end if;
-				
-			when SEND_DATA_LOW			=>
-				if(i2c_bytestate = WAIT_ACK and sdc_counter = COUNTER_NEXTSTATE)
-				then
-					--sda_sig <= apbi.pwdata(23);
-					--sda_data_next <= apbi.pwdata(23 downto 16);
-					sda_sig <= data_buffer(23);
-					sda_data_next <= data_buffer(23 downto 16);
-	
-					i2c_bytestate_next <= B0;
 					i2c_state_next <= SEND_DATA_HIGH;
 				end if;
-					
+				
 			when SEND_DATA_HIGH			=>
+				if(i2c_bytestate = WAIT_ACK and sdc_counter = COUNTER_NEXTSTATE)
+				then
+					--sda_sig <= data_buffer(7);
+					sda_data_next <= data_buffer(7 downto 0);
+	
+					i2c_bytestate_next <= B0;
+					i2c_state_next <= SEND_DATA_LOW;
+				end if;
+					
+			when SEND_DATA_LOW			=>
 				if(i2c_bytestate = WAIT_ACK and sdc_counter = COUNTER_NEXTSTATE)
 				then
 					i2c_bytestate_next <= IDLE;
@@ -320,7 +385,11 @@ process(clk, rst)
 		-- if we get a proper flank and are idle, start statemachine
 		if(i2c_config_sel_old /= extsel and extsel = '1' and i2c_state = IDLE)
 		then
-			i2c_state_next <= START_CLK;
+			--i2c_state_next <= START_CLK;
+			i2c_state_next <= SEND_STARTBIT;
+			sdc_counter_next <= 1;
+			
+			
 			data_buffer_next <= exti.data(23 downto 0);			
 		end if;
 	

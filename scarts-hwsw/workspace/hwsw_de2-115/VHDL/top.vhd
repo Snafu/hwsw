@@ -84,9 +84,13 @@ entity top is
 		cam_lval			: in std_logic;
 		cam_pixdata		: in std_logic_vector(11 downto 0);
 		cam_sramo			: out sram_t;
+		cam_resetN		:	out std_logic;
+		cam_xclk			:	out std_logic;
 		 
-		-- TESTSIGNALE
-		clk_test	:	out std_logic
+	 -- TESTSIGNALE
+	clk_test				:	out std_logic;
+	pxl_clk_out			:	out std_logic;
+	cam_resetN_dbg	: out std_logic
   );
 end top;
 
@@ -144,6 +148,9 @@ architecture behaviour of top is
 	
 	signal i2c_config_sel	:	std_logic	:= '0';
 	
+	signal cam_clock			: std_logic;
+	signal cam_counter		: integer range 0 to 4;
+	signal cam_counter_next	: integer range 0 to 4;
 
   -- signals for AUX UART
   signal aux_uart_sel      : std_ulogic;
@@ -396,7 +403,7 @@ begin
 		port map
 		(
 			clk	=>	clk,
-			rst	=>	rst,
+			rst	=>	syncrst,
 			
 			extsel     => i2c_config_sel,			
 			exti       => exti,
@@ -415,6 +422,12 @@ begin
 	
 	i2c_trigger <= i2c_config_sel;
 	clk_test <= clk;
+	
+	cam_resetN	<= syncrst;
+	cam_resetN_dbg <= syncrst;
+	
+	cam_xclk <= cam_clock;
+	pxl_clk_out <= cam_pixclk;
 	
 	-----------------------------------------------------------------------------
 	-- DISPLAY controller
@@ -550,6 +563,29 @@ begin
   end process;
 
 
+  -- process to divide clk to get proper camera pixel clock
+  process(cam_counter)
+  begin
+  
+	cam_counter_next <= cam_counter;
+	
+	if(cam_counter < 2)
+	then
+			cam_clock <= '0';
+	else
+			cam_clock <= '1';
+	end if;
+	
+	cam_counter_next <= cam_counter + 1;
+	
+	if(cam_counter = 3)
+	then
+		cam_counter_next <= 0;
+	end if;
+  
+  
+  end process;
+  
   reg : process(clk)
   begin
     if rising_edge(clk) then
@@ -557,6 +593,8 @@ begin
       -- input flip-flops
       --
       syncrst <= rst;
+		
+		cam_counter <= cam_counter_next;
     end if;
   end process;
 
