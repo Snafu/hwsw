@@ -403,8 +403,10 @@ begin
 	-- I2C output pins
 	i2c_scl <= i2co_pin.scl;
 	i2c_sda <= i2co_pin.sda;
+	
 	i2c_scl_dbg <= i2co_pin.scl;
 	i2c_sda_dbg <= i2co_pin.sda;
+	
 	i2c_trigger <= i2c_config_sel;
 	clk_test <= clk;
 	

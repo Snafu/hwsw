@@ -123,7 +123,7 @@ process(clk, rst)
 	end process;
 	
 	
-	process(extsel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, data_buffer)
+	process(extsel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, data_buffer, exti)
 	
 	variable apbwrite	: std_logic;
 	
