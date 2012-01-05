@@ -222,8 +222,8 @@ begin
 		dmai.size <= "010";
 		dmai.write <= '1';
 		dmai.busy <= '0';
-		if ((r.colcnt = r.top or r.colcnt = r.bottom) and (r.rowcnt >= r.left and r.rowcnt <= r.right)) or
-			 ((r.colcnt >= r.top and r.colcnt <= r.bottom) and (r.rowcnt = r.left or r.rowcnt = r.right)) then
+		if ((r.rowcnt = r.top or r.rowcnt = r.bottom) and (r.colcnt >= r.left and r.colcnt <= r.right)) or
+			 ((r.colcnt = r.left or r.colcnt = r.right) and (r.rowcnt >= r.top and r.rowcnt <= r.bottom)) then
 			dmai.wdata <= x"0000ff00";
 		else
 			dmai.wdata <= r.data;

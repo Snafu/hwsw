@@ -125,9 +125,22 @@ mini_uart_write(&aux_uart_handle, (char *)"DISPCTRL INIT", sizeof("DISPCTRL INIT
 
 	// DISPCTRL initialization
 	dis7seg_displayHexUInt32(&dispHandle, 0, DISPCTRL_STATUS);  
-	
+
+mini_uart_write(&aux_uart_handle, (char *)"I2C WRITE", sizeof("I2C WRITE"));
+
+	// i2c - test
+/*
+	while(1)
+	{
+		I2CCONFIG_STATUS= 0xCCAA33;
+		I2CCONFIG_DATA	= 0xCCAA33;
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	};
+	*/
+
 	uint32_t i;
 	uint32_t j;
+/*
 	// red -> yellow
 	for(i = 0; i < 0xff; i++)
 	{
@@ -136,18 +149,6 @@ mini_uart_write(&aux_uart_handle, (char *)"DISPCTRL INIT", sizeof("DISPCTRL INIT
 		DISPCTRL_STATUS = DISPCTRL_UPDATE;
 		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
 	}
-
-mini_uart_write(&aux_uart_handle, (char *)"I2C WRITE", sizeof("I2C WRITE"));
-
-	// i2c - test
-
-	while(1)
-	{
-		I2CCONFIG_STATUS= 0xCCAA33;
-		I2CCONFIG_DATA	= 0xCCAA33;
-		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-	};
-/*
 	// yello -> green
 	for(i = 0; i < 0xff; i++)
 	{
@@ -188,7 +189,19 @@ mini_uart_write(&aux_uart_handle, (char *)"I2C WRITE", sizeof("I2C WRITE"));
 		DISPCTRL_STATUS = DISPCTRL_UPDATE;
 		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
 	}
-*/
+	*/
+	
+	DRAW_RECT(0,0,0,0);
+	DISPCTRL_COLOR = 0x000000ff;
+	UPDATE_GLCD();
+	for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	for(i = 0; i < 300; i++)
+	{
+		DRAW_RECT(50,50,50+(i<<1),50+i);
+		UPDATE_GLCD();
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	}
 
 
 
