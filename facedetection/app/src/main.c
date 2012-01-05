@@ -15,17 +15,7 @@
 #include <drivers/mini_uart.h>
 #include "svga.h"
 #include "dispctrl.h"
-
-/*
-	#define DISPCTRL_BASE (0xF0000200)
-	#define DISPCTRL_STATUS (*(volatile int *const) (DISPCTRL_BASE))
-	#define DISPCTRL_COLOR (*(volatile int *const) (DISPCTRL_BASE+4))
- * */
-
-
-#define I2CCONFIG_BADDR ((uint32_t)-384)
-#define I2CCONFIG_STATUS (*(volatile int *const) (I2CCONFIG_BADDR))
-#define I2CCONFIG_DATA   (*(volatile int *const) (I2CCONFIG_BADDR+4))
+#include "i2c.h"
 
 #define AUX_UART_BADDR ((uint32_t)-352)
 #define COUNTER_BADDR ((uint32_t)-320)
@@ -121,25 +111,27 @@ int main(int argc, char **argv)
 	memset((void *)screenData, 0, (SCREEN_WIDTH*SCREEN_HEIGHT*4));
 
 
-mini_uart_write(&aux_uart_handle, (char *)"DISPCTRL INIT", sizeof("DISPCTRL INIT"));
+	mini_uart_write(&aux_uart_handle, (char *)"DISPCTRL INIT", sizeof("DISPCTRL INIT"));
 
 	// DISPCTRL initialization
 	dis7seg_displayHexUInt32(&dispHandle, 0, DISPCTRL_STATUS);  
 
-mini_uart_write(&aux_uart_handle, (char *)"I2C WRITE", sizeof("I2C WRITE"));
-
-	// i2c - test
-/*
-	while(1)
-	{
-		I2CCONFIG_STATUS= 0xCCAA33;
-		I2CCONFIG_DATA	= 0xCCAA33;
-		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-	};
-	*/
+	mini_uart_write(&aux_uart_handle, (char *)"I2C WRITE", sizeof("I2C WRITE"));
 
 	uint32_t i;
 	uint32_t j;
+	
+	i2c_write(0x10,0x51);
+	for(j = 0; j < 3000; j++) asm volatile("nop\n\t");
+	i2c_write(0x11,0x1e04);
+	for(j = 0; j < 3000; j++) asm volatile("nop\n\t");
+	i2c_write(0x12,0x01);
+	for(j = 0; j < 3000; j++) asm volatile("nop\n\t");
+	i2c_write(0x10,0x53);
+	for(j = 0; j < 3000; j++) asm volatile("nop\n\t");
+	i2c_write(0x0a,0x8000);
+	for(j = 0; j < 3000; j++) asm volatile("nop\n\t");
+
 /*
 	// red -> yellow
 	for(i = 0; i < 0xff; i++)

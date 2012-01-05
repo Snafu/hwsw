@@ -299,10 +299,21 @@ set_location_assignment PIN_E27 -to aux_uart_rx
 set_global_assignment -name MISC_FILE "/homes/w0727156/Desktop/Desktop/GIT/hwsw/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.qsf"
 
 set_global_assignment -name MISC_FILE "/homes/w0727156/Desktop/GIT/hwsw/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.dpf"
+set_location_assignment PIN_G28 -to i2c_scl
+set_location_assignment PIN_F26 -to i2c_sda
+set_location_assignment PIN_AC21 -to clk_test
+set_location_assignment PIN_AD21 -to i2c_trigger
+set_location_assignment PIN_AB22 -to i2c_scl_dbg
+set_location_assignment PIN_AB21 -to i2c_sda_dbg
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name VHDL_FILE ../VHDL/top.vhd
+set_global_assignment -name VHDL_FILE ../VHDL/top_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/i2clib.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/i2cmaster.vhd
-set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/hwswlib.vhd
+set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/kamera.vhd
+set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/dispctrl.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/grlib/lib/gaisler/misc/svgactrl.vhd
+set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/hwswlib.vhd
 set_global_assignment -name VHDL_FILE ../../../VHDL/common/scarts_amba_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../VHDL/common/scarts_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../VHDL/scarts_core/scarts_core_pkg.vhd
@@ -358,15 +369,5 @@ set_global_assignment -name VHDL_FILE ../../libraries/grlib/lib/techmap/altera_m
 set_global_assignment -name VHDL_FILE ../../libraries/grlib/lib/gaisler/memctrl/sdctrl.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/grlib/lib/gaisler/memctrl/memctrl.vhd
 set_global_assignment -name VHDL_FILE ../VHDL/altera_pll.vhd
-set_global_assignment -name VHDL_FILE ../VHDL/top_pkg.vhd
-set_global_assignment -name VHDL_FILE ../VHDL/top.vhd
 set_global_assignment -name SDC_FILE top.sdc
 set_global_assignment -name QIP_FILE ../VHDL/altera_pll.qip
-set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/dispctrl.vhd
-set_location_assignment PIN_G28 -to i2c_scl
-set_location_assignment PIN_F26 -to i2c_sda
-set_location_assignment PIN_AC21 -to clk_test
-set_location_assignment PIN_AD21 -to i2c_trigger
-set_location_assignment PIN_AB22 -to i2c_scl_dbg
-set_location_assignment PIN_AB21 -to i2c_sda_dbg
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
