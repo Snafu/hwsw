@@ -14,10 +14,13 @@ COUNTER_BADDR	src/main.c	31;"	d	file:
 CR_HIGH	src/skinFilter.c	10;"	d	file:
 CR_LOW	src/skinFilter.c	6;"	d	file:
 DISPCTRL_BASE	include/dispctrl.h	4;"	d
+DISPCTRL_BR	include/dispctrl.h	8;"	d
 DISPCTRL_COLOR	include/dispctrl.h	6;"	d
 DISPCTRL_STATUS	include/dispctrl.h	5;"	d
-DISPCTRL_UPDATE	include/dispctrl.h	8;"	d
+DISPCTRL_TL	include/dispctrl.h	7;"	d
+DISPCTRL_UPDATE	include/dispctrl.h	14;"	d
 DISP_BADDR	src/main.c	32;"	d	file:
+DRAW_RECT	include/dispctrl.h	10;"	d
 FILTER_DILATE	include/filters.h	7;"	d
 FILTER_ERODE	include/filters.h	6;"	d
 FOREGROUND_COLOR_B	src/detectFace.c	9;"	d	file:
@@ -80,6 +83,7 @@ SVGA_VIDEO_LENGTH	include/svga.h	6;"	d
 SVGA_VLINELEN	include/svga.h	24;"	d
 SVGA_VPORCH	include/svga.h	21;"	d
 SVGA_VVIDEOLEN	include/svga.h	18;"	d
+UPDATE_GLCD	include/dispctrl.h	13;"	d
 WAIT_TIME	src/main.c	34;"	d	file:
 WINDOW_LENGTH	src/erodeDilateFilter.c	4;"	d	file:
 WINDOW_OFFSET	src/erodeDilateFilter.c	5;"	d	file:
