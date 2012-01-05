@@ -65,34 +65,38 @@ architecture rtl of dispctrl is
   type state_type is (running, not_running, reset);
   type job_type is (idle, busy);
 
-	signal top,top_in		: std_logic_vector(9 downto 0);
-	signal left,left_in		: std_logic_vector(9 downto 0);
-	signal bottom,bottom_in		: std_logic_vector(9 downto 0);
-	signal right,right_in		: std_logic_vector(9 downto 0);
-  signal data,data_in					: std_logic_vector(31 downto 0);
-  signal startaddr,startaddr_in			: std_logic_vector(31 downto 0);
-  signal endaddr,endaddr_in				: std_logic_vector(31 downto 0);
-  signal write_en,write_en_in			: std_logic;
-  signal write_done,write_done_in		: std_logic;
   signal ahbready							: std_logic;
   
   signal dmai	: ahb_dma_in_type;
   signal dmao	: ahb_dma_out_type;
+	
+	type control_t is record
+		top					: std_logic_vector(9 downto 0);
+		left				: std_logic_vector(9 downto 0);
+		bottom			: std_logic_vector(9 downto 0);
+		right				: std_logic_vector(9 downto 0);
+		data				: std_logic_vector(31 downto 0);
+		startaddr		: std_logic_vector(31 downto 0);
+		endaddr			: std_logic_vector(31 downto 0);
+		write_en		: std_logic;
+		write_done	: std_logic;
+	end record;
 
   type write_t is record
-		top			: std_logic_vector(9 downto 0);
+		top				: std_logic_vector(9 downto 0);
 		left			: std_logic_vector(9 downto 0);
-		bottom			: std_logic_vector(9 downto 0);
+		bottom		: std_logic_vector(9 downto 0);
 		right			: std_logic_vector(9 downto 0);
-		colcnt	: std_logic_vector(9 downto 0);
-		rowcnt	: std_logic_vector(9 downto 0);
+		colcnt		: std_logic_vector(9 downto 0);
+		rowcnt		: std_logic_vector(9 downto 0);
 		address 	: std_logic_vector(31 downto 0);
-		data		: std_logic_vector(31 downto 0);
-		start		: std_logic;
+		data			: std_logic_vector(31 downto 0);
+		start			: std_logic;
 		newburst	: std_logic;
-		done		: std_logic;
+		done			: std_logic;
   end record;
   
+	signal c,cin	: control_t;
   signal r,rin	: write_t;
   
   signal vcc	: std_logic;
@@ -109,14 +113,18 @@ begin
   apbo.pindex  <= pindex;
   apbo.pconfig <= PCONFIG;
   
-  control_proc : process(rst,apbi,dmao,dmai,r,write_en,data)
+  control_proc : process(rst,apbi,dmao,r,c)
     variable apbwrite	: std_logic;
     variable apbrdata : std_logic_vector(31 downto 0);
   	variable v	: write_t;
+		variable w	: control_t;
   begin
-		 
+		
 		v := r;
-
+		w := c;
+	
+		apbrdata := (others => '0');
+		
 	  ---------------------------------------------------------------------------
 	  -- Control. Handles the APB accesses and stores the internal registers
 	  ---------------------------------------------------------------------------
@@ -126,33 +134,34 @@ begin
 	    -- FB start address
 	    if apbwrite = '1' then
 				if apbi.pwdata(0) = '1' then
-			  	write_en_in <= '1';
+			  	w.write_en := '1';
 				else
-					write_en_in <= '0';
+					w.write_en := '0';
 	    	end if;
-				--apbrdata := (0 => write_en, others => '0');
+				apbrdata := (0 => c.write_en, others => '0');
 			end if;
 			apbrdata := x"DEADBABE";
 	  when "0001" =>
 	    -- Color register
 	    if apbwrite = '1' then
-	    	data_in <= apbi.pwdata;
+	    	w.data := apbi.pwdata;
 	    end if;
-			apbrdata := data;
+			--apbrdata := data;
+			apbrdata := c.data;
 		when "0010" =>
 			-- TopLeft address
 			if apbwrite = '1' then
-				top_in <= apbi.pwdata(25 downto 16);
-				left_in <= apbi.pwdata(9 downto 0);
+				w.top := apbi.pwdata(25 downto 16);
+				w.left := apbi.pwdata(9 downto 0);
 			end if;
-			apbrdata := "000000" & top & "000000" & left;
+			apbrdata := "000000" & c.top & "000000" & c.left;
 		when "0011" =>
 			-- BottomRight address
 			if apbwrite = '1' then
-				bottom_in <= apbi.pwdata(25 downto 16);
-				right_in <= apbi.pwdata(9 downto 0);
+				w.bottom := apbi.pwdata(25 downto 16);
+				w.right := apbi.pwdata(9 downto 0);
 			end if;
-			apbrdata := "000000" & bottom & "000000" & right;
+			apbrdata := "000000" & c.bottom & "000000" & c.right;
 	  when others =>
 	  end case;
 		         
@@ -161,10 +170,10 @@ begin
 	  -- Control reset
 	  ---------------------------------------------------------------------------
 	  if rst = '0' then
-			data_in <= x"000FF000";
-			startaddr_in <= x"E0000000";
-			endaddr_in	<= x"E0176FFC";
-			write_en_in <= '0';
+			w.data := x"000FF000";
+			w.startaddr := x"E0000000";
+			w.endaddr := x"E0176FFC";
+			w.write_en := '0';
 		end if;
 
 
@@ -175,22 +184,22 @@ begin
 		ahbready <= dmao.ready;
 		
 	 	v.start := '0';
-		if rst = '0' or write_en = '0' then
+		if rst = '0' or c.write_en = '0' then
 			v.newburst := '0';
 			v.done := '0';
-		elsif write_en = '1' and r.done = '0' then
+		elsif c.write_en = '1' and r.done = '0' then
 			v.start := '1';
 			if r.start = '0' then
 				v.newburst := '0';
 				if r.newburst = '0' then
-					v.address := startaddr;
-					v.data := data;
+					v.address := c.startaddr;
+					v.data := c.data;
 					v.colcnt := "0000000000";
 					v.rowcnt := "0000000000";
-					v.top := top;
-					v.left := left;
-					v.bottom := bottom;
-					v.right := right;
+					v.top := c.top;
+					v.left := c.left;
+					v.bottom := c.bottom;
+					v.right := c.right;
 				end if;
 			end if;
 			if r.start = '1' and dmao.ready = '1' then
@@ -202,7 +211,7 @@ begin
 				else
 					v.colcnt := v.colcnt + '1';
 				end if;
-				if v.address > endaddr then
+				if v.address > c.endaddr then
 					v.start := '0';
 					v.address := (others => '0');
 					v.data := (others => '0');
@@ -215,7 +224,10 @@ begin
 		end if;
 			 
 			
+		w.write_done := v.done;
 		rin <= v;
+		cin <= w;
+		
     apbo.prdata <= apbrdata;
 		dmai.burst <= '1';
 		dmai.irq <= '0';
@@ -230,7 +242,6 @@ begin
 		end if;
 		dmai.address <= r.address;
 		dmai.start <= r.start;
-		write_done_in <= r.done;
 		 
   end process;
   
@@ -243,15 +254,7 @@ begin
   begin
     if rising_edge(clk) then
 			r <= rin;
-			data <= data_in;
-			startaddr <= startaddr_in;
-			endaddr <= endaddr_in;
-			write_en <= write_en_in;
-			write_done <= write_done_in;
-			top <= top_in;
-			left <= left_in;
-			right <= right_in;
-			bottom <= bottom_in;
+			c <= cin;
     end if;
   end process;
   
