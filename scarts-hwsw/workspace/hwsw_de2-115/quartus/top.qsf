@@ -305,7 +305,6 @@ set_location_assignment PIN_AC21 -to clk_test
 set_location_assignment PIN_AD21 -to i2c_trigger
 set_location_assignment PIN_AB22 -to i2c_scl_dbg
 set_location_assignment PIN_AB21 -to i2c_sda_dbg
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name VHDL_FILE ../VHDL/top.vhd
 set_global_assignment -name VHDL_FILE ../VHDL/top_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/i2clib.vhd
@@ -371,3 +370,20 @@ set_global_assignment -name VHDL_FILE ../../libraries/grlib/lib/gaisler/memctrl/
 set_global_assignment -name VHDL_FILE ../VHDL/altera_pll.vhd
 set_global_assignment -name SDC_FILE top.sdc
 set_global_assignment -name QIP_FILE ../VHDL/altera_pll.qip
+set_location_assignment PIN_H26 -to cam_pixdata[0]
+set_location_assignment PIN_M28 -to cam_pixdata[1]
+set_location_assignment PIN_K25 -to cam_pixdata[2]
+set_location_assignment PIN_K21 -to cam_pixdata[3]
+set_location_assignment PIN_K26 -to cam_pixdata[4]
+set_location_assignment PIN_K22 -to cam_pixdata[5]
+set_location_assignment PIN_L23 -to cam_pixdata[6]
+set_location_assignment PIN_H23 -to cam_pixdata[7]
+set_location_assignment PIN_L24 -to cam_pixdata[8]
+set_location_assignment PIN_H24 -to cam_pixdata[9]
+set_location_assignment PIN_M25 -to cam_pixdata[10]
+set_location_assignment PIN_M26 -to cam_pixdata[11]
+set_location_assignment PIN_K27 -to cam_fval
+set_location_assignment PIN_E26 -to cam_lval
+set_global_assignment -name MISC_FILE "/homes/w0725226/hwsw/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.dpf"
+set_location_assignment PIN_J28 -to cam_pixclk
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

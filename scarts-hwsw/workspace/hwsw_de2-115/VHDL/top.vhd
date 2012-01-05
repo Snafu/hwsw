@@ -43,44 +43,50 @@ use work.i2clib.all;
 
 entity top is
   port(
-    db_clk      : in  std_ulogic;
-    rst         : in  std_ulogic;
-    -- Debug Interface
-    D_RxD       : in  std_logic; 
-    D_TxD       : out std_logic;
-    -- 7Segment Anzeige
-    digits      : out digit_vector_t(7 downto 0);
-    -- SDRAM Controller Interface (AMBA)
-    sdcke       : out std_logic;
-    sdcsn       : out std_logic;
-    sdwen       : out std_logic;
-    sdrasn      : out std_logic;
-    sdcasn      : out std_logic;
-    sddqm       : out std_logic_vector(3 downto 0);
-    sdclk       : out std_logic;
-    sa          : out std_logic_vector(14 downto 0);
-    sd          : inout std_logic_vector(31 downto 0);
-    -- LCD (AMBA)
-    ltm_hd      : out std_logic;
-    ltm_vd      : out std_logic;
-    ltm_r       : out std_logic_vector(7 downto 0);
-    ltm_g       : out std_logic_vector(7 downto 0);
-    ltm_b       : out std_logic_vector(7 downto 0);
-    ltm_nclk    : out std_logic;
-    ltm_den     : out std_logic;
-    ltm_grest   : out std_logic;
-    -- AUX UART
-    aux_uart_rx : in  std_logic;
-    aux_uart_tx : out std_logic;
-	 -- I2C
-	 i2c_scl		:	out std_logic;
-	 i2c_sda		:	out std_logic;
-	 i2c_scl_dbg:	out std_logic;
-	 i2c_sda_dbg:	out std_logic;
-	 i2c_trigger:	out std_logic;
-	 
-	 -- TESTSIGNALE
-	 clk_test	:	out std_logic
+		db_clk      : in  std_ulogic;
+		rst         : in  std_ulogic;
+		-- Debug Interface
+		D_RxD       : in  std_logic; 
+		D_TxD       : out std_logic;
+		-- 7Segment Anzeige
+		digits      : out digit_vector_t(7 downto 0);
+		-- SDRAM Controller Interface (AMBA)
+		sdcke       : out std_logic;
+		sdcsn       : out std_logic;
+		sdwen       : out std_logic;
+		sdrasn      : out std_logic;
+		sdcasn      : out std_logic;
+		sddqm       : out std_logic_vector(3 downto 0);
+		sdclk       : out std_logic;
+		sa          : out std_logic_vector(14 downto 0);
+		sd          : inout std_logic_vector(31 downto 0);
+		-- LCD (AMBA)
+		ltm_hd      : out std_logic;
+		ltm_vd      : out std_logic;
+		ltm_r       : out std_logic_vector(7 downto 0);
+		ltm_g       : out std_logic_vector(7 downto 0);
+		ltm_b       : out std_logic_vector(7 downto 0);
+		ltm_nclk    : out std_logic;
+		ltm_den     : out std_logic;
+		ltm_grest   : out std_logic;
+		-- AUX UART
+		aux_uart_rx : in  std_logic;
+		aux_uart_tx : out std_logic;
+		-- I2C
+		i2c_scl		:	out std_logic;
+		i2c_sda		:	out std_logic;
+		i2c_scl_dbg:	out std_logic;
+		i2c_sda_dbg:	out std_logic;
+		i2c_trigger:	out std_logic;
+		-- CAM
+		cam_pixclk		: in std_logic;
+		cam_fval			: in std_logic;
+		cam_lval			: in std_logic;
+		cam_pixdata		: in std_logic_vector(11 downto 0);
+		cam_sramo			: out sram_t;
+		 
+		-- TESTSIGNALE
+		clk_test	:	out std_logic
   );
 end top;
 
@@ -432,6 +438,30 @@ begin
       ahbi => grlib_ahbmi,
       ahbo => disp_ahbmo
     );  
+	
+	-----------------------------------------------------------------------------
+	-- Kamera readout
+	-----------------------------------------------------------------------------
+	
+	
+  cam0 : kamera
+    generic map
+    (
+	   pindex => 2,
+		paddr => 16#004#,
+      pmask => 16#fff#,
+		hindex => 3
+    )
+    port map
+    (
+      rst => syncrst,
+      clk => clk,
+			pixclk => cam_pixclk,
+			fval => cam_fval,
+			lval => cam_lval,
+			pixdata	=> cam_pixdata,
+			sramo		=> cam_sramo
+    ); 
   
 
   -----------------------------------------------------------------------------

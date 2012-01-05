@@ -40,6 +40,16 @@ library gaisler;
 
 package hwswlib is
 
+	type sram_t is record
+		addr		: std_logic_vector(19 downto 0);
+		data		: std_logic_vector(15 downto 0);
+		we			: std_logic;
+		oe			: std_logic;
+		ce			: std_logic;
+		ub			: std_logic;
+		lb			: std_logic;
+	end record;
+
 	component dispctrl
 	  generic(
 		 pindex      : integer := 0;
@@ -58,6 +68,31 @@ package hwswlib is
 		 ahbi      : in  ahb_mst_in_type;
 		 ahbo      : out ahb_mst_out_type
 		 );
+	end component;
+	
+	component kamera
+		generic(
+			pindex      : integer := 0;
+			paddr       : integer := 0;
+			pmask       : integer := 16#fff#;
+			hindex      : integer := 0;
+			hirq        : integer := 0;
+			ahbaccsz    : integer := 32
+			);
+		
+		port (
+			rst       : in std_logic;           -- Synchronous reset
+			clk       : in std_logic;
+--			apbi      : in apb_slv_in_type;
+--			apbo      : out apb_slv_out_type;
+--			ahbi      : in  ahb_mst_in_type;
+--			ahbo      : out ahb_mst_out_type;
+			pixclk		: in std_logic;
+			fval			: in std_logic;
+			lval			: in std_logic;
+			pixdata		: in std_logic_vector(11 downto 0);
+			sramo			: out sram_t
+			);
 	end component;
 end;
 
