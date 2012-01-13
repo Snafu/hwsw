@@ -83,14 +83,20 @@ entity top is
 		cam_fval			: in std_logic;
 		cam_lval			: in std_logic;
 		cam_pixdata		: in std_logic_vector(11 downto 0);
-		cam_sramo			: out sram_t;
+		cam_sramo		: out sram_t;
 		cam_resetN		:	out std_logic;
 		cam_xclk			:	out std_logic;
 		 
 	 -- TESTSIGNALE
 	clk_test				:	out std_logic;
 	pxl_clk_out			:	out std_logic;
-	cam_resetN_dbg	: out std_logic
+	cam_resetN_dbg	: out std_logic;
+	
+	cam_fval_dbg			: out std_logic;
+	cam_lval_dbg			: out std_logic;
+	cam_pixdata_dbg		: out std_logic_vector(11 downto 0)
+	
+	
   );
 end top;
 
@@ -155,6 +161,7 @@ architecture behaviour of top is
   -- signals for AUX UART
   signal aux_uart_sel      : std_ulogic;
   signal aux_uart_exto     : module_out_type;
+  
   
   component altera_pll IS
     PORT
@@ -428,6 +435,10 @@ begin
 	
 	cam_xclk <= cam_clock;
 	pxl_clk_out <= cam_pixclk;
+	
+	cam_lval_dbg <= cam_lval;
+	cam_fval_dbg <= cam_fval;
+	cam_pixdata_dbg <= cam_pixdata;
 	
 	-----------------------------------------------------------------------------
 	-- DISPLAY controller

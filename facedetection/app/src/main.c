@@ -120,23 +120,36 @@ int main(int argc, char **argv)
 
 	uint32_t i;
 	uint32_t j;
+
+	/*
+ 		i2c config for camera, see hints.pdf
+ 	*/
 	
+	// power pll
 	i2c_write(0x10,0x51);
 	for(j = 0; j < 1300; j++) asm volatile("nop\n\t");
 
+	// pll factor + divider
+	i2c_write(0x11,0x1404);			// 25MHz
 	//i2c_write(0x11,0x3004);
-	i2c_write(0x11,0x1e04);
+	//i2c_write(0x11,0x1e04);
 	for(j = 0; j < 1300; j++) asm volatile("nop\n\t");
 
+	// pll p1 divider
 	i2c_write(0x12,0x01);
 	for(j = 0; j < 1300; j++) asm volatile("nop\n\t");
 
+	// use and power pll
 	i2c_write(0x10,0x53);
 	for(j = 0; j < 1300; j++) asm volatile("nop\n\t");
 
+	// invert pixel clock
 	i2c_write(0x0a,0x8000);
 	for(j = 0; j < 1300; j++) asm volatile("nop\n\t");
 
+	
+	// slew rate settings
+	// 1024 | 868 | 2
 /*
 	// red -> yellow
 	for(i = 0; i < 0xff; i++)

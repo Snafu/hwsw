@@ -125,7 +125,7 @@ begin
 			case c.lcnt is
 			-- First pixel half-line
 			when FIRST =>
-				if c.ccnt = 0 then
+				if c.ccnt = 1 then
 					w.addr := 0;
 				end if;
 				
@@ -151,7 +151,7 @@ begin
 			
 			-- Second pixel half-line
 			when SECOND =>
-				if c.ccnt = 0 then
+				if c.ccnt = 1 then
 					w.addr := 1;
 				end if;
 				
