@@ -117,6 +117,7 @@ getYCbCrColorValue	src/image.c	/^ycbcr_color_t getYCbCrColorValue(image_t *i, in
 height	include/image.h	/^	uint32_t height;$/;"	m	struct:__anon4
 i2c_write	include/i2c.h	8;"	d
 image_t	include/image.h	/^} image_t;$/;"	t	typeref:struct:__anon4
+initCamera	src/camera.c	/^void initCamera(void)$/;"	f
 initializeImage	src/main.c	/^void initializeImage(image_t *template, image_t *image)$/;"	f
 main	src/main.c	/^int main(int argc, char **argv)$/;"	f
 paintRectangle	src/detectFace.c	/^void paintRectangle(image_t *image, rect_t *rectangle)$/;"	f
