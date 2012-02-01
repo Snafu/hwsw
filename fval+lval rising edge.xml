@@ -1,0 +1,26 @@
+<File Content='Logic Analyzer Trigger Specification' Owner='' Project='' Desc='' Version='03.60.0002' Date='Feb 2, 2012 15:03:38'>
+<Trigger Mode='Timing'>
+<Step Number='1'>
+<If>
+<Event ParensNeeded='F'>
+<BusSignal Module='My Logic Analyzer-1' Name='CAM' Bit='2' Operator='Rising Edge'/>
+</Event>
+<Occurrence Value='1' Mode='Eventual'/>
+<Action>
+<Goto Step='2'/>
+</Action>
+</If>
+</Step>
+<Step Number='2'>
+<If>
+<Event ParensNeeded='F'>
+<BusSignal Module='My Logic Analyzer-1' Name='CAM' Bit='3' Operator='Rising Edge'/>
+</Event>
+<Occurrence Value='1' Mode='Eventual'/>
+<Action>
+<TriggerAction Operator='Fill Memory'/>
+</Action>
+</If>
+</Step>
+</Trigger>
+</File>
