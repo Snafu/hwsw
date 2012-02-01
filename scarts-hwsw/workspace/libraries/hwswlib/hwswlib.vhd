@@ -32,11 +32,11 @@ library grlib;
 use grlib.amba.all;
 use grlib.devices.all;
 use grlib.stdlib.all;
-use gaisler.misc.all;
 
 library techmap;
 use techmap.gencomp.all;
 library gaisler;
+use gaisler.misc.all;
 
 package hwswlib is
 
@@ -59,6 +59,7 @@ package hwswlib is
 		ub			: std_logic;
 		lb			: std_logic;
 	end record;
+	type writestate_type is (IDLE, STARTBLOCK, HANDLEBLOCK);
 
 	component dispctrl
 	  generic(
@@ -79,6 +80,7 @@ package hwswlib is
 		 ahbo      : out ahb_mst_out_type;
 		 rdaddress : out std_logic_vector(8 downto 0);
 		 rddata    : in std_logic_vector(31 downto 0);
+		writestate : out writestate_type;
 		 blockrdy  : in std_logic
 		 );
 	end component;

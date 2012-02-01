@@ -27,7 +27,7 @@ library gaisler;
 use gaisler.misc.all;
 
 library hwswlib;
-use hwswlib.all;
+use work.hwswlib.all;
  
  
 entity dispctrl is
@@ -50,6 +50,7 @@ entity dispctrl is
     ahbo      : out ahb_mst_out_type;
 		rdaddress : out std_logic_vector(8 downto 0);
 		rddata    : in std_logic_vector(31 downto 0);
+		writestate : out writestate_type;
 		blockrdy  : in std_logic
     );
 
@@ -71,7 +72,7 @@ architecture rtl of dispctrl is
 
   type state_type is (running, not_running, reset);
   type job_type is (idle, busy);
-	type writestate_type is (IDLE, STARTBLOCK, HANDLEBLOCK);
+	--type writestate_type is (IDLE, STARTBLOCK, HANDLEBLOCK);
 
   signal ahbready							: std_logic;
   
@@ -87,10 +88,6 @@ architecture rtl of dispctrl is
 
   type write_t is record
 		face			: facebox_t;
-		--top				: std_logic_vector(9 downto 0);
-		--left			: std_logic_vector(9 downto 0);
-		--bottom		: std_logic_vector(9 downto 0);
-		--right			: std_logic_vector(9 downto 0);
 		colcnt		: std_logic_vector(9 downto 0);
 		rowcnt		: std_logic_vector(9 downto 0);
 		address 	: std_logic_vector(31 downto 0);
@@ -98,13 +95,15 @@ architecture rtl of dispctrl is
 		start			: std_logic;
   end record;
 
-	signal numBlocks_sig,numBlocks_sig_n : INTEGER range -100 to 100;
-	signal pixCount_sig,pixCount_sig_n : INTEGER range 0 to 511;
+	signal numBlocks_sig,numBlocks_sig_n : INTEGER range -10 to 100;
+	signal pixCount_sig,pixCount_sig_n : INTEGER range 0 to 512;
   
 	signal facebox_sig,facebox_sig_n	: facebox_t;
   signal output_sig,output_sig_n	: write_t;
 
 	signal writeState_sig,writeState_sig_n : writestate_type;
+	signal dpaddr_sig,dpaddr_sig_n : std_logic_vector(8 downto 0);
+	signal dpdata_sig,dpdata_sig_n : std_logic_vector(31 downto 0);
   
 begin
 
@@ -116,18 +115,25 @@ begin
   apbo.pindex  <= pindex;
   apbo.pconfig <= PCONFIG;
   
-  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig)
+  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy)
     variable apbwrite	: std_logic;
     variable apbrdata : std_logic_vector(31 downto 0);
   	variable output	: write_t;
 		variable facebox	: facebox_t;
-		variable numBlocks : INTEGER range -100 to 100;
-		variable pixCount : INTEGER range 0 to 511;
+		variable numBlocks : INTEGER range -10 to 100;
+		variable pixCount : INTEGER range 0 to 512;
 		variable writeState : writestate_type;
+		variable dpaddr : std_logic_vector(8 downto 0);
+		variable dpdata : std_logic_vector(31 downto 0);
   begin
 		
 		output := output_sig;
 		facebox := facebox_sig;
+		numBlocks := numBlocks_sig;
+		pixCount := pixCount_sig;
+		writeState := writeState_sig;
+		dpaddr := dpaddr_sig;
+		dpdata := dpdata_sig;
 	
 		apbrdata := (others => '0');
 		
@@ -183,6 +189,10 @@ begin
 
 			output.address := FIFOSTART;
 			output.face := facebox;
+
+			writeState := IDLE;
+			dpaddr := (others => '0');
+			dpdata := (others => '0');
 		end if;
 
 
@@ -199,38 +209,44 @@ begin
 
 	 	output.start := '0';
 
-		case writeState_sig is
+		case writeState is
 		when IDLE =>
 			if numBlocks > 0 then
 				writeState := STARTBLOCK;
-				rdaddress <= conv_std_logic_vector(pixCount,9);
+				dpaddr := conv_std_logic_vector(pixCount,9);
 			end if;
 
 		when STARTBLOCK =>
 			output.start := '1';
 			output.data := rddata;
-			writeState := HANDLEBLOCK;
+
+			if dmao.ready = '1' then
+				writeState := HANDLEBLOCK;
 
 			-- increment pixelbuf counter
-			if pixCount < 511 then
+			--if pixCount < 511 then
+			--	pixCount := pixCount + 1;
+			--else
+			--	pixCount := 0;
+			--end if;
 				pixCount := pixCount + 1;
-			else
-				pixCount := 0;
-			end if;
 
-			rdaddress <= conv_std_logic_vector(pixCount,9);
+			--dpaddr := conv_std_logic_vector(pixCount,9);
 
 			-- increment column and row counter
-			if output.colcnt = conv_std_logic_vector(799,10) then
-				output.colcnt := "0000000000";
-				if output.rowcnt = conv_std_logic_vector(479,10) then
-					output.rowcnt := "0000000000";
-					output.address := FIFOSTART;
-				else
-				 output.rowcnt := output.rowcnt + '1';
-				end if;
-			else
-				output.colcnt := output.colcnt + '1';
+			--if output.colcnt = conv_std_logic_vector(799,10) then
+			--	output.colcnt := "0000000000";
+			--	if output.rowcnt = conv_std_logic_vector(479,10) then
+			--		output.rowcnt := "0000000000";
+			--		output.address := FIFOSTART;
+			--		-- refresh face position
+			--		output.face := facebox_sig;
+			--	else
+			--	 output.rowcnt := output.rowcnt + '1';
+			--	end if;
+			--else
+			--	output.colcnt := output.colcnt + '1';
+			--end if;
 			end if;
 			
 
@@ -241,43 +257,66 @@ begin
 				output.data := rddata;
 
 				-- increment pixelbuf counter
-				if pixCount < 511 then
-					pixCount := pixCount + 1;
-				else
-					pixCount := 0;
+				--if pixCount < 511 then
+				--	pixCount := pixCount + 1;
+				--else
+				--	pixCount := 0;
+				--end if;
+
+				dpaddr := conv_std_logic_vector(pixCount,9);
+				pixCount := pixCount + 1;
+
+
+			-- increment column and row counter
+			--if output.colcnt = conv_std_logic_vector(799,10) then
+			--	output.colcnt := "0000000000";
+			--	if output.rowcnt = conv_std_logic_vector(479,10) then
+			--		output.rowcnt := "0000000000";
+			--		output.address := FIFOSTART;
+			--		-- refresh face position
+			--		output.face := facebox_sig;
+			--	else
+			--	 output.rowcnt := output.rowcnt + '1';
+			--	end if;
+			--else
+			--	output.colcnt := output.colcnt + '1';
+			--end if;
+
+				-- end of block
+				if output.address(5 downto 2) = "0000" then
+					output.start := '0';
+					writeState := IDLE;
+					numBlocks := numBlocks - 1;
 				end if;
-
-				rdaddress <= conv_std_logic_vector(pixCount,9);
-
-				-- increment column and row counter
-				if output.colcnt = conv_std_logic_vector(799,10) then
-					output.colcnt := "0000000000";
-					if output.rowcnt = conv_std_logic_vector(479,10) then
-						output.rowcnt := "0000000000";
-						output.address := FIFOSTART;
-						-- refresh face position
-						output.face := facebox_sig;
-					else
-					 output.rowcnt := output.rowcnt + '1';
-					end if;
-				else
-					output.colcnt := output.colcnt + '1';
-				end if;
-			end if;
-
-			-- end of block
-			if output.address(3 downto 0) = (3 downto 0 => '0') then
-				output.start := '0';
-				writeState := IDLE;
-				numBlocks := numBlocks - 1;
 			end if;
 
 		end case; -- writeState_sig
 
+		if pixCount = 512 then
+			pixCount := 0;
+		end if;
+
+		-- increment column counter
+		if output.colcnt = conv_std_logic_vector(800,10) then
+			output.colcnt := "0000000000";
+			output.rowcnt := output.rowcnt + '1';
+		end if;
+
+		-- increment row counter
+		if output.rowcnt = conv_std_logic_vector(480,10) then
+			output.rowcnt := "0000000000";
+			output.address := FIFOSTART;
+			-- refresh face position
+			output.face := facebox_sig;
+		end if;
+
 
 		-- update signals
+		dpaddr_sig_n <= dpaddr;
 		facebox_sig_n <= facebox;
 		output_sig_n <= output;
+		pixCount_sig_n <= pixCount;
+		numBlocks_sig_n <= numBlocks;
 		writeState_sig_n <= writeState;
 		
     apbo.prdata <= apbrdata;
@@ -308,9 +347,17 @@ begin
   reg_proc : process(clk)
   begin
     if rising_edge(clk) then
-			output_sig <= output_sig_n;
+			dpaddr_sig <= dpaddr_sig_n;
+			dpdata_sig <= rddata;
+			rdaddress <= dpaddr_sig_n;
+
 			facebox_sig <= facebox_sig_n;
+			output_sig <= output_sig_n;
+			pixCount_sig <= pixCount_sig_n;
+			numBlocks_sig <= numBlocks_sig_n;
 			writeState_sig <= writeState_sig_n;
+			writestate <= writeState_sig_n;
+
     end if;
   end process;
   
