@@ -40,6 +40,16 @@ library gaisler;
 
 package hwswlib is
 
+	type sram_ctrl_t is record
+		addr		: std_logic_vector(19 downto 0);
+		we			: std_logic;
+		oe			: std_logic;
+		ce			: std_logic;
+		ub			: std_logic;
+		lb			: std_logic;
+	end record;
+
+
 	type sram_t is record
 		addr		: std_logic_vector(19 downto 0);
 		data		: std_logic_vector(15 downto 0);
@@ -94,7 +104,8 @@ package hwswlib is
 			fval			: in std_logic;
 			lval			: in std_logic;
 			pixdata		: in std_logic_vector(11 downto 0);
-			sramo			: out sram_t
+			sram_ctrl	: out sram_ctrl_t;
+			sram_data	: inout std_logic_vector(15 downto 0)
 			);
 	end component;
 

@@ -83,7 +83,8 @@ entity top is
 		cam_fval			: in std_logic;
 		cam_lval			: in std_logic;
 		cam_pixdata		: in std_logic_vector(11 downto 0);
-		cam_sramo		: inout sram_t;
+		cam_sram_ctrl	: out sram_ctrl_t;
+		cam_sram_data	: inout std_logic_vector(15 downto 0);
 		cam_resetN		:	out std_logic;
 		cam_xclk			:	out std_logic;
 		
@@ -504,13 +505,14 @@ begin
     )
     port map
     (
-      rst => syncrst,
-      clk => clk,
-			pixclk => cam_pixclk,
-			fval => cam_fval,
-			lval => cam_lval,
-			pixdata	=> cam_pixdata,
-			sramo		=> cam_sramo
+			rst			=> syncrst,
+			clk			=> clk,
+			pixclk		=> cam_pixclk,
+			fval			=> cam_fval,
+			lval			=> cam_lval,
+			pixdata		=> cam_pixdata,
+			sram_ctrl	=> cam_sram_ctrl,
+			sram_data	=> cam_sram_data
     ); 
   
 
