@@ -96,8 +96,8 @@ architecture rtl of dispctrl is
 		done			: std_logic;
   end record;
   
-	signal c,cin	: control_t;
-  signal r,rin	: write_t;
+	signal controlSig,controlSig_n	: control_t;
+  signal writeSig,writeSig_n	: write_t;
   
   signal vcc	: std_logic;
   
@@ -116,12 +116,12 @@ begin
   control_proc : process(rst,apbi,dmao,r,c)
     variable apbwrite	: std_logic;
     variable apbrdata : std_logic_vector(31 downto 0);
-  	variable v	: write_t;
-		variable w	: control_t;
+  	variable output	: write_t;
+		variable writectrl	: control_t;
   begin
 		
-		v := r;
-		w := c;
+		output := writeSig;
+		writectrl := controlSig;
 	
 		apbrdata := (others => '0');
 		
@@ -134,34 +134,34 @@ begin
 	    -- FB start address
 	    if apbwrite = '1' then
 				if apbi.pwdata(0) = '1' then
-			  	w.write_en := '1';
+			  	writectrl.write_en := '1';
 				else
-					w.write_en := '0';
+					writectrl.write_en := '0';
 	    	end if;
-				apbrdata := (0 => c.write_en, others => '0');
+				apbrdata := (0 => controlSig.write_en, others => '0');
 			end if;
 			apbrdata := x"DEADBABE";
 	  when "0001" =>
 	    -- Color register
 	    if apbwrite = '1' then
-	    	w.data := apbi.pwdata;
+	    	writectrl.data := apbi.pwdata;
 	    end if;
 			--apbrdata := data;
-			apbrdata := c.data;
+			apbrdata := controlSig.data;
 		when "0010" =>
 			-- TopLeft address
 			if apbwrite = '1' then
-				w.top := apbi.pwdata(25 downto 16);
-				w.left := apbi.pwdata(9 downto 0);
+				writectrl.top := apbi.pwdata(25 downto 16);
+				writectrl.left := apbi.pwdata(9 downto 0);
 			end if;
-			apbrdata := "000000" & c.top & "000000" & c.left;
+			apbrdata := "000000" & controlSig.top & "000000" & controlSig.left;
 		when "0011" =>
 			-- BottomRight address
 			if apbwrite = '1' then
-				w.bottom := apbi.pwdata(25 downto 16);
-				w.right := apbi.pwdata(9 downto 0);
+				writectrl.bottom := apbi.pwdata(25 downto 16);
+				writectrl.right := apbi.pwdata(9 downto 0);
 			end if;
-			apbrdata := "000000" & c.bottom & "000000" & c.right;
+			apbrdata := "000000" & controlSig.bottom & "000000" & controlSig.right;
 	  when others =>
 	  end case;
 		         
@@ -170,10 +170,10 @@ begin
 	  -- Control reset
 	  ---------------------------------------------------------------------------
 	  if rst = '0' then
-			w.data := x"000FF000";
-			w.startaddr := x"E0000000";
-			w.endaddr := x"E0176FFC";
-			w.write_en := '0';
+			writectrl.data := x"000FF000";
+			writectrl.startaddr := x"E0000000";
+			writectrl.endaddr := x"E0176FFC";
+			writectrl.write_en := '0';
 		end if;
 
 
@@ -183,50 +183,50 @@ begin
 		 
 		ahbready <= dmao.ready;
 		
-	 	v.start := '0';
-		if rst = '0' or c.write_en = '0' then
-			v.newburst := '0';
-			v.done := '0';
-		elsif c.write_en = '1' and r.done = '0' then
-			v.start := '1';
-			if r.start = '0' then
-				v.newburst := '0';
-				if r.newburst = '0' then
-					v.address := c.startaddr;
-					v.data := c.data;
-					v.colcnt := "0000000000";
-					v.rowcnt := "0000000000";
-					v.top := c.top;
-					v.left := c.left;
-					v.bottom := c.bottom;
-					v.right := c.right;
+	 	output.start := '0';
+		if rst = '0' or controlSig.write_en = '0' then
+			output.newburst := '0';
+			output.done := '0';
+		elsif controlSig.write_en = '1' and writeSig.done = '0' then
+			output.start := '1';
+			if writeSig.start = '0' then
+				output.newburst := '0';
+				if writeSig.newburst = '0' then
+					output.address := controlSig.startaddr;
+					output.data := controlSig.data;
+					output.colcnt := "0000000000";
+					output.rowcnt := "0000000000";
+					output.top := controlSig.top;
+					output.left := controlSig.left;
+					output.bottom := controlSig.bottom;
+					output.right := controlSig.right;
 				end if;
 			end if;
-			if r.start = '1' and dmao.ready = '1' then
-				v.newburst := '0';
-				v.address := v.address + "100";
-				if v.colcnt = conv_std_logic_vector(799,10) then
-					v.colcnt := "0000000000";
-					v.rowcnt := v.rowcnt + '1';
+			if writeSig.start = '1' and dmao.ready = '1' then
+				output.newburst := '0';
+				output.address := output.address + "100";
+				if output.colcnt = conv_std_logic_vector(799,10) then
+					output.colcnt := "0000000000";
+					output.rowcnt := output.rowcnt + '1';
 				else
-					v.colcnt := v.colcnt + '1';
+					output.colcnt := output.colcnt + '1';
 				end if;
-				if v.address > c.endaddr then
-					v.start := '0';
-					v.address := (others => '0');
-					v.data := (others => '0');
-					v.done := '1';
-				elsif v.address(3 downto 0) = (3 downto 0 => '0') then
-					v.newburst := '1';
-					v.start := '0';
+				if output.address > controlSig.endaddr then
+					output.start := '0';
+					output.address := (others => '0');
+					output.data := (others => '0');
+					output.done := '1';
+				elsif output.address(3 downto 0) = (3 downto 0 => '0') then
+					output.newburst := '1';
+					output.start := '0';
 				end if;
 			end if;
 		end if;
 			 
 			
-		w.write_done := v.done;
-		rin <= v;
-		cin <= w;
+		writectrl.write_done := output.done;
+		writeSig_n <= output;
+		controlSig_n <= writectrl;
 		
     apbo.prdata <= apbrdata;
 		dmai.burst <= '1';
@@ -234,14 +234,14 @@ begin
 		dmai.size <= "010";
 		dmai.write <= '1';
 		dmai.busy <= '0';
-		if ((r.rowcnt = r.top or r.rowcnt = r.bottom) and (r.colcnt >= r.left and r.colcnt <= r.right)) or
-			 ((r.colcnt = r.left or r.colcnt = r.right) and (r.rowcnt >= r.top and r.rowcnt <= r.bottom)) then
+		if ((writeSig.rowcnt = writeSig.top or writeSig.rowcnt = writeSig.bottom) and (writeSig.colcnt >= writeSig.left and writeSig.colcnt <= writeSig.right)) or
+			 ((writeSig.colcnt = writeSig.left or writeSig.colcnt = writeSig.right) and (writeSig.rowcnt >= writeSig.top and writeSig.rowcnt <= writeSig.bottom)) then
 			dmai.wdata <= x"0000ff00";
 		else
-			dmai.wdata <= r.data;
+			dmai.wdata <= writeSig.data;
 		end if;
-		dmai.address <= r.address;
-		dmai.start <= r.start;
+		dmai.address <= writeSig.address;
+		dmai.start <= writeSig.start;
 		 
   end process;
   
@@ -253,8 +253,8 @@ begin
   reg_proc : process(clk)
   begin
     if rising_edge(clk) then
-			r <= rin;
-			c <= cin;
+			writeSig <= writeSig_n;
+			controlSig <= controlSig_n;
     end if;
   end process;
   
