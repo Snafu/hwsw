@@ -33,43 +33,36 @@ use work.hwswlib.all;
 entity kamera is
 
   generic(
-    pindex      : integer := 0;
-    paddr       : integer := 0;
-    pmask       : integer := 16#fff#;
-    hindex      : integer := 0;
-    hirq        : integer := 0;
-    ahbaccsz    : integer := 32
-    );
+		pindex      : integer := 0;
+		paddr       : integer := 0;
+		pmask       : integer := 16#fff#;
+		hindex      : integer := 0;
+		hirq        : integer := 0;
+		ahbaccsz    : integer := 32
+	);
   
-  port (
-    rst       : in std_logic;           -- Synchronous reset
-    clk       : in std_logic;
---    apbi      : in apb_slv_in_type;
---    apbo      : out apb_slv_out_type;
---    ahbi      : in  ahb_mst_in_type;
---    ahbo      : out ahb_mst_out_type;
-		pixclk		: in std_logic;
-		fval			: in std_logic;
-		lval			: in std_logic;
-		pixdata		: in std_logic_vector(11 downto 0);
-		sramo			: out sram_t
+	port (
+		rst				: in std_logic;           -- Synchronous reset
+		clk				: in std_logic;
+		pixclk			: in std_logic;
+		fval				: in std_logic;
+		lval				: in std_logic;
+		pixdata			: in std_logic_vector(11 downto 0);
+		sram_ctrl		: out sram_ctrl_t;
+		sram_data		: inout std_logic_vector(15 downto 0)
     );
-
 end ;
 
 architecture rtl of kamera is
   
---  constant REVISION : amba_version_type := 0; 
---  constant VENDOR_HWSW: amba_vendor_type := 16#08#;
---  constant HWSW_CAM: amba_device_type := 16#14#;
---  constant PCONFIG : apb_config_type := (
---     0 => ahb_device_reg ( VENDOR_HWSW, HWSW_CAM, 0, REVISION, 0),
---     1 => apb_iobar(paddr, pmask));
---  
---  signal dmai	: ahb_dma_in_type;
---  signal dmao	: ahb_dma_out_type;
-
-  signal vcc	: std_logic;
+  type sram_ctrl_t is record
+		addr		: std_logic_vector(19 downto 0);
+		we			: std_logic;
+		oe			: std_logic;
+		ce			: std_logic;
+		ub			: std_logic;
+		lb			: std_logic;
+	end record;
 	
 	type sram_t is record
 		addr		: std_logic_vector(19 downto 0);
@@ -87,23 +80,32 @@ architecture rtl of kamera is
 	type line_t is (FIRST, SECOND);
 	
 	
-	signal pixclk_old : std_logic;
+--	signal sram				: sram_t;
+	signal pixclk_old		: std_logic;
 	
 	signal fval_old		: std_logic;
 	signal fval_old_next	: std_logic;
 	
-	signal linecnt			: std_logic_vector(0 to 9); 
-	signal linecnt_next	: std_logic_vector(0 to 9);
+	signal lval_old		: std_logic;
+	signal lval_old_next	: std_logic;
+	
+	signal linecnt			: std_logic_vector(9 downto 0); 
+	signal linecnt_next	: std_logic_vector(9 downto 0);
   
-	signal rowcnt			: std_logic_vector(0 to 9);
-	signal rowcnt_next	: std_logic_vector(0 to 9);
+	signal rowcnt			: std_logic_vector(9 downto 0);
+	signal rowcnt_next	: std_logic_vector(9 downto 0);
 	
 	signal whichline		: line_t;
 	signal whichline_next: line_t;
-  
+	
+	signal pixelB			: std_logic_vector(7 downto 0);
+	signal pixelB_next	: std_logic_vector(7 downto 0);
+	
+	signal pixelG			: std_logic_vector(7 downto 0);
+	signal pixelG_next	: std_logic_vector(7 downto 0);
+	  
 begin
 
-  vcc <= '1';
 
 --  ahb_master : ahbmst generic map (hindex, hirq, VENDOR_HWSW,
 --	HWSW_CAM, 0, 3, 0)
@@ -114,11 +116,24 @@ begin
 --  apbo.pconfig <= PCONFIG;
   
   --readout : process(rst,apbi,dmao,dmai,s,c)
-  readout : process(rst,fval,lval,pixdata,pixclk)
+  readout : process(rst, fval, fval_old, lval, lval_old, whichline, pixdata ,pixclk, pixclk_old, rowcnt, linecnt, pixelG, pixelB)
 	begin
+		
+		rowcnt_next <= rowcnt;
+		linecnt_next <= linecnt;
+		pixelG_next <= pixelG;
+		pixelB_next <= pixelB;
+		whichline_next <= whichline;
 		
 		fval_old_next <= fval;
 		lval_old_next <= lval;
+		
+		sram_ctrl.we <= '1';
+		sram_ctrl.oe <= '1';
+		sram_ctrl.ce <= '1';
+		sram_ctrl.ub <= '0';
+		sram_ctrl.lb <= '0';
+		sram_ctrl.addr <= "00000000000000000000";
 		
 		-- rising edge of FVAL -> NEW FRAME starts
 		if(fval_old /= fval and fval = '1')
@@ -128,14 +143,54 @@ begin
 			linecnt_next <= "0000000000";			
 		end if;
 		
+		-- rising edge of LVAL -> NEW LINE starts
 		if(lval_old /= lval and lval = '1')
 		then
+			rowcnt_next  <= "0000000000";
+			linecnt_next <= linecnt + 1;
+			
+			if(whichline = FIRST)
+			then
+				whichline_next <= SECOND;
+			else
+				whichline_next <= FIRST;
+			end if;
 		
 		end if;
 		
 		-- rising edge of pxclk -> valid BAYER data from cam
 		if fval = '1' and lval = '1' and pixclk_old /= pixclk and pixclk = '1'
 		then
+			rowcnt_next  <= rowcnt + 1;
+			
+			-- FIRST LINE: save COMPLETE line to SRAM
+			if(whichline = FIRST)
+			then
+				if(rowcnt(0) = '0')
+				then
+					pixelG_next <= pixdata(11 downto 4);
+				else	
+					sram_ctrl.we <= '0';
+					sram_ctrl.ce <= '0';
+					sram_ctrl.addr(9 downto 0) <= rowcnt;
+					sram_data(7 downto 0) <= pixdata(7 downto 0);	-- save RED pixel
+					sram_data(15 downto 8) <= pixelG;
+				end if;
+				
+			-- SECOND LINE: calculate new pixel
+			else
+				-- save BLUE part of pixel
+				if(rowcnt(0) = '0')
+				then
+					pixelB_next <= pixdata(11 downto 4);
+					sram_ctrl.addr(9 downto 0) <= rowcnt;
+					sram_ctrl.ce <= '0';
+					sram_ctrl.oe <= '0';
+				else
+									
+				end if;
+			
+			end if;
 		
 		end if;
 			
@@ -143,27 +198,40 @@ begin
   end process;
   
 
+  
+  
 
   -----------------------------------------------------------------------------
   -- Registers in system clock domain
   -----------------------------------------------------------------------------
-  reg_proc : process(clk)
+  reg_proc : process(clk, rst)
   begin
   	if(rst = '0')
 	then
+		pixclk_old <= '0';
 		fval_old <= '0';
+		lval_old <= '0';
+		
 		linecnt <= "0000000000";
 		rowcnt <=  "0000000000";
 		whichline <= FIRST;
+		
+		pixelB <= "00000000";
+		pixelG <= "00000000";
 	else
 		if rising_edge(clk)
 		then
+			pixclk_old <= pixclk;
+			fval_old <= fval_old_next;
+			lval_old <= lval_old_next;
+			
 			linecnt <= linecnt_next;
 			rowcnt <= rowcnt_next;
 			whichline <= whichline_next;
 			
-			pixclk_old <= pixclk;
-			fval_old <= fval_old_next;
+			pixelB <= pixelB_next;
+			pixelG <= pixelG_next;
+					
 		end if;
 	end if;
 	end process;
