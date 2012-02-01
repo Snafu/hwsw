@@ -94,6 +94,19 @@ package hwswlib is
 			sramo			: out sram_t
 			);
 	end component;
+
+	component dp_pixelram
+        PORT
+        (
+		data            : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+                rdaddress               : IN STD_LOGIC_VECTOR (8 DOWNTO 0);
+                rdclock         : IN STD_LOGIC ;
+                wraddress               : IN STD_LOGIC_VECTOR (8 DOWNTO 0);
+                wrclock         : IN STD_LOGIC  := '1';
+                wren            : IN STD_LOGIC  := '0';
+                q               : OUT STD_LOGIC_VECTOR (31 DOWNTO 0)
+        );
+end component;
 end;
 
 

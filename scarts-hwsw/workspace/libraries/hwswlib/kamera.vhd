@@ -83,21 +83,23 @@ architecture rtl of kamera is
 	
 	type color_t is (R,G,B);
 	type pixel_t is array(color_t'left to color_t'right) of std_logic_vector(7 downto 0);
-  type pixline_t is array(1 to 800) of pixel_t;
+	type pixline_t is array(1 to 800) of pixel_t;
 	type line_t is (FIRST, SECOND);
 	
-	type convert_t is record
-		addr		: integer range 0 to 800*480*2-1;
-		cdata		: std_logic_vector(15 downto 0);
-		ccnt		: integer range 1 to 800;
-		rcnt		: integer range 1 to 480;
-		lcnt		: line_t;
-		col			: color_t;
-	end record;
 	
-	signal s,s_in		: sram_t;
-	signal c,c_in		: convert_t;
 	signal pixclk_old : std_logic;
+	
+	signal fval_old		: std_logic;
+	signal fval_old_next	: std_logic;
+	
+	signal linecnt			: std_logic_vector(0 to 9); 
+	signal linecnt_next	: std_logic_vector(0 to 9);
+  
+	signal rowcnt			: std_logic_vector(0 to 9);
+	signal rowcnt_next	: std_logic_vector(0 to 9);
+	
+	signal whichline		: line_t;
+	signal whichline_next: line_t;
   
 begin
 
@@ -112,99 +114,31 @@ begin
 --  apbo.pconfig <= PCONFIG;
   
   --readout : process(rst,apbi,dmao,dmai,s,c)
-  readout : process(rst,fval,lval,pixdata,pixclk,s,c)
-		variable v		: sram_t;
-		variable w		: convert_t;
+  readout : process(rst,fval,lval,pixdata,pixclk)
 	begin
-		v := s;
-		w := c;
 		
-		v.ce := '1';
+		fval_old_next <= fval;
+		lval_old_next <= lval;
 		
-		if fval = '1' and lval = '1' and pixclk_old /= pixclk and pixclk = '1' then
-			case c.lcnt is
-			-- First pixel half-line
-			when FIRST =>
-				if c.ccnt = 1 then
-					w.addr := 0;
-				end if;
-				
-				case c.col is
-				when G =>
-					w.cdata(7 downto 0) := pixdata(11 downto 4);
-					w.col := R;
-					
-				when R =>
-					w.cdata(15 downto 8) := pixdata(11 downto 4);
-					if c.ccnt = 800 then
-						w.col := B;
-						w.ccnt := 1;
-						w.rcnt := w.rcnt + 1;
-						w.lcnt := SECOND;
-					else
-						w.col := G;
-						w.ccnt := w.ccnt + 1;
-					end if;
-					
-				when others =>
-				end case;
+		-- rising edge of FVAL -> NEW FRAME starts
+		if(fval_old /= fval and fval = '1')
+		then
+			whichline_next <= FIRST;
+			rowcnt_next  <= "0000000000";
+			linecnt_next <= "0000000000";			
+		end if;
+		
+		if(lval_old /= lval and lval = '1')
+		then
+		
+		end if;
+		
+		-- rising edge of pxclk -> valid BAYER data from cam
+		if fval = '1' and lval = '1' and pixclk_old /= pixclk and pixclk = '1'
+		then
+		
+		end if;
 			
-			-- Second pixel half-line
-			when SECOND =>
-				if c.ccnt = 1 then
-					w.addr := 1;
-				end if;
-				
-				case c.col is
-				when B =>
-					w.cdata(7 downto 0) := pixdata(11 downto 4);
-					w.col := G;
-					
-				when G =>
-					w.cdata(15 downto 8) := pixdata(11 downto 4);
-					if c.ccnt = 800 then
-						w.col := R;
-						w.ccnt := 1;
-						w.rcnt := w.rcnt + 1;
-						w.lcnt := SECOND;
-					else
-						w.col := B;
-						w.ccnt := w.ccnt + 1;
-					end if;
-					
-				when others =>
-				end case;
-			end case;
-					
-			v.we := '0';
-			v.ce := '0';
-			v.oe := '0';
-			v.ub := '0';
-			v.lb := '0';
-			v.addr := conv_std_logic_vector(w.addr,20);
-			v.data := w.cdata;
-			w.addr := w.addr + 2;
-		end if;
-		
-		if rst = '1' or fval = '0' then
-			v.ce := '1';
-			w.rcnt := 1;
-			w.ccnt := 1;
-			w.lcnt := FIRST;
-			w.col := G;
-			w.addr := 0;
-		end if;
-		
-		s_in <= v;
-		c_in <= w;
-		
-		
-		sramo.addr <= v.addr;
-		sramo.data <= v.data;
-		sramo.we <= v.we;
-		sramo.oe <= v.oe;
-		sramo.ub <= v.ub;
-		sramo.lb <= v.lb;
 		
   end process;
   
@@ -215,12 +149,24 @@ begin
   -----------------------------------------------------------------------------
   reg_proc : process(clk)
   begin
-    if rising_edge(clk) then
-			s <= s_in;
-			c <= c_in;
+  	if(rst = '0')
+	then
+		fval_old <= '0';
+		linecnt <= "0000000000";
+		rowcnt <=  "0000000000";
+		whichline <= FIRST;
+	else
+		if rising_edge(clk)
+		then
+			linecnt <= linecnt_next;
+			rowcnt <= rowcnt_next;
+			whichline <= whichline_next;
+			
 			pixclk_old <= pixclk;
-    end if;
-  end process;
+			fval_old <= fval_old_next;
+		end if;
+	end if;
+	end process;
   
 
 

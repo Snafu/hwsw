@@ -83,10 +83,19 @@ entity top is
 		cam_fval			: in std_logic;
 		cam_lval			: in std_logic;
 		cam_pixdata		: in std_logic_vector(11 downto 0);
-		cam_sramo		: out sram_t;
+		cam_sramo		: inout sram_t;
 		cam_resetN		:	out std_logic;
 		cam_xclk			:	out std_logic;
-		 
+		
+		-- dpram
+		data_sig			: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+		rdaddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
+		rdclock_sig		: IN STD_LOGIC ;
+		wraddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
+		wrclock_sig		: IN STD_LOGIC  := '1';
+		wren_sig			: IN STD_LOGIC  := '0';
+		q_sig				: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
+		
 	 -- TESTSIGNALE
 	clk_test				:	out std_logic;
 	pxl_clk_out			:	out std_logic;
@@ -466,6 +475,18 @@ begin
 	-----------------------------------------------------------------------------
 	-- Kamera readout
 	-----------------------------------------------------------------------------
+	
+	dp_pixelram_inst : dp_pixelram
+	PORT MAP
+	(
+		data     	=> data_sig,
+		rdaddress	=> rdaddress_sig,
+		rdclock		=> rdclock_sig,
+		wraddress	=> wraddress_sig,
+		wrclock		=> wrclock_sig,
+		wren			=> wren_sig,
+		q				=> q_sig
+	);
 	
 	
   cam0 : kamera
