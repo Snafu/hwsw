@@ -89,12 +89,14 @@ entity top is
 		
 		-- dpram
 		data_sig			: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-		rdaddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
+		rdaddress_sig	: buffer STD_LOGIC_VECTOR (8 DOWNTO 0);
 		rdclock_sig		: IN STD_LOGIC ;
 		wraddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
 		wrclock_sig		: IN STD_LOGIC  := '1';
 		wren_sig			: IN STD_LOGIC  := '0';
 		q_sig				: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
+		
+		blockrdy_sig : buffer std_logic;
 		
 	 -- TESTSIGNALE
 	clk_test				:	out std_logic;
@@ -469,7 +471,10 @@ begin
       apbi => apbi,
       apbo => apbo(1),
       ahbi => grlib_ahbmi,
-      ahbo => disp_ahbmo
+      ahbo => disp_ahbmo,
+			rdaddress => rdaddress_sig,
+			rddata => data_sig,
+			blockrdy => blockrdy_sig
     );  
 	
 	-----------------------------------------------------------------------------
@@ -481,7 +486,7 @@ begin
 	(
 		data     	=> data_sig,
 		rdaddress	=> rdaddress_sig,
-		rdclock		=> rdclock_sig,
+		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
 		wrclock		=> wrclock_sig,
 		wren			=> wren_sig,

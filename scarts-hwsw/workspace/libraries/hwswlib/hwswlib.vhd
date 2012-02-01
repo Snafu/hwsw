@@ -66,7 +66,10 @@ package hwswlib is
 		 apbi      : in apb_slv_in_type;
 		 apbo      : out apb_slv_out_type;
 		 ahbi      : in  ahb_mst_in_type;
-		 ahbo      : out ahb_mst_out_type
+		 ahbo      : out ahb_mst_out_type;
+		 rdaddress : out std_logic_vector(8 downto 0);
+		 rddata    : in std_logic_vector(31 downto 0);
+		 blockrdy  : in std_logic
 		 );
 	end component;
 	
