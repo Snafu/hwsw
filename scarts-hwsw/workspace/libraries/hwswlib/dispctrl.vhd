@@ -113,7 +113,7 @@ begin
   apbo.pindex  <= pindex;
   apbo.pconfig <= PCONFIG;
   
-  control_proc : process(rst,apbi,dmao,r,c)
+  control_proc : process(rst,apbi,dmao)
     variable apbwrite	: std_logic;
     variable apbrdata : std_logic_vector(31 downto 0);
   	variable output	: write_t;
