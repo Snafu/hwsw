@@ -7,6 +7,8 @@ use work.pkg_dis7seg.all;
 
 use std.textio.all;
 
+use work.hwswlib.all;
+
 entity top_tb is
 end top_tb;
 
@@ -44,6 +46,19 @@ architecture behaviour of top_tb is
   -- AUX UART
   signal aux_uart_rx : std_logic;
   signal aux_uart_tx : std_logic;
+
+	signal	cam_pixclk		:  std_logic;
+	signal		cam_fval			:  std_logic;
+	signal		cam_lval			:  std_logic;
+	signal		cam_pixdata		:  std_logic_vector(11 downto 0);
+
+	signal	data_sig			:  STD_LOGIC_VECTOR (31 DOWNTO 0);
+	signal	rdclock_sig		:  STD_LOGIC ;
+	signal	wraddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
+
+	signal blockrdy : std_logic;
+	signal writestate : writestate_type;
+	signal ahbready : std_logic;
   
   file appFile : text  open read_mode is "app.srec";
 
@@ -76,7 +91,36 @@ architecture behaviour of top_tb is
       ltm_grest   : out std_logic;
       -- AUX UART
       aux_uart_rx : in  std_logic;
-      aux_uart_tx : out std_logic
+      aux_uart_tx : out std_logic;
+			-- CAM
+			cam_pixclk		: in std_logic;
+			cam_fval			: in std_logic;
+			cam_lval			: in std_logic;
+			cam_pixdata		: in std_logic_vector(11 downto 0);
+			cam_sram_ctrl	: out sram_ctrl_t;
+			cam_sram_data	: inout std_logic_vector(15 downto 0);
+			cam_resetN		:	out std_logic;
+			cam_xclk			:	out std_logic;
+			-- DPRAM
+			data_sig			: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+			rdaddress_sig	: buffer STD_LOGIC_VECTOR (8 DOWNTO 0);
+			rdclock_sig		: IN STD_LOGIC ;
+			wraddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
+			wrclock_sig		: IN STD_LOGIC  := '1';
+			wren_sig			: IN STD_LOGIC  := '0';
+			q_sig					: buffer STD_LOGIC_VECTOR (31 DOWNTO 0);
+
+
+			-- TESTSIGNALE
+			blockrdy				: in std_logic;
+
+			clk_test				:	out std_logic;
+			pxl_clk_out			:	out std_logic;
+			cam_resetN_dbg	: out std_logic;
+
+			cam_fval_dbg		: out std_logic;
+			cam_lval_dbg		: out std_logic;
+			cam_pixdata_dbg	: out std_logic_vector(11 downto 0)
       );    
   end component;
 
@@ -157,7 +201,15 @@ begin
       ltm_den        => ltm_den,
       ltm_grest      => ltm_grest,
       aux_uart_rx    => aux_uart_rx,
-      aux_uart_tx    => aux_uart_tx
+      aux_uart_tx    => aux_uart_tx,
+			cam_pixclk => cam_pixclk,
+			cam_fval => cam_fval,
+			cam_lval => cam_lval,
+			cam_pixdata => cam_pixdata,
+			data_sig			=> data_sig,
+			rdclock_sig		=> rdclock_sig,
+			wraddress_sig	=> wraddress_sig,
+			blockrdy => blockrdy
       );
 
 
@@ -245,11 +297,26 @@ begin
     
   begin
 
+		blockrdy <= '0';
     rst <= RST_ACT;
     D_Rxd <= '1';
     aux_uart_rx <= '1';
     icwait(100);
     rst <= not RST_ACT;
+		
+		icwait(500);
+		blockrdy <= '1';
+		icwait(1);
+		blockrdy <= '0';
+		icwait(32);
+		blockrdy <= '1';
+		icwait(1);
+		blockrdy <= '0';
+		icwait(10);
+		blockrdy <= '1';
+		icwait(1);
+		blockrdy <= '0';
+
 
     -- wait until bootloader is ready to receive program
     icwait(2000);

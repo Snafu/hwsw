@@ -37,7 +37,7 @@ library gaisler;
 use gaisler.misc.all;
 use gaisler.memctrl.all;
 
---library hwswlib;
+library hwswlib;
 use work.hwswlib.all;
 use work.i2clib.all;
 
@@ -87,28 +87,26 @@ entity top is
 		cam_sram_data	: inout std_logic_vector(15 downto 0);
 		cam_resetN		:	out std_logic;
 		cam_xclk			:	out std_logic;
-		
-		-- dpram
+		-- DPRAM
 		data_sig			: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
 		rdaddress_sig	: buffer STD_LOGIC_VECTOR (8 DOWNTO 0);
 		rdclock_sig		: IN STD_LOGIC ;
 		wraddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
 		wrclock_sig		: IN STD_LOGIC  := '1';
 		wren_sig			: IN STD_LOGIC  := '0';
-		q_sig				: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
+		q_sig					: buffer STD_LOGIC_VECTOR (31 DOWNTO 0);
 		
-		blockrdy_sig : buffer std_logic;
+
+		-- TESTSIGNALE
+		blockrdy				: in std_logic;
+
+		clk_test				:	out std_logic;
+		pxl_clk_out			:	out std_logic;
+		cam_resetN_dbg	: out std_logic;
 		
-	 -- TESTSIGNALE
-	clk_test				:	out std_logic;
-	pxl_clk_out			:	out std_logic;
-	cam_resetN_dbg	: out std_logic;
-	
-	cam_fval_dbg			: out std_logic;
-	cam_lval_dbg			: out std_logic;
-	cam_pixdata_dbg		: out std_logic_vector(11 downto 0)
-	
-	
+		cam_fval_dbg		: out std_logic;
+		cam_lval_dbg		: out std_logic;
+		cam_pixdata_dbg	: out std_logic_vector(11 downto 0)
   );
 end top;
 
@@ -474,8 +472,8 @@ begin
       ahbi => grlib_ahbmi,
       ahbo => disp_ahbmo,
 			rdaddress => rdaddress_sig,
-			rddata => data_sig,
-			blockrdy => blockrdy_sig
+			rddata => q_sig,
+			blockrdy => blockrdy
     );  
 	
 	-----------------------------------------------------------------------------
