@@ -71,7 +71,6 @@ architecture rtl of dispctrl is
 
   type state_type is (running, not_running, reset);
   type job_type is (idle, busy);
-	--type writestate_type is (IDLE, STARTBLOCK, HANDLEBLOCK);
 
   signal dmai	: ahb_dma_in_type;
   signal dmao	: ahb_dma_out_type;
@@ -104,6 +103,7 @@ architecture rtl of dispctrl is
 
 	signal ahbready_sig : std_logic;
 	signal blockready_sig, blockready_sig_n : std_logic;
+	signal update_sig,update_sig_n : std_logic; --dbg
   
 begin
 
@@ -115,7 +115,7 @@ begin
   apbo.pindex  <= pindex;
   apbo.pconfig <= PCONFIG;
   
-  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy)
+  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy,blockready_sig)
     variable apbwrite	: std_logic;
     variable apbrdata : std_logic_vector(31 downto 0);
   	variable output	: write_t;
@@ -126,6 +126,7 @@ begin
 		variable dpaddr : std_logic_vector(8 downto 0);
 		variable dpdata : std_logic_vector(31 downto 0);
 		variable ahbready : std_logic;
+		variable update : std_logic; --dbg
   begin
 		
 		output := output_sig;
@@ -137,6 +138,7 @@ begin
 		dpdata := dpdata_sig;
 	
 		apbrdata := (others => '0');
+		update := '0';
 		
 	  ---------------------------------------------------------------------------
 	  -- Control. Handles the APB accesses and stores the internal registers
@@ -152,6 +154,11 @@ begin
 			--		writectrl.write_en := '0';
 	    --	end if;
 			--end if;
+	    if apbwrite = '1' then
+				if apbi.pwdata(0) = '1' then
+					update := '1';
+	    	end if;
+			end if;
 			apbrdata := x"DEADBABE";
 	  when "0001" =>
 	    -- Color register
@@ -207,7 +214,8 @@ begin
 		ahbready := dmao.ready;
 		ahbready_sig <= ahbready; --dbg
 
-		if blockready_sig /= blockrdy and blockrdy = '1' then
+		--if blockready_sig /= blockrdy and blockrdy = '1' then
+		if update_sig /= update and update = '1' then
 			numBlocks := numBlocks + 1;
 		end if;
 
@@ -235,7 +243,7 @@ begin
 
 		when HANDLEBLOCK =>
 			output.start := '1';
-			if ahbready = '1' then
+			if output_sig.start = '1' and ahbready = '1' then
 				output.address := output.address + "100";
 				output.data := rddata;
 				--output.data := "00000000000000000000000" & dpaddr(8 downto 0); --dbg
@@ -272,8 +280,10 @@ begin
 			output.face := facebox_sig;
 		end if;
 
+		output.data := x"00ff0000";
 
 		-- update signals
+		update_sig_n <= update; --dbg
 		blockready_sig_n <= blockrdy;
 		dpaddr_sig_n <= dpaddr;
 		facebox_sig_n <= facebox;
@@ -310,6 +320,7 @@ begin
   reg_proc : process(clk)
   begin
     if rising_edge(clk) then
+			update_sig <= update_sig_n; --dbg
 			blockready_sig <= blockready_sig_n;
 
 			dpaddr_sig <= dpaddr_sig_n;
