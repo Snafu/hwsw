@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 	mini_uart_write(&aux_uart_handle, (char *)"I2C WRITE", sizeof("I2C WRITE"));
 	
 	// CAM initialization
-	initCamera();
+	//initCamera();
 
 	uint32_t i;
 	uint32_t j;
@@ -177,18 +177,26 @@ int main(int argc, char **argv)
 		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
 	}
 	*/
+	for(i = 0; i < 300; i++)
+	{
+		UPDATE_GLCD();
+		for(j = 0; j < 30; j++) asm volatile("nop\n\t");
+	}
+
+	while(1)
+	{
+		i2c_write(0x0b, 0x04);
+		for(i = 0; i < 110; i++)
+		{
+			for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+		}
+	}
 	
 	DRAW_RECT(0,0,0,0);
 	DISPCTRL_COLOR = 0x000000ff;
 	UPDATE_GLCD();
 	for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-	for(i = 0; i < 300; i++)
-	{
-		DRAW_RECT(50,50,50+(i<<1),50+i);
-		UPDATE_GLCD();
-		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-	}
+
 
 
 

@@ -49,10 +49,15 @@ void initCamera(void)
 	i2c_write(0x1e,(0x4006 | (1<<8)));
 
 
+	/*
+	 * Hadsch du Ratte, die Bloede while-Schleife wars :)
+	 */
+	/*
 	while(1)
 	{
 		i2c_write(0x0b, 0x04);
 	}
+	*/
 	
 	// unpause restart
 //	i2c_write(0x0b,1);

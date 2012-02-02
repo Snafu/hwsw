@@ -91,7 +91,7 @@ architecture rtl of dispctrl is
 		start			: std_logic;
   end record;
 
-	signal numBlocks_sig,numBlocks_sig_n : INTEGER range -10 to 100;
+	signal numBlocks_sig,numBlocks_sig_n : INTEGER range 0 to 1000;
 	signal pixCount_sig,pixCount_sig_n : INTEGER range 0 to 512;
   
 	signal facebox_sig,facebox_sig_n	: facebox_t;
@@ -104,6 +104,7 @@ architecture rtl of dispctrl is
 	signal ahbready_sig : std_logic;
 	signal blockready_sig, blockready_sig_n : std_logic;
 	signal update_sig,update_sig_n : std_logic; --dbg
+	signal color_sig,color_sig_n : std_logic_vector(23 downto 0);
   
 begin
 
@@ -115,7 +116,7 @@ begin
   apbo.pindex  <= pindex;
   apbo.pconfig <= PCONFIG;
   
-  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy,blockready_sig)
+  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy,blockready_sig,update_sig,dpdata_sig,dpaddr_sig,writeState_sig,numBlocks_sig,pixCount_sig,rddata)
     variable apbwrite	: std_logic;
     variable apbrdata : std_logic_vector(31 downto 0);
   	variable output	: write_t;
@@ -127,6 +128,7 @@ begin
 		variable dpdata : std_logic_vector(31 downto 0);
 		variable ahbready : std_logic;
 		variable update : std_logic; --dbg
+		variable color : std_logic_vector(23 downto 0); --dbg
   begin
 		
 		output := output_sig;
@@ -138,7 +140,8 @@ begin
 		dpdata := dpdata_sig;
 	
 		apbrdata := (others => '0');
-		update := '0';
+		update := update_sig;
+		color := color_sig;
 		
 	  ---------------------------------------------------------------------------
 	  -- Control. Handles the APB accesses and stores the internal registers
@@ -157,6 +160,8 @@ begin
 	    if apbwrite = '1' then
 				if apbi.pwdata(0) = '1' then
 					update := '1';
+				else
+					update := '0';
 	    	end if;
 			end if;
 			apbrdata := x"DEADBABE";
@@ -196,7 +201,6 @@ begin
 			facebox.right := NOFACE;
 
 			output.address := FIFOSTART;
-			--output.address := (others => '0'); --dbg
 			output.face := facebox;
 			output.colcnt := (others => '0');
 			output.rowcnt := (others => '0');
@@ -204,6 +208,8 @@ begin
 			writeState := IDLE;
 			dpaddr := (others => '0');
 			dpdata := (others => '0');
+			update := '0'; --dbg
+			color := x"000000"; --dbg
 		end if;
 
 
@@ -214,8 +220,8 @@ begin
 		ahbready := dmao.ready;
 		ahbready_sig <= ahbready; --dbg
 
-		--if blockready_sig /= blockrdy and blockrdy = '1' then
-		if update_sig /= update and update = '1' then
+		if blockready_sig /= blockrdy and blockrdy = '1' then
+		--if update_sig /= update and update = '1' then
 			numBlocks := numBlocks + 1;
 		end if;
 
@@ -225,28 +231,25 @@ begin
 		case writeState is
 		when IDLE =>
 			if numBlocks > 0 then
-				--output.address := FIFOSTART; --dbg
 				writeState := STARTBLOCK;
-				dpaddr := conv_std_logic_vector(pixCount,9);
 			end if;
 
 		when STARTBLOCK =>
 			output.start := '1';
 			output.data := rddata;
 			--output.data := "00000000000000000000000" & dpaddr(8 downto 0); --dbg
+			pixCount := pixCount + 1;
+			output.colcnt := output.colcnt + '1';
 
-			--if ahbready = '1' then
-				pixCount := pixCount + 1;
-				writeState := HANDLEBLOCK;
-			--end if;
-			
+			writeState := HANDLEBLOCK;
 
 		when HANDLEBLOCK =>
 			output.start := '1';
-			if output_sig.start = '1' and ahbready = '1' then
+			if ahbready = '1' then
 				output.address := output.address + "100";
 				output.data := rddata;
 				--output.data := "00000000000000000000000" & dpaddr(8 downto 0); --dbg
+
 
 				-- end of block
 				if output.address(5 downto 2) = "0000" then
@@ -255,6 +258,7 @@ begin
 					numBlocks := numBlocks - 1;
 				else
 					pixCount := pixCount + 1;
+					output.colcnt := output.colcnt + '1';
 				end if;
 			end if;
 
@@ -278,11 +282,14 @@ begin
 			output.address := FIFOSTART;
 			-- refresh face position
 			output.face := facebox_sig;
+			color := color + "10";
 		end if;
 
-		output.data := x"00ff0000";
+		--output.data := x"00ff0000";
+		output.data := "00000000" & color;
 
 		-- update signals
+		color_sig_n <= color; --dbg
 		update_sig_n <= update; --dbg
 		blockready_sig_n <= blockrdy;
 		dpaddr_sig_n <= dpaddr;
@@ -320,6 +327,7 @@ begin
   reg_proc : process(clk)
   begin
     if rising_edge(clk) then
+			color_sig <= color_sig_n; --dbg
 			update_sig <= update_sig_n; --dbg
 			blockready_sig <= blockready_sig_n;
 
@@ -335,6 +343,13 @@ begin
 
     end if;
   end process;
-  
+ 
+  -- Boot message
+  -- pragma translate_off
+  bootmsg : report_version 
+    generic map (
+      "dispctrl" & tost(hindex) & ": Display data controller rev " &
+      tost(REVISION) & ", AHB access size: " & tost(ahbaccsz) & " bits");
+  -- pragma translate_on 
 end;
 

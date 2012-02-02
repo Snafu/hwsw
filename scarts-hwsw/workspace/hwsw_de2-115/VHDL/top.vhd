@@ -478,8 +478,8 @@ begin
       ahbo => disp_ahbmo,
 			rdaddress => rdaddress_sig,
 			rddata => q_sig,
-			blockrdy => blockrdy --dbg
-			--blockrdy => pxReady_sig
+			--blockrdy => blockrdy --dbg
+			blockrdy => pxReady_sig
     );  
 	
 	-----------------------------------------------------------------------------
