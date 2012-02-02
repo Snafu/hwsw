@@ -1,3 +1,4 @@
+onerror {stop}
 vlib work
 vmap work work 
 
@@ -12,6 +13,7 @@ vmap techmap techmap
 
 vlib hwswlib
 vmap hwswlib work
+
 
 
 vcom  -work work ../VHDL/altera_pll.vhd
@@ -79,6 +81,9 @@ vcom  -work gaisler ../../libraries/grlib/lib/gaisler/memctrl/sdctrl.vhd
 
 vcom  -work work ../../libraries/hwswlib/hwswlib.vhd
 vcom  -work work ../../libraries/hwswlib/dispctrl.vhd
+vcom  -work work ../../libraries/hwswlib/i2clib.vhd
+vcom  -work work ../../libraries/hwswlib/i2cmaster.vhd
+vcom  -work work ../../libraries/hwswlib/dp_pixelram.vhd
 
 vcom  -work work ../../../VHDL/ext_modules/ext_Dis7Seg/pkg_Dis7Seg.vhd
 vcom  -work work ../../../VHDL/ext_modules/ext_Dis7Seg/ext_Dis7Seg_ent.vhd

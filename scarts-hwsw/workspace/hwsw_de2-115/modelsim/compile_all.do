@@ -1,3 +1,4 @@
+onerror {stop}
 vlib work
 vmap work work
 

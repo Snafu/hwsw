@@ -80,7 +80,6 @@ package hwswlib is
 		 ahbo      : out ahb_mst_out_type;
 		 rdaddress : out std_logic_vector(8 downto 0);
 		 rddata    : in std_logic_vector(31 downto 0);
-		writestate : out writestate_type;
 		 blockrdy  : in std_logic
 		 );
 	end component;

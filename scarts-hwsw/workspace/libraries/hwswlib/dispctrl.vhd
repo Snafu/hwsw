@@ -50,7 +50,6 @@ entity dispctrl is
     ahbo      : out ahb_mst_out_type;
 		rdaddress : out std_logic_vector(8 downto 0);
 		rddata    : in std_logic_vector(31 downto 0);
-		writestate : out writestate_type;
 		blockrdy  : in std_logic
     );
 
@@ -74,8 +73,6 @@ architecture rtl of dispctrl is
   type job_type is (idle, busy);
 	--type writestate_type is (IDLE, STARTBLOCK, HANDLEBLOCK);
 
-  signal ahbready							: std_logic;
-  
   signal dmai	: ahb_dma_in_type;
   signal dmao	: ahb_dma_out_type;
 	
@@ -104,6 +101,9 @@ architecture rtl of dispctrl is
 	signal writeState_sig,writeState_sig_n : writestate_type;
 	signal dpaddr_sig,dpaddr_sig_n : std_logic_vector(8 downto 0);
 	signal dpdata_sig,dpdata_sig_n : std_logic_vector(31 downto 0);
+
+	signal ahbready_sig : std_logic;
+	signal blockready_sig, blockready_sig_n : std_logic;
   
 begin
 
@@ -125,6 +125,7 @@ begin
 		variable writeState : writestate_type;
 		variable dpaddr : std_logic_vector(8 downto 0);
 		variable dpdata : std_logic_vector(31 downto 0);
+		variable ahbready : std_logic;
   begin
 		
 		output := output_sig;
@@ -188,7 +189,10 @@ begin
 			facebox.right := NOFACE;
 
 			output.address := FIFOSTART;
+			--output.address := (others => '0'); --dbg
 			output.face := facebox;
+			output.colcnt := (others => '0');
+			output.rowcnt := (others => '0');
 
 			writeState := IDLE;
 			dpaddr := (others => '0');
@@ -200,9 +204,10 @@ begin
 		-- Do write
 		---------------------------------------------------------------------------
 		 
-		ahbready <= dmao.ready;
+		ahbready := dmao.ready;
+		ahbready_sig <= ahbready; --dbg
 
-		if blockrdy = '1' then
+		if blockready_sig /= blockrdy and blockrdy = '1' then
 			numBlocks := numBlocks + 1;
 		end if;
 
@@ -212,6 +217,7 @@ begin
 		case writeState is
 		when IDLE =>
 			if numBlocks > 0 then
+				--output.address := FIFOSTART; --dbg
 				writeState := STARTBLOCK;
 				dpaddr := conv_std_logic_vector(pixCount,9);
 			end if;
@@ -219,74 +225,28 @@ begin
 		when STARTBLOCK =>
 			output.start := '1';
 			output.data := rddata;
+			--output.data := "00000000000000000000000" & dpaddr(8 downto 0); --dbg
 
-			if dmao.ready = '1' then
-				writeState := HANDLEBLOCK;
-
-			-- increment pixelbuf counter
-			--if pixCount < 511 then
-			--	pixCount := pixCount + 1;
-			--else
-			--	pixCount := 0;
-			--end if;
+			--if ahbready = '1' then
 				pixCount := pixCount + 1;
-
-			--dpaddr := conv_std_logic_vector(pixCount,9);
-
-			-- increment column and row counter
-			--if output.colcnt = conv_std_logic_vector(799,10) then
-			--	output.colcnt := "0000000000";
-			--	if output.rowcnt = conv_std_logic_vector(479,10) then
-			--		output.rowcnt := "0000000000";
-			--		output.address := FIFOSTART;
-			--		-- refresh face position
-			--		output.face := facebox_sig;
-			--	else
-			--	 output.rowcnt := output.rowcnt + '1';
-			--	end if;
-			--else
-			--	output.colcnt := output.colcnt + '1';
+				writeState := HANDLEBLOCK;
 			--end if;
-			end if;
 			
 
 		when HANDLEBLOCK =>
 			output.start := '1';
-			if dmao.ready = '1' then
+			if ahbready = '1' then
 				output.address := output.address + "100";
 				output.data := rddata;
-
-				-- increment pixelbuf counter
-				--if pixCount < 511 then
-				--	pixCount := pixCount + 1;
-				--else
-				--	pixCount := 0;
-				--end if;
-
-				dpaddr := conv_std_logic_vector(pixCount,9);
-				pixCount := pixCount + 1;
-
-
-			-- increment column and row counter
-			--if output.colcnt = conv_std_logic_vector(799,10) then
-			--	output.colcnt := "0000000000";
-			--	if output.rowcnt = conv_std_logic_vector(479,10) then
-			--		output.rowcnt := "0000000000";
-			--		output.address := FIFOSTART;
-			--		-- refresh face position
-			--		output.face := facebox_sig;
-			--	else
-			--	 output.rowcnt := output.rowcnt + '1';
-			--	end if;
-			--else
-			--	output.colcnt := output.colcnt + '1';
-			--end if;
+				--output.data := "00000000000000000000000" & dpaddr(8 downto 0); --dbg
 
 				-- end of block
 				if output.address(5 downto 2) = "0000" then
 					output.start := '0';
 					writeState := IDLE;
 					numBlocks := numBlocks - 1;
+				else
+					pixCount := pixCount + 1;
 				end if;
 			end if;
 
@@ -295,6 +255,8 @@ begin
 		if pixCount = 512 then
 			pixCount := 0;
 		end if;
+		
+		dpaddr := conv_std_logic_vector(pixCount,9);
 
 		-- increment column counter
 		if output.colcnt = conv_std_logic_vector(800,10) then
@@ -312,6 +274,7 @@ begin
 
 
 		-- update signals
+		blockready_sig_n <= blockrdy;
 		dpaddr_sig_n <= dpaddr;
 		facebox_sig_n <= facebox;
 		output_sig_n <= output;
@@ -347,6 +310,8 @@ begin
   reg_proc : process(clk)
   begin
     if rising_edge(clk) then
+			blockready_sig <= blockready_sig_n;
+
 			dpaddr_sig <= dpaddr_sig_n;
 			dpdata_sig <= rddata;
 			rdaddress <= dpaddr_sig_n;
@@ -356,20 +321,9 @@ begin
 			pixCount_sig <= pixCount_sig_n;
 			numBlocks_sig <= numBlocks_sig_n;
 			writeState_sig <= writeState_sig_n;
-			writestate <= writeState_sig_n;
 
     end if;
   end process;
-  
-
-
-  -- Boot message
-  -- pragma translate_off
-  bootmsg : report_version 
-    generic map (
-      "dispctrl" & tost(hindex) & ": Display data controller rev " &
-      tost(REVISION) & ", AHB access size: " & tost(ahbaccsz) & " bits");
-  -- pragma translate_on
   
 end;
 
