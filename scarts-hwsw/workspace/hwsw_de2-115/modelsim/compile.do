@@ -14,6 +14,9 @@ vmap techmap techmap
 vlib hwswlib
 vmap hwswlib work
 
+vlib kameralib
+vmap kameralib work
+
 
 
 vcom  -work work ../VHDL/altera_pll.vhd
@@ -80,6 +83,8 @@ vcom  -work gaisler ../../libraries/grlib/lib/gaisler/memctrl/memctrl.vhd
 vcom  -work gaisler ../../libraries/grlib/lib/gaisler/memctrl/sdctrl.vhd
 
 vcom  -work work ../../libraries/hwswlib/hwswlib.vhd
+vcom  -work work ../../libraries/hwswlib/kameralib.vhd
+vcom  -work work ../../libraries/hwswlib/kamera.vhd
 vcom  -work work ../../libraries/hwswlib/dispctrl.vhd
 vcom  -work work ../../libraries/hwswlib/i2clib.vhd
 vcom  -work work ../../libraries/hwswlib/i2cmaster.vhd

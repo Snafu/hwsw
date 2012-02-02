@@ -91,6 +91,7 @@ entity top is
 		
 
 		-- TESTSIGNALE
+		blockrdy			: in std_logic;
 		clk_test				:	out std_logic;
 		pxl_clk_out			:	out std_logic;
 		cam_resetN_dbg	: out std_logic;
@@ -477,7 +478,8 @@ begin
       ahbo => disp_ahbmo,
 			rdaddress => rdaddress_sig,
 			rddata => q_sig,
-			blockrdy => pxReady_sig
+			blockrdy => blockrdy --dbg
+			--blockrdy => pxReady_sig
     );  
 	
 	-----------------------------------------------------------------------------

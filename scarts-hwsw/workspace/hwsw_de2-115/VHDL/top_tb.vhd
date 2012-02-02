@@ -8,6 +8,7 @@ use work.pkg_dis7seg.all;
 use std.textio.all;
 
 use work.hwswlib.all;
+use work.kameralib.all;
 
 entity top_tb is
 end top_tb;
@@ -101,14 +102,6 @@ architecture behaviour of top_tb is
 			cam_sram_data	: inout std_logic_vector(15 downto 0);
 			cam_resetN		:	out std_logic;
 			cam_xclk			:	out std_logic;
-			-- DPRAM
-			data_sig			: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-			rdaddress_sig	: buffer STD_LOGIC_VECTOR (8 DOWNTO 0);
-			rdclock_sig		: IN STD_LOGIC ;
-			wraddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
-			wrclock_sig		: IN STD_LOGIC  := '1';
-			wren_sig			: IN STD_LOGIC  := '0';
-			q_sig					: buffer STD_LOGIC_VECTOR (31 DOWNTO 0);
 
 
 			-- TESTSIGNALE
@@ -206,9 +199,6 @@ begin
 			cam_fval => cam_fval,
 			cam_lval => cam_lval,
 			cam_pixdata => cam_pixdata,
-			data_sig			=> data_sig,
-			rdclock_sig		=> rdclock_sig,
-			wraddress_sig	=> wraddress_sig,
 			blockrdy => blockrdy
       );
 
