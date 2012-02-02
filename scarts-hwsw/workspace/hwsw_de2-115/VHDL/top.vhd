@@ -40,6 +40,7 @@ use gaisler.memctrl.all;
 library hwswlib;
 use work.hwswlib.all;
 use work.i2clib.all;
+use work.kameralib.all;
 
 entity top is
   port(
@@ -84,22 +85,12 @@ entity top is
 		cam_lval			: in std_logic;
 		cam_pixdata		: in std_logic_vector(11 downto 0);
 		cam_sram_ctrl	: out sram_ctrl_t;
-		cam_sram_data	: inout std_logic_vector(15 downto 0);
-		cam_resetN		:	out std_logic;
-		cam_xclk			:	out std_logic;
-		-- DPRAM
-		data_sig			: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-		rdaddress_sig	: buffer STD_LOGIC_VECTOR (8 DOWNTO 0);
-		rdclock_sig		: IN STD_LOGIC ;
-		wraddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
-		wrclock_sig		: IN STD_LOGIC  := '1';
-		wren_sig			: IN STD_LOGIC  := '0';
-		q_sig					: buffer STD_LOGIC_VECTOR (31 DOWNTO 0);
+		cam_sram_data	: buffer std_logic_vector(15 downto 0);
+		cam_resetN		: out std_logic;
+		cam_xclk			: out std_logic;
 		
 
 		-- TESTSIGNALE
-		blockrdy				: in std_logic;
-
 		clk_test				:	out std_logic;
 		pxl_clk_out			:	out std_logic;
 		cam_resetN_dbg	: out std_logic;
@@ -111,6 +102,19 @@ entity top is
 end top;
 
 architecture behaviour of top is
+  
+	-- kamera signals
+	signal pxReady_sig		: std_logic;
+  
+  -- dpram
+	signal data_sig			:  STD_LOGIC_VECTOR (31 DOWNTO 0);
+	signal rdaddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
+	signal rdclock_sig		:  STD_LOGIC ;
+	signal wraddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
+	signal wrclock_sig		:  STD_LOGIC  := '1';
+	signal wren_sig			:  STD_LOGIC  := '0';
+	signal q_sig				:  STD_LOGIC_VECTOR (31 DOWNTO 0);
+  
   
   signal scarts_i    : scarts_in_type;
   signal scarts_o    : scarts_out_type;
@@ -487,7 +491,7 @@ begin
 		rdaddress	=> rdaddress_sig,
 		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
-		wrclock		=> wrclock_sig,
+		wrclock		=> cam_pixclk,
 		wren			=> wren_sig,
 		q				=> q_sig
 	);
@@ -510,10 +514,23 @@ begin
 			lval			=> cam_lval,
 			pixdata		=> cam_pixdata,
 			sram_ctrl	=> cam_sram_ctrl,
-			sram_data	=> cam_sram_data
+			sram_data	=> cam_sram_data,
+			
+			dp_data		=> data_sig,
+			dp_wren		=> wren_sig,
+			dp_wraddr	=> wraddress_sig,
+			pixelburstReady => pxReady_sig
     ); 
   
-
+  -- dpram
+--	data_sig			: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+--		rdaddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
+--		rdclock_sig		: IN STD_LOGIC ;
+--		wraddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
+--		wrclock_sig		: IN STD_LOGIC  := '1';
+--		wren_sig			: IN STD_LOGIC  := '0';
+--		q_sig				: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
+  
   -----------------------------------------------------------------------------
   -- Scarts extension modules
   -----------------------------------------------------------------------------

@@ -21,8 +21,8 @@ use ieee.std_logic_1164.all;
 
 use work.scarts_amba_pkg.all;
 
---library grlib;
---use grlib.amba.all;
+library grlib;
+use grlib.amba.all;
 
 package scarts_pkg is 
 
