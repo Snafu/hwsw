@@ -39,6 +39,7 @@ library gaisler;
 use gaisler.misc.all;
 
 package hwswlib is
+	type writestate_type is (IDLE, STARTBLOCK, HANDLEBLOCK);
 
 	component dispctrl
 	  generic(
