@@ -183,12 +183,10 @@ int main(int argc, char **argv)
 		for(j = 0; j < 30; j++) asm volatile("nop\n\t");
 	}
 
-	i2c_write(0x0b, 0x04);
-/*
 	while(1)
 	{
 		i2c_write(0x0b, 0x04);
-		for(i = 0; i < 100; i++)
+		for(i = 0; i < 130; i++)
 		{
 			for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
 		}
@@ -198,7 +196,7 @@ int main(int argc, char **argv)
 	DISPCTRL_COLOR = 0x000000ff;
 	UPDATE_GLCD();
 	for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-*/
+
 
 
 

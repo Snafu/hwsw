@@ -160,55 +160,55 @@ architecture rtl of kamera is
 begin
 
 
-	--
-	-- DILATION FILTER
-	--
-	-- gets signaled when EROSION is done
-	imageProcessingDilation : process(dilationXCnt, dilationYCnt, startDilation, startDilation_next, dilationState)
-	begin
-				
-		dilationXCnt_next <= dilationXCnt;
-		dilationYCnt_next <= dilationYCnt;
-		dilationState_next <= dilationState;
-	
-		case dilationState is
-			when	IDLE =>
-				if(startDilation /= startDilation_next and startDilation_next = '1')
-				then
-					erosionState_next <= BUSY;
-				end if;
-			when	BUSY =>
-			
-			when	FINISHED =>
-		
-		end case;
-		
-	
-	end process;
-	
-	
-	--
-	--	EROSION FILTER
-	--
-	-- gets signaled when complex 400x240 x 1bit picture(after skinfilter) is ready
-	imageProcessingErosion : process(erosionXCnt, erosionYCnt)
-	begin
-	
-		erosionXCnt_next <= erosionXCnt;
-		erosionYCnt_next <= erosionYCnt;
-		erosionState_next <= erosionState;
-		
-		case erosionState is
-			when	IDLE =>
-			
-			when	BUSY =>
-			
-			when	FINISHED =>
-		
-		end case;
-		
-	end process;
-	
+--	--
+--	-- DILATION FILTER
+--	--
+--	-- gets signaled when EROSION is done
+--	imageProcessingDilation : process(dilationXCnt, dilationYCnt, startDilation, startDilation_next, dilationState)
+--	begin
+--				
+--		dilationXCnt_next <= dilationXCnt;
+--		dilationYCnt_next <= dilationYCnt;
+--		dilationState_next <= dilationState;
+--	
+--		case dilationState is
+--			when	IDLE =>
+--				if(startDilation /= startDilation_next and startDilation_next = '1')
+--				then
+--					erosionState_next <= BUSY;
+--				end if;
+--			when	BUSY =>
+--			
+--			when	FINISHED =>
+--		
+--		end case;
+--		
+--	
+--	end process;
+--	
+--	
+--	--
+--	--	EROSION FILTER
+--	--
+--	-- gets signaled when complex 400x240 x 1bit picture(after skinfilter) is ready
+--	imageProcessingErosion : process(erosionXCnt, erosionYCnt)
+--	begin
+--	
+--		erosionXCnt_next <= erosionXCnt;
+--		erosionYCnt_next <= erosionYCnt;
+--		erosionState_next <= erosionState;
+--		
+--		case erosionState is
+--			when	IDLE =>
+--			
+--			when	BUSY =>
+--			
+--			when	FINISHED =>
+--		
+--		end case;
+--		
+--	end process;
+--	
 	
 
 	readout : process(rst, fval, fval_old, lval, lval_old, whichline, pixdata ,pixclk, pixclk_old, rowcnt, pixelG, pixelB, pixelR, dp_cnt, sram_data, firstPixel, firstPixel_next, burstCnt, burstCnt_next, linecnt, frameCnt, dp_buf, sram_buf)
@@ -266,8 +266,8 @@ else
 dp_wraddr(8 downto 0) <= "000000000";
 end if;
 		
-dp_wren <= '1';
---dp_wren <= '0';
+--dp_wren <= '1';
+dp_wren <= '0';
 		
 		--
 		-- SRAM CONTROL
@@ -304,6 +304,13 @@ dp_wren <= '1';
 		-- rising edge of FVAL
 		if(fval_old /= fval and fval = '1')
 		then
+			whichline_next <= FIRST;
+			rowcnt_next  <= 0;
+			linecnt_next <= 0;
+			dp_cnt_next <= 0;
+			burstCnt_next <= 0;
+			firstPixel_next <= '0';
+		
 			if(frameCnt < 3)
 			then
 				frameCnt_next <= frameCnt + 1;
@@ -312,30 +319,30 @@ dp_wren <= '1';
 			end if;		
 		end if;
 		
-		if(fval = '0')
-		then
-			whichline_next <= FIRST;
-			rowcnt_next  <= 0;
-			linecnt_next <= 0;
-			dp_cnt_next <= 0;
-			burstCnt_next <= 0;
-			firstPixel_next <= '0';
-		end if;
-		
-		
-		if (lval = '0')
-		then
-			rowcnt_next  <= 0;
-			dp_cnt_next <= 0;
-			burstCnt_next <= 0;
-			firstPixel_next <= '0';
-		end if;
+--		if(fval = '0')
+--		then
+--			whichline_next <= FIRST;
+--			rowcnt_next  <= 0;
+--			linecnt_next <= 0;
+--			dp_cnt_next <= 0;
+--			burstCnt_next <= 0;
+--			firstPixel_next <= '0';
+--		end if;
+--		
+--		
+--		if (lval = '0')
+--		then
+--			rowcnt_next  <= 0;
+--			dp_cnt_next <= 0;
+--			burstCnt_next <= 0;
+--			firstPixel_next <= '0';
+--		end if;
 		
 		--
 		-- NEW LINE
 		--
 		-- rising edge of LVAL
-		if(lval_old /= lval and lval = '1' and fval = '1')
+		if(lval_old /= lval and lval = '1')
 		then
 			linecnt_next <= linecnt + 1;
 			
@@ -395,8 +402,8 @@ dp_wren <= '1';
 					if(rowcnt > 0)
 					then
 -- disabled TEMP to test with memINIT file
-dp_wren <= '0';
---dp_wren <= '1';
+dp_wren <= '1';
+--dp_wren <= '0';
 					end if;
 					
 				else

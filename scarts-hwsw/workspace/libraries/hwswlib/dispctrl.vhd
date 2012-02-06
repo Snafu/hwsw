@@ -48,6 +48,7 @@ entity dispctrl is
     apbo      : out apb_slv_out_type;
     ahbi      : in  ahb_mst_in_type;
     ahbo      : out ahb_mst_out_type;
+		fval			: in std_logic;
 		rdaddress : out std_logic_vector(8 downto 0);
 		rddata    : in std_logic_vector(31 downto 0);
 		blockrdy  : in std_logic
@@ -109,8 +110,7 @@ architecture rtl of dispctrl is
 	signal blockready_sig,blockready_sig_n : std_logic;
 	signal update_sig,update_sig_n : std_logic; --dbg
 	signal ahbready_sig : std_logic; --dbg
-	signal colors_sig,colors_sig_n : colors_t;
-  
+  signal fval_old,fval_old_n : std_logic;
 begin
 
   ahb_master : ahbmst generic map (hindex, hirq, VENDOR_HWSW,
@@ -146,8 +146,8 @@ begin
 		apbrdata := (others => '0');
 		update := update_sig;
 		blockPartCount_sig_n <= blockPartCount_sig;
-		colors_sig_n <= colors_sig;
-		
+		fval_old_n <= fval_old;
+
 	  ---------------------------------------------------------------------------
 	  -- Control. Handles the APB accesses and stores the internal registers
 	  ---------------------------------------------------------------------------
@@ -210,7 +210,7 @@ begin
 			output.colcnt := (others => '0');
 			output.rowcnt := (others => '0');
 
-			writeState := IDLE;
+			writeState := NOINIT;
 			dpaddr := (others => '0');
 			dpdata := (others => '0');
 			update := '0'; --dbg
@@ -226,7 +226,7 @@ begin
 		ahbready := dmao.ready;
 		ahbready_sig <= dmao.ready;
 
-		if blockready_sig /= blockrdy and blockrdy = '1' then
+		if rst = '1' and blockready_sig /= blockrdy and blockrdy = '1' then
 		--if update_sig /= update and update = '1' then --dbg
 			numBlocks := numBlocks + 1;
 		end if;
@@ -235,6 +235,11 @@ begin
 	 	output.start := '0';
 
 		case writeState is
+		when NOINIT =>
+			if rst = '1' and fval_old /= fval and fval = '1' then
+				writeState := IDLE;
+			end if;
+
 		when IDLE =>
 			if numBlocks > 0 then
 				writeState := STARTBLOCK;
@@ -293,9 +298,11 @@ begin
 		end if;
 
 		--dbg ram-readout test
-		if output.data = x"00000000" then
-			output.data := x"000000ff";
-		end if;
+		--if output.data = x"00000000" then
+		--	output.data := x"000000ff";
+		--end if;
+
+		--output.data := x"00FFA500";
 
 		--output.data := "00000000000000000000000" & dpaddr; --dbg
 
@@ -337,6 +344,7 @@ begin
   reg_proc : process(clk)
   begin
     if rising_edge(clk) then
+			fval_old <= fval_old_n;
 			update_sig <= update_sig_n; --dbg
 			blockready_sig <= blockready_sig_n;
 

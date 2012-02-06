@@ -295,17 +295,15 @@ begin
     rst <= not RST_ACT;
 		
 		icwait(500);
-		blockrdy <= '1';
-		icwait(1);
-		blockrdy <= '0';
-		icwait(32);
-		blockrdy <= '1';
-		icwait(1);
-		blockrdy <= '0';
-		icwait(10);
-		blockrdy <= '1';
-		icwait(1);
-		blockrdy <= '0';
+		for A in 0 to 240 loop
+			for I in 0 to 24 loop
+				blockrdy <= '1';
+				icwait(1);
+				blockrdy <= '0';
+				icwait(10);
+			end loop;
+			icwait(500);
+		end loop;
 
 
     -- wait until bootloader is ready to receive program

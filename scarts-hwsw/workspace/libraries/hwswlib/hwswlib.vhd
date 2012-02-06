@@ -39,28 +39,29 @@ library gaisler;
 use gaisler.misc.all;
 
 package hwswlib is
-	type writestate_type is (IDLE,STARTBLOCK,PIXELA,PIXELB,PIXELC,PIXELD,HANDLEBLOCK);
+	type writestate_type is (NOINIT,IDLE,STARTBLOCK,PIXELA,PIXELB,PIXELC,PIXELD,HANDLEBLOCK);
 
 	component dispctrl
 	  generic(
-		 pindex      : integer := 0;
-		 paddr       : integer := 0;
-		 pmask       : integer := 16#fff#;
-		 hindex      : integer := 0;
-		 hirq        : integer := 0;
-		 ahbaccsz    : integer := 32
+			pindex      : integer := 0;
+			paddr       : integer := 0;
+			pmask       : integer := 16#fff#;
+			hindex      : integer := 0;
+			hirq        : integer := 0;
+			ahbaccsz    : integer := 32
 		 );
 	  
 	  port (
-		 rst       : in std_logic;           -- Synchronous reset
-		 clk       : in std_logic;
-		 apbi      : in apb_slv_in_type;
-		 apbo      : out apb_slv_out_type;
-		 ahbi      : in  ahb_mst_in_type;
-		 ahbo      : out ahb_mst_out_type;
-		 rdaddress : out std_logic_vector(8 downto 0);
-		 rddata    : in std_logic_vector(31 downto 0);
-		 blockrdy  : in std_logic
+			rst       : in std_logic;           -- Synchronous reset
+			clk       : in std_logic;
+			apbi      : in apb_slv_in_type;
+			apbo      : out apb_slv_out_type;
+			ahbi      : in  ahb_mst_in_type;
+			ahbo      : out ahb_mst_out_type;
+			fval			: in std_logic;
+			rdaddress : out std_logic_vector(8 downto 0);
+			rddata    : in std_logic_vector(31 downto 0);
+			blockrdy  : in std_logic
 		 );
 	end component;
 	
