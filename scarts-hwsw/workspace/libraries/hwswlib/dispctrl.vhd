@@ -97,7 +97,7 @@ architecture rtl of dispctrl is
 
 	signal numBlocks_sig,numBlocks_sig_n : INTEGER range 0 to 1000;
 	signal pixelCount_sig,pixelCount_sig_n : INTEGER range 0 to 512;
-  signal blockPartCount_sig,blockPartCount_sig_n : INTEGER range 0 to 3;
+  signal blockPartCount_sig,blockPartCount_sig_n : INTEGER range 0 to 16;
 
 	signal facebox_sig,facebox_sig_n	: facebox_t;
   signal output_sig,output_sig_n	: write_t;
@@ -279,7 +279,7 @@ begin
 				output.address := output.address - x"c80" + "100";
 				output.colcnt := output.colcnt + '1';
 
-				if blockPartCount_sig = 3 then
+				if blockPartCount_sig = 15 then
 					output.start := '0';
 					numBlocks := numBlocks - 1;
 					writeState := IDLE;
