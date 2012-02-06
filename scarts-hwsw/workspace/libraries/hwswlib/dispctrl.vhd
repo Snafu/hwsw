@@ -281,12 +281,12 @@ begin
 			pixelCount := 0;
 		end if;
 		
-		dpaddr := conv_std_logic_vector(pixelCount,9);
 
 		-- increment column counter
 		if output.colcnt = conv_std_logic_vector(MAXCOL,10) then
 			output.colcnt := "0000000000";
 			output.rowcnt := output.rowcnt + '1';
+			pixelCount := 0;
 		end if;
 
 		-- increment row counter
@@ -296,6 +296,8 @@ begin
 			-- refresh face position
 			output.face := facebox_sig;
 		end if;
+
+		dpaddr := conv_std_logic_vector(pixelCount,9);
 
 		--dbg ram-readout test
 		--if output.data = x"00000000" then
