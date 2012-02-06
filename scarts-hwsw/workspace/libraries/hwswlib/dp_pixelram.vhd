@@ -66,6 +66,7 @@ ARCHITECTURE SYN OF dp_pixelram IS
 		clock_enable_input_a		: STRING;
 		clock_enable_input_b		: STRING;
 		clock_enable_output_b		: STRING;
+		init_file		: STRING;
 		intended_device_family		: STRING;
 		lpm_type		: STRING;
 		numwords_a		: NATURAL;
@@ -101,6 +102,7 @@ BEGIN
 		clock_enable_input_a => "BYPASS",
 		clock_enable_input_b => "BYPASS",
 		clock_enable_output_b => "BYPASS",
+		init_file => "dp_pixelram_init.mif",
 		intended_device_family => "Cyclone IV E",
 		lpm_type => "altsyncram",
 		numwords_a => 512,
@@ -139,7 +141,7 @@ END SYN;
 -- Retrieval info: PRIVATE: BYTE_ENABLE_A NUMERIC "0"
 -- Retrieval info: PRIVATE: BYTE_ENABLE_B NUMERIC "0"
 -- Retrieval info: PRIVATE: BYTE_SIZE NUMERIC "8"
--- Retrieval info: PRIVATE: BlankMemory NUMERIC "1"
+-- Retrieval info: PRIVATE: BlankMemory NUMERIC "0"
 -- Retrieval info: PRIVATE: CLOCK_ENABLE_INPUT_A NUMERIC "0"
 -- Retrieval info: PRIVATE: CLOCK_ENABLE_INPUT_B NUMERIC "0"
 -- Retrieval info: PRIVATE: CLOCK_ENABLE_OUTPUT_A NUMERIC "0"
@@ -165,7 +167,7 @@ END SYN;
 -- Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
 -- Retrieval info: PRIVATE: MEMSIZE NUMERIC "16384"
 -- Retrieval info: PRIVATE: MEM_IN_BITS NUMERIC "0"
--- Retrieval info: PRIVATE: MIFfilename STRING ""
+-- Retrieval info: PRIVATE: MIFfilename STRING "dp_pixelram_init.mif"
 -- Retrieval info: PRIVATE: OPERATION_MODE NUMERIC "2"
 -- Retrieval info: PRIVATE: OUTDATA_ACLR_B NUMERIC "0"
 -- Retrieval info: PRIVATE: OUTDATA_REG_B NUMERIC "1"
@@ -198,6 +200,7 @@ END SYN;
 -- Retrieval info: CONSTANT: CLOCK_ENABLE_INPUT_A STRING "BYPASS"
 -- Retrieval info: CONSTANT: CLOCK_ENABLE_INPUT_B STRING "BYPASS"
 -- Retrieval info: CONSTANT: CLOCK_ENABLE_OUTPUT_B STRING "BYPASS"
+-- Retrieval info: CONSTANT: INIT_FILE STRING "dp_pixelram_init.mif"
 -- Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone IV E"
 -- Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
 -- Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "512"
