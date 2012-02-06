@@ -93,9 +93,12 @@ architecture rtl of dispctrl is
 		start			: std_logic;
   end record;
 
-	signal numPixels_sig,numPixels_sig_n : INTEGER range 0 to 1000;
-	signal pixCount_sig,pixCount_sig_n : INTEGER range 0 to 512;
-  
+	type colors_t is array (0 to 3) of std_logic_vector(31 downto 0);
+
+	signal numBlocks_sig,numBlocks_sig_n : INTEGER range 0 to 1000;
+	signal pixelCount_sig,pixelCount_sig_n : INTEGER range 0 to 512;
+  signal blockPartCount_sig,blockPartCount_sig_n : INTEGER range 0 to 3;
+
 	signal facebox_sig,facebox_sig_n	: facebox_t;
   signal output_sig,output_sig_n	: write_t;
 
@@ -106,6 +109,7 @@ architecture rtl of dispctrl is
 	signal blockready_sig,blockready_sig_n : std_logic;
 	signal update_sig,update_sig_n : std_logic; --dbg
 	signal ahbready_sig : std_logic; --dbg
+	signal colors_sig,colors_sig_n : colors_t;
   
 begin
 
@@ -117,13 +121,13 @@ begin
   apbo.pindex  <= pindex;
   apbo.pconfig <= PCONFIG;
   
-  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy,blockready_sig,update_sig,dpdata_sig,dpaddr_sig,writeState_sig,numPixels_sig,pixCount_sig,rddata)
+  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy,blockready_sig,update_sig,dpdata_sig,dpaddr_sig,writeState_sig,numBlocks_sig,pixelCount_sig,rddata)
     variable apbwrite	: std_logic;
     variable apbrdata : std_logic_vector(31 downto 0);
   	variable output	: write_t;
 		variable facebox	: facebox_t;
-		variable numPixels : INTEGER range -10 to 100;
-		variable pixCount : INTEGER range 0 to 512;
+		variable numBlocks : INTEGER range -10 to 100;
+		variable pixelCount : INTEGER range 0 to 512;
 		variable writeState : writestate_type;
 		variable dpaddr : std_logic_vector(8 downto 0);
 		variable dpdata : std_logic_vector(31 downto 0);
@@ -133,14 +137,16 @@ begin
 		
 		output := output_sig;
 		facebox := facebox_sig;
-		numPixels := numPixels_sig;
-		pixCount := pixCount_sig;
+		numBlocks := numBlocks_sig;
+		pixelCount := pixelCount_sig;
 		writeState := writeState_sig;
 		dpaddr := dpaddr_sig;
 		dpdata := dpdata_sig;
 	
 		apbrdata := (others => '0');
 		update := update_sig;
+		blockPartCount_sig_n <= blockPartCount_sig;
+		colors_sig_n <= colors_sig;
 		
 	  ---------------------------------------------------------------------------
 	  -- Control. Handles the APB accesses and stores the internal registers
@@ -192,7 +198,7 @@ begin
 	  -- Control reset
 	  ---------------------------------------------------------------------------
 	  if rst = '0' then
-			numPixels := 0;
+			numBlocks := 0;
 			
 			facebox.top := NOFACE;
 			facebox.left := NOFACE;
@@ -208,7 +214,8 @@ begin
 			dpaddr := (others => '0');
 			dpdata := (others => '0');
 			update := '0'; --dbg
-			pixCount := 0;
+			pixelCount := 0;
+			blockPartCount_sig_n <= 0;
 		end if;
 
 
@@ -221,7 +228,7 @@ begin
 
 		if blockready_sig /= blockrdy and blockrdy = '1' then
 		--if update_sig /= update and update = '1' then --dbg
-			numPixels := numPixels + 16;
+			numBlocks := numBlocks + 1;
 		end if;
 
 
@@ -229,23 +236,27 @@ begin
 
 		case writeState is
 		when IDLE =>
-			if numPixels > 0 then
+			if numBlocks > 0 then
 				writeState := STARTBLOCK;
 			end if;
 
 		when STARTBLOCK =>
 			output.start := '1';
 			output.data := rddata;
-			pixCount := pixCount + 1;
+			colors_sig(0) <= rddata;
+			pixelCount := pixelCount + 1;
 			output.colcnt := output.colcnt + '1';
+			blockPartCount_sig_n <= 0;
 
 			writeState := PIXELA;
 
 		when PIXELA =>
 			output.start := '1';
 			if ahbready = '1' then
+				colors_sig(1) <= rddata;
 				output.address := output.address + "100";
 				writeState := PIXELB;
+				--pixelCount := pixelCount + 1;
 			end if;
 
 		when PIXELB =>
@@ -265,11 +276,18 @@ begin
 		when PIXELD =>
 			output.start := '1';
 			if ahbready = '1' then
-				output.start := '0';
 				output.address := output.address - x"c80" + "100";
-				numPixels := numPixels - 1;
+				output.colcnt := output.colcnt + '1';
 
-				writeState := IDLE;
+				if blockPartCount_sig = 3 then
+					output.start := '0';
+					numBlocks := numBlocks - 1;
+					writeState := IDLE;
+				else
+					blockPartCount_sig_n <= blockPartCount_sig + 1;
+					writeState := PIXELA;
+				end if;
+
 			end if;	
 
 
@@ -285,21 +303,21 @@ begin
 				if output.address(5 downto 2) = "0000" then
 					output.start := '0';
 					writeState := IDLE;
-					numPixels := numPixels - 1;
+					numBlocks := numBlocks - 1;
 				else
-					pixCount := pixCount + 1;
+					pixelCount := pixelCount + 1;
 					output.colcnt := output.colcnt + '1';
 				end if;
 			end if;
 
 		end case; -- writeState_sig
 
-		--if pixCount = 512 then
-		if pixCount = 400 then
-			pixCount := 0;
+		if pixelCount = 512 then
+		--if pixelCount = 400 then
+			pixelCount := 0;
 		end if;
 		
-		dpaddr := conv_std_logic_vector(pixCount,9);
+		dpaddr := conv_std_logic_vector(pixelCount,9);
 
 		-- increment column counter
 		if output.colcnt = conv_std_logic_vector(MAXCOL,10) then
@@ -324,8 +342,8 @@ begin
 		dpaddr_sig_n <= dpaddr;
 		facebox_sig_n <= facebox;
 		output_sig_n <= output;
-		pixCount_sig_n <= pixCount;
-		numPixels_sig_n <= numPixels;
+		pixelCount_sig_n <= pixelCount;
+		numBlocks_sig_n <= numBlocks;
 		writeState_sig_n <= writeState;
 		
     apbo.prdata <= apbrdata;
@@ -365,9 +383,10 @@ begin
 
 			facebox_sig <= facebox_sig_n;
 			output_sig <= output_sig_n;
-			pixCount_sig <= pixCount_sig_n;
-			numPixels_sig <= numPixels_sig_n;
+			pixelCount_sig <= pixelCount_sig_n;
+			numBlocks_sig <= numBlocks_sig_n;
 			writeState_sig <= writeState_sig_n;
+			blockPartCount_sig <= blockPartCount_sig_n;
 
     end if;
   end process;
