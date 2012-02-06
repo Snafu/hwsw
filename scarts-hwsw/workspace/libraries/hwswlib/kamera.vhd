@@ -105,8 +105,8 @@ architecture rtl of kamera is
 	signal pixelR			: std_logic_vector(7 downto 0);
 	signal pixelR_next	: std_logic_vector(7 downto 0);
 	
-	signal dp_cnt			: integer range 0 to 500;
-	signal dp_cnt_next	: integer range 0 to 500;
+	signal dp_cnt			: integer range 0 to 512;
+	signal dp_cnt_next	: integer range 0 to 512;
 	
 	signal firstPixel			: std_logic;
 	signal firstPixel_next	: std_logic;
@@ -119,10 +119,13 @@ architecture rtl of kamera is
 	
 	signal dp_buf			: std_logic_vector(31 downto 0);
 	signal dp_buf_next	: std_logic_vector(31 downto 0);
+	
+	signal sram_buf			: std_logic_vector(15 downto 0);
+	signal sram_buf_next	: std_logic_vector(15 downto 0);
 		  
 begin
 
-	readout : process(rst, fval, fval_old, lval, lval_old, whichline, pixdata ,pixclk, pixclk_old, rowcnt, pixelG, pixelB, dp_cnt, sram_data, firstPixel, firstPixel_next, burstCnt, burstCnt_next, linecnt, frameCnt)
+	readout : process(rst, fval, fval_old, lval, lval_old, whichline, pixdata ,pixclk, pixclk_old, rowcnt, pixelG, pixelB, pixelR, dp_cnt, sram_data, firstPixel, firstPixel_next, burstCnt, burstCnt_next, linecnt, frameCnt, dp_buf, sram_buf)
 	begin
 						
 		burstCnt_next <= burstCnt;
@@ -145,6 +148,7 @@ begin
 		
 		dp_cnt_next <= dp_cnt;	
 		dp_buf_next <= dp_buf;
+		sram_buf_next <= sram_buf;
 						
 --		if(frameCnt = 0)
 --		then
@@ -160,14 +164,14 @@ begin
 --		end if;
 		
 		-- DUALPORT RAM CONTROL
-		-- DATA -> RAM: always assert signals here - WR_EN will get falling flank
+		-- DATA -> RAM: always assert signals here - WR_EN will get falling flank later
 		
 		dp_data <= dp_buf;	
 		dp_wraddr(8 downto 0) <= conv_std_logic_vector(dp_cnt, 9);
 		dp_wren <= '1';
 		
 		-- SRAM CONTROL
-		sram_data <= "0000000000000000";
+		sram_data <= sram_buf;
 		sram_ctrl.we <= '1';	
 		-- can be LOW all the time according to datasheet
 		sram_ctrl.oe <= '0';
@@ -176,7 +180,20 @@ begin
 		sram_ctrl.lb <= '0';	
 		-- we only need 9 bit adress: 800 pixel per line, but SRAM-datawidth=16bit
 		-- so save 2 Byte at one adress, ignore bits 10-19
-		sram_ctrl.addr(8 downto 0) <= conv_std_logic_vector(rowcnt, 9);
+		
+		if(whichline = FIRST)
+		then
+			if(rowcnt > 0)
+			then
+				-- when WRITING to SRAM, rowcnt is to high(+1)
+				sram_ctrl.addr(8 downto 0) <= conv_std_logic_vector((rowcnt-1), 9);
+			else
+				sram_ctrl.addr(8 downto 0) <= "000000000";
+			end if;
+		else
+			-- when READING from SRAM no additional cylce is needed to get proper data
+			sram_ctrl.addr(8 downto 0) <= conv_std_logic_vector(rowcnt, 9);
+		end if;
 		sram_ctrl.addr(19 downto 9) <= (others => '0');
 		
 		-- rising edge of FVAL -> NEW FRAME starts
@@ -203,7 +220,7 @@ begin
 		if (lval = '0')
 		then
 			rowcnt_next  <= 0;
-			dp_cnt_next <= 0;
+dp_cnt_next <= 0;
 			burstCnt_next <= 0;
 			firstPixel_next <= '0';
 		end if;
@@ -223,26 +240,32 @@ begin
 			end if;
 		end if;
 		
-				
+		
+		-- PROCESS BAYER PIXEL PATTERN
 		-- rising edge of pxclk -> valid BAYER data from cam
 		if fval = '1' and lval = '1' and pixclk_old /= pixclk and pixclk = '1'
-		then				
+		then	
+		
 			-- FIRST LINE: save COMPLETE line to SRAM
 			if(whichline = FIRST)
 			then
 				if( firstPixel = '0' )
 				then
 					firstPixel_next <= '1';
-					pixelG_next <= pixdata(11 downto 4);
+
+					-- buffer G1 Value
+					sram_buf_next(15 downto 8) <= pixdata(11 downto 4);
+					
+					if(rowcnt > 0)
+					then
+						sram_ctrl.we <= '0';
+					end if;
 				else
-					-- save pixels from 'first' lines(Bayer: G1|R|G1|R... )
-					-- save RED pixel and buffered GREEN1 pixel
-					-- proper adress was already set one cylce earlier
-					sram_ctrl.we <= '0';
 		
-					sram_data(7 downto 0) <= pixdata(11 downto 4);		-- this is the RED share of the pixel
-					sram_data(15 downto 8) <= pixelG;						-- this is the GREEN_1 share of the pixel
-					-- ... and prepare next SRAM adress
+					-- buffer RED value
+					sram_buf_next(7 downto 0) <= pixdata(11 downto 4);		
+					-- prepare next SRAM adress
+					-- because SRAM values+address will be written with NEXT - signals, this rowcnt is too high
 					rowcnt_next  <= rowcnt + 1;
 					firstPixel_next <= '0';
 													
@@ -257,26 +280,29 @@ begin
 					pixelB_next <= pixdata(11 downto 4);
 					
 					-- save the last 4 Pixel to DP-RAM
-					-- must be done here because DP-RAM seems to need DATA and ADRESS first, one cylce later WR_EN:
+					-- must be done here because DP-RAM seems to need DATA and ADRESS first, then one cylce later WR_EN:
 					if(rowcnt > 0)
 					then
-dp_wren <= '0';
+						dp_wren <= '0';
 					end if;
 					
 				else
 					firstPixel_next <= '0';
 					dp_cnt_next <= dp_cnt + 1;
 					rowcnt_next  <= rowcnt + 1;
-				
---dp_wren <= '0';
-					
+							
 					-- get pixeldata from corresponding first line, save in SRAM
 					-- proper adress was already set one cycle earlier
 										
-					-- ignore G2 for now...
-					dp_buf_next(7 downto 0)   <= sram_data(7  downto 0);
-					dp_buf_next(15 downto 8)  <= sram_data(15 downto 8);
-					dp_buf_next(23 downto 16) <= pixelB;
+					-- FIXME:ignore G2 for now...
+					
+					-- reading from SRAM: 
+					--dp_buf_next(23 downto 16)   <= sram_data(7  downto 0);
+					--dp_buf_next(15 downto 8)  <= sram_data(15 downto 8);
+					--dp_buf_next(7 downto 0) <= pixelB;
+					dp_data(23 downto 16)   <= sram_data(7  downto 0);
+					dp_data(15 downto 8)  <= sram_data(15 downto 8);
+					dp_data(7 downto 0) <= pixelB;
 					burstCnt_next <= burstCnt + 1;
 					
 					if( burstCnt = PIXELBURSTLEN)
@@ -316,6 +342,7 @@ dp_wren <= '0';
 		frameCnt <= 0;
 		
 		dp_buf <= x"00000000";
+		sram_buf <= x"0000";
 		
 	else
 		if rising_edge(clk)
@@ -339,7 +366,7 @@ dp_wren <= '0';
 			frameCnt <= frameCnt_next;
 			
 			dp_buf <= dp_buf_next;
-			
+			sram_buf <= sram_buf_next;
 		end if;
 	end if;
 	end process;
