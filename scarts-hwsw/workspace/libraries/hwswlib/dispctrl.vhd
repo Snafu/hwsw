@@ -244,7 +244,6 @@ begin
 			output.start := '1';
 			output.data := rddata;
 			colors_sig(0) <= rddata;
-			pixelCount := pixelCount + 1;
 			output.colcnt := output.colcnt + '1';
 			blockPartCount_sig_n <= 0;
 
@@ -256,7 +255,7 @@ begin
 				colors_sig(1) <= rddata;
 				output.address := output.address + "100";
 				writeState := PIXELB;
-				--pixelCount := pixelCount + 1;
+				pixelCount := pixelCount + 1;
 			end if;
 
 		when PIXELB =>
@@ -278,6 +277,7 @@ begin
 			if ahbready = '1' then
 				output.address := output.address - x"c80" + "100";
 				output.colcnt := output.colcnt + '1';
+				output.data := rddata;
 
 				if blockPartCount_sig = 15 then
 					output.start := '0';
@@ -334,7 +334,10 @@ begin
 			output.face := facebox_sig;
 		end if;
 
-		--output.data := x"00ff0000";
+		--dbg ram-readout test
+		if output.data := x"00000000" then
+			output.data := x"000000ff";
+		end if;
 
 		-- update signals
 		update_sig_n <= update; --dbg
