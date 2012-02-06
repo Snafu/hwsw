@@ -243,7 +243,6 @@ begin
 		when STARTBLOCK =>
 			output.start := '1';
 			output.data := rddata;
-			output.colcnt := output.colcnt + '1';
 			pixelCount := pixelCount + 1;
 
 			writeState := HANDLEBLOCK;
@@ -252,6 +251,7 @@ begin
 			output.start := '1';
 			if ahbready = '1' then
 				output.address := output.address + "100";
+				output.colcnt := output.colcnt + '1';
 				output.data := rddata;
 
 				-- end of block
@@ -261,7 +261,6 @@ begin
 					numBlocks := numBlocks - 1;
 				else
 					pixelCount := pixelCount + 1;
-					output.colcnt := output.colcnt + '1';
 				end if;
 			end if;
 
@@ -279,7 +278,6 @@ begin
 		if output.colcnt = conv_std_logic_vector(MAXCOL,10) then
 			output.colcnt := "0000000000";
 			output.rowcnt := output.rowcnt + '1';
-			output.address := output.address + x"640";
 		end if;
 
 		-- increment row counter
@@ -290,10 +288,17 @@ begin
 			output.face := facebox_sig;
 		end if;
 
+		-- skip rest of line
+		if output.colcnt = conv_std_logic_vector(0,10) and output.rowcnt /= conv_std_logic_vector(0,10) then
+			output.address := output.address + x"640";
+		end if;
+
 		--dbg ram-readout test
 		if output.data = x"00000000" then
 			output.data := x"000000ff";
 		end if;
+
+		--output.data := "00000000000000000000000" & dpaddr; --dbg
 
 		-- update signals
 		update_sig_n <= update; --dbg
