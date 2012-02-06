@@ -481,7 +481,7 @@ begin
     );  
 	
 	-----------------------------------------------------------------------------
-	-- DP RAM
+	-- DP RAM for storing ONE LINE OF RGB DATA(400pixels each, 240 of them)
 	-----------------------------------------------------------------------------
 	
 	dp_pixelram_inst : dp_pixelram
@@ -491,6 +491,7 @@ begin
 		rdaddress	=> rdaddress_sig,
 		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
+-- HARI: use sysclk as INPUT/OUTPUT clock, should be ok
 --wrclock		=> cam_pixclk,
 wrclock		=> clk,
 		wren			=> wren_sig,
