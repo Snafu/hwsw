@@ -305,6 +305,7 @@ begin
 		if output.colcnt = conv_std_logic_vector(MAXCOL,10) then
 			output.colcnt := "0000000000";
 			output.rowcnt := output.rowcnt + '1';
+			output.address := output.address + x"c80";
 		end if;
 
 		-- increment row counter
