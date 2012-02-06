@@ -102,6 +102,9 @@ architecture rtl of kamera is
 	signal pixelG			: std_logic_vector(7 downto 0);
 	signal pixelG_next	: std_logic_vector(7 downto 0);
 	
+	signal pixelR			: std_logic_vector(7 downto 0);
+	signal pixelR_next	: std_logic_vector(7 downto 0);
+	
 	signal dp_cnt			: integer range 0 to 500;
 	signal dp_cnt_next	: integer range 0 to 500;
 	
@@ -110,28 +113,56 @@ architecture rtl of kamera is
 	
 	signal burstCnt		:	integer range 0 to 30;
 	signal burstCnt_next	:	integer range 0 to 30;
+	
+	signal frameCnt		:	integer range 0 to 10;
+	signal frameCnt_next	:	integer range 0 to 10;
+	
+	signal dp_buf			: std_logic_vector(31 downto 0);
+	signal dp_buf_next	: std_logic_vector(31 downto 0);
 		  
 begin
 
-	readout : process(rst, fval, fval_old, lval, lval_old, whichline, pixdata ,pixclk, pixclk_old, rowcnt, pixelG, pixelB, dp_cnt, sram_data, firstPixel, firstPixel_next, burstCnt, burstCnt_next, linecnt)
+	readout : process(rst, fval, fval_old, lval, lval_old, whichline, pixdata ,pixclk, pixclk_old, rowcnt, pixelG, pixelB, dp_cnt, sram_data, firstPixel, firstPixel_next, burstCnt, burstCnt_next, linecnt, frameCnt)
 	begin
 						
 		burstCnt_next <= burstCnt;
 		firstPixel_next <= firstPixel;			
-		dp_cnt_next <= dp_cnt;	
+		
 		rowcnt_next <= rowcnt;
 		linecnt_next <= linecnt;
 		pixelG_next <= pixelG;
 		pixelB_next <= pixelB;
+		pixelR_next <= pixelR;
+		
 		whichline_next <= whichline;	
 		fval_old_next <= fval;
 		lval_old_next <= lval;
 		pixclk_old_next <= pixclk;
 				
 		pixelburstReady <= '0';
-				
+		
+		frameCnt_next <= frameCnt;
+		
+		dp_cnt_next <= dp_cnt;	
+		dp_buf_next <= dp_buf;
+						
+--		if(frameCnt = 0)
+--		then
+--			dp_data <= x"00000000";	
+--		elsif(frameCnt = 1)
+--		then
+--			dp_data <= x"000000FF";
+--		elsif(frameCnt = 2)
+--		then
+--			dp_data <= x"0000FF00";
+--		else
+--			dp_data <= x"00FF0000";
+--		end if;
+		
 		-- DUALPORT RAM CONTROL
-		dp_data <= "00000000000000000000000000000000";
+		-- DATA -> RAM: always assert signals here - WR_EN will get falling flank
+		
+		dp_data <= dp_buf;	
 		dp_wraddr(8 downto 0) <= conv_std_logic_vector(dp_cnt, 9);
 		dp_wren <= '1';
 		
@@ -149,7 +180,16 @@ begin
 		sram_ctrl.addr(19 downto 9) <= (others => '0');
 		
 		-- rising edge of FVAL -> NEW FRAME starts
-		--if(fval_old /= fval and fval = '1')
+		if(fval_old /= fval and fval = '1')
+		then
+			if(frameCnt < 3)
+			then
+				frameCnt_next <= frameCnt + 1;
+			else
+				frameCnt_next <= 0;
+			end if;		
+		end if;
+		
 		if(fval = '0')
 		then
 			whichline_next <= FIRST;
@@ -195,15 +235,17 @@ begin
 					firstPixel_next <= '1';
 					pixelG_next <= pixdata(11 downto 4);
 				else
-					rowcnt_next  <= rowcnt + 1;
-					firstPixel_next <= '0';
-					sram_ctrl.we <= '0';
-					
+					-- save pixels from 'first' lines(Bayer: G1|R|G1|R... )
 					-- save RED pixel and buffered GREEN1 pixel
 					-- proper adress was already set one cylce earlier
-					sram_data(7 downto 0) <= pixdata(7 downto 0);
-					sram_data(15 downto 8) <= pixelG;
-					
+					sram_ctrl.we <= '0';
+		
+					sram_data(7 downto 0) <= pixdata(11 downto 4);		-- this is the RED share of the pixel
+					sram_data(15 downto 8) <= pixelG;						-- this is the GREEN_1 share of the pixel
+					-- ... and prepare next SRAM adress
+					rowcnt_next  <= rowcnt + 1;
+					firstPixel_next <= '0';
+													
 					end if;
 								
 			-- SECOND LINE: calculate new pixels
@@ -213,23 +255,28 @@ begin
 				then
 					firstPixel_next <= '1';
 					pixelB_next <= pixdata(11 downto 4);
-
+					
+					-- save the last 4 Pixel to DP-RAM
+					-- must be done here because DP-RAM seems to need DATA and ADRESS first, one cylce later WR_EN:
+					if(rowcnt > 0)
+					then
+dp_wren <= '0';
+					end if;
+					
 				else
 					firstPixel_next <= '0';
 					dp_cnt_next <= dp_cnt + 1;
 					rowcnt_next  <= rowcnt + 1;
 				
-					dp_wren <= '0';
+--dp_wren <= '0';
 					
 					-- get pixeldata from corresponding first line, save in SRAM
 					-- proper adress was already set one cycle earlier
 										
-					dp_data(7 downto 0)		<= "00000000";
-					dp_data(15 downto 8)		<= "00000000";
-					dp_data(23 downto 16)	<= "11111111";
-					--dp_data(7 downto 0)   <= sram_data(7  downto 0);
-					--dp_data(15 downto 8)  <= (sram_data(15 downto 8) + pixelG);
-					--dp_data(23 downto 16) <= pixelB;
+					-- ignore G2 for now...
+					dp_buf_next(7 downto 0)   <= sram_data(7  downto 0);
+					dp_buf_next(15 downto 8)  <= sram_data(15 downto 8);
+					dp_buf_next(23 downto 16) <= pixelB;
 					burstCnt_next <= burstCnt + 1;
 					
 					if( burstCnt = PIXELBURSTLEN)
@@ -262,9 +309,13 @@ begin
 		
 		pixelB <= "00000000";
 		pixelG <= "00000000";
+		pixelR <= "00000000";
 		
 		firstPixel <= '0';
 		burstCnt <= 0;
+		frameCnt <= 0;
+		
+		dp_buf <= x"00000000";
 		
 	else
 		if rising_edge(clk)
@@ -281,9 +332,13 @@ begin
 			
 			pixelB <= pixelB_next;
 			pixelG <= pixelG_next;
+			pixelR <= pixelR_next;
 							
 			firstPixel <= firstPixel_next;	
 			burstCnt <= burstCnt_next;
+			frameCnt <= frameCnt_next;
+			
+			dp_buf <= dp_buf_next;
 			
 		end if;
 	end if;

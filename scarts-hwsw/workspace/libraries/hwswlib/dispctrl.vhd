@@ -104,7 +104,7 @@ architecture rtl of dispctrl is
 	signal ahbready_sig : std_logic;
 	signal blockready_sig, blockready_sig_n : std_logic;
 	signal update_sig,update_sig_n : std_logic; --dbg
-	signal color_sig,color_sig_n : std_logic_vector(23 downto 0);
+--signal color_sig,color_sig_n : std_logic_vector(23 downto 0);
   
 begin
 
@@ -128,7 +128,7 @@ begin
 		variable dpdata : std_logic_vector(31 downto 0);
 		variable ahbready : std_logic;
 		variable update : std_logic; --dbg
-		variable color : std_logic_vector(23 downto 0); --dbg
+--variable color : std_logic_vector(23 downto 0); --dbg
   begin
 		
 		output := output_sig;
@@ -141,7 +141,7 @@ begin
 	
 		apbrdata := (others => '0');
 		update := update_sig;
-		color := color_sig;
+--color := color_sig;
 		
 	  ---------------------------------------------------------------------------
 	  -- Control. Handles the APB accesses and stores the internal registers
@@ -209,7 +209,9 @@ begin
 			dpaddr := (others => '0');
 			dpdata := (others => '0');
 			update := '0'; --dbg
-			color := x"000000"; --dbg
+pixCount := 0;
+
+--color := x"000000"; --dbg
 		end if;
 
 
@@ -236,8 +238,7 @@ begin
 
 		when STARTBLOCK =>
 			output.start := '1';
-			output.data := rddata;
-			--output.data := "00000000000000000000000" & dpaddr(8 downto 0); --dbg
+output.data := rddata;
 			pixCount := pixCount + 1;
 			output.colcnt := output.colcnt + '1';
 
@@ -247,7 +248,7 @@ begin
 			output.start := '1';
 			if ahbready = '1' then
 				output.address := output.address + "100";
-				output.data := rddata;
+output.data := rddata;
 				--output.data := "00000000000000000000000" & dpaddr(8 downto 0); --dbg
 
 
@@ -264,7 +265,8 @@ begin
 
 		end case; -- writeState_sig
 
-		if pixCount = 512 then
+--if pixCount = 512 then
+		if pixCount = 400 then
 			pixCount := 0;
 		end if;
 		
@@ -282,14 +284,14 @@ begin
 			output.address := FIFOSTART;
 			-- refresh face position
 			output.face := facebox_sig;
-			color := color + "10";
+--color := color + "10";
 		end if;
 
 		--output.data := x"00ff0000";
-		output.data := "00000000" & color;
+--output.data := "00000000" & color;
 
 		-- update signals
-		color_sig_n <= color; --dbg
+--color_sig_n <= color; --dbg
 		update_sig_n <= update; --dbg
 		blockready_sig_n <= blockrdy;
 		dpaddr_sig_n <= dpaddr;
@@ -327,7 +329,7 @@ begin
   reg_proc : process(clk)
   begin
     if rising_edge(clk) then
-			color_sig <= color_sig_n; --dbg
+--color_sig <= color_sig_n; --dbg
 			update_sig <= update_sig_n; --dbg
 			blockready_sig <= blockready_sig_n;
 

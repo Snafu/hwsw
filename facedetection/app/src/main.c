@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 	mini_uart_write(&aux_uart_handle, (char *)"I2C WRITE", sizeof("I2C WRITE"));
 	
 	// CAM initialization
-	//initCamera();
+	initCamera();
 
 	uint32_t i;
 	uint32_t j;

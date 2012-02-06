@@ -91,7 +91,7 @@ entity top is
 		
 
 		-- TESTSIGNALE
-		blockrdy			: in std_logic;
+		blockrdy_dbg			: out std_logic;
 		clk_test				:	out std_logic;
 		pxl_clk_out			:	out std_logic;
 		cam_resetN_dbg	: out std_logic;
@@ -457,8 +457,7 @@ begin
 	
 	-----------------------------------------------------------------------------
 	-- DISPLAY controller
-	-----------------------------------------------------------------------------
-	
+	-----------------------------------------------------------------------------	
 	
   dispctrl0 : dispctrl
     generic map
@@ -470,20 +469,19 @@ begin
     )
     port map
     (
-      rst => syncrst,
-      clk => clk,
-      apbi => apbi,
-      apbo => apbo(1),
-      ahbi => grlib_ahbmi,
-      ahbo => disp_ahbmo,
-			rdaddress => rdaddress_sig,
-			rddata => q_sig,
-			--blockrdy => blockrdy --dbg
-			blockrdy => pxReady_sig
+		rst => syncrst,
+		clk => clk,
+		apbi => apbi,
+		apbo => apbo(1),
+		ahbi => grlib_ahbmi,
+		ahbo => disp_ahbmo,
+		rdaddress => rdaddress_sig,
+		rddata => q_sig,
+		blockrdy => pxReady_sig
     );  
 	
 	-----------------------------------------------------------------------------
-	-- Kamera readout
+	-- DP RAM
 	-----------------------------------------------------------------------------
 	
 	dp_pixelram_inst : dp_pixelram
@@ -493,11 +491,15 @@ begin
 		rdaddress	=> rdaddress_sig,
 		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
-		wrclock		=> cam_pixclk,
+--wrclock		=> cam_pixclk,
+wrclock		=> clk,
 		wren			=> wren_sig,
 		q				=> q_sig
 	);
 	
+	------------------------------------------------------------------------------- 
+	--- Kamera readout
+	-----------------------------------------------------------------------------
 	
   cam0 : kamera
     generic map
@@ -523,15 +525,8 @@ begin
 			dp_wraddr	=> wraddress_sig,
 			pixelburstReady => pxReady_sig
     ); 
-  
-  -- dpram
---	data_sig			: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
---		rdaddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
---		rdclock_sig		: IN STD_LOGIC ;
---		wraddress_sig	: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
---		wrclock_sig		: IN STD_LOGIC  := '1';
---		wren_sig			: IN STD_LOGIC  := '0';
---		q_sig				: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
+	 
+	 blockrdy_dbg <= pxReady_sig;
   
   -----------------------------------------------------------------------------
   -- Scarts extension modules
