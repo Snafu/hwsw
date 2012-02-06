@@ -53,6 +53,7 @@ end ;
 
 architecture rtl of kamera is
   
+  --constant PIXELBURSTLEN	: integer := 3;
   constant PIXELBURSTLEN	: integer := 15;
   
   type sram_ctrl_t is record
@@ -74,9 +75,6 @@ architecture rtl of kamera is
 		lb			: std_logic;
 	end record;
 	
-	type color_t is (R,G,B);
-	type pixel_t is array(color_t'left to color_t'right) of std_logic_vector(7 downto 0);
-	type pixline_t is array(1 to 800) of pixel_t;
 	type line_t is (FIRST, SECOND);
 	
 	signal pixclk_old			: std_logic;
@@ -122,11 +120,102 @@ architecture rtl of kamera is
 	
 	signal sram_buf			: std_logic_vector(15 downto 0);
 	signal sram_buf_next	: std_logic_vector(15 downto 0);
-		  
+	
+	
+	type matrix_t is array(0 to 399) of std_logic_vector(239 downto 0);
+	
+	signal bitmapORIG		: matrix_t;
+	signal bitmapEROSION	: matrix_t;
+	signal bitmapDILATION: matrix_t;
+	
+	signal origXCnt			: integer range 0 to 400;
+	signal origXCnt_next		: integer range 0 to 400;
+	signal origYCnt			: integer range 0 to 240;
+	signal origYCnt_next		: integer range 0 to 240;
+	
+	signal dilationXCnt			: integer range 0 to 400;
+	signal dilationXCnt_next	: integer range 0 to 400;
+	signal dilationYCnt			: integer range 0 to 240;
+	signal dilationYCnt_next	: integer range 0 to 240;
+	
+	signal erosionXCnt			: integer range 0 to 400;
+	signal erosionXCnt_next		: integer range 0 to 400;
+	signal erosionYCnt			: integer range 0 to 240;
+	signal erosionYCnt_next		: integer range 0 to 240;
+
+	type filter_t is(IDLE, BUSY, FINISHED);
+	
+	signal erosionState			: filter_t;
+	signal erosionState_next	: filter_t;
+	
+	signal dilationState			: filter_t;
+	signal dilationState_next	: filter_t;
+	
+	signal startDilation			: std_logic;
+	signal startDilation_next	: std_logic;
+	
+	signal startErosion			: std_logic;
+	signal startErosion_next	: std_logic;
+	
 begin
+
+
+	--
+	-- DILATION FILTER
+	--
+	-- gets signaled when EROSION is done
+	imageProcessingDilation : process(dilationXCnt, dilationYCnt, startDilation, startDilation_next, dilationState)
+	begin
+				
+		dilationXCnt_next <= dilationXCnt;
+		dilationYCnt_next <= dilationYCnt;
+		dilationState_next <= dilationState;
+	
+		case dilationState is
+			when	IDLE =>
+				if(startDilation /= startDilation_next and startDilation_next = '1')
+				then
+					erosionState_next <= BUSY;
+				end if;
+			when	BUSY =>
+			
+			when	FINISHED =>
+		
+		end case;
+		
+	
+	end process;
+	
+	
+	--
+	--	EROSION FILTER
+	--
+	-- gets signaled when complex 400x240 x 1bit picture(after skinfilter) is ready
+	imageProcessingErosion : process(erosionXCnt, erosionYCnt)
+	begin
+	
+		erosionXCnt_next <= erosionXCnt;
+		erosionYCnt_next <= erosionYCnt;
+		erosionState_next <= erosionState;
+		
+		case erosionState is
+			when	IDLE =>
+			
+			when	BUSY =>
+			
+			when	FINISHED =>
+		
+		end case;
+		
+	end process;
+	
+	
 
 	readout : process(rst, fval, fval_old, lval, lval_old, whichline, pixdata ,pixclk, pixclk_old, rowcnt, pixelG, pixelB, pixelR, dp_cnt, sram_data, firstPixel, firstPixel_next, burstCnt, burstCnt_next, linecnt, frameCnt, dp_buf, sram_buf)
 	begin
+	
+		startErosion_next <= startErosion;
+		startDilation_next <= startDilation;
 						
 		burstCnt_next <= burstCnt;
 		firstPixel_next <= firstPixel;			
@@ -163,14 +252,26 @@ begin
 --			dp_data <= x"00FF0000";
 --		end if;
 		
+		--
 		-- DUALPORT RAM CONTROL
+		--
 		-- DATA -> RAM: always assert signals here - WR_EN will get falling flank later
+
+-- TEMP disabled wg. meminit - test
+dp_data <= dp_buf;
+if(dp_cnt > 0)
+then	
+dp_wraddr(8 downto 0) <= conv_std_logic_vector((dp_cnt-1), 9);
+else
+dp_wraddr(8 downto 0) <= "000000000";
+end if;
 		
-		dp_data <= dp_buf;	
-		dp_wraddr(8 downto 0) <= conv_std_logic_vector(dp_cnt, 9);
-		dp_wren <= '1';
+dp_wren <= '1';
+--dp_wren <= '0';
 		
+		--
 		-- SRAM CONTROL
+		--
 		sram_data <= sram_buf;
 		sram_ctrl.we <= '1';	
 		-- can be LOW all the time according to datasheet
@@ -178,14 +279,14 @@ begin
 		sram_ctrl.ce <= '0';
 		sram_ctrl.ub <= '0';
 		sram_ctrl.lb <= '0';	
-		-- we only need 9 bit adress: 800 pixel per line, but SRAM-datawidth=16bit
-		-- so save 2 Byte at one adress, ignore bits 10-19
+		
+		-- we only need 9 bit adress: 800 pixel per line, but SRAM-datawidth=16bit...
 		
 		if(whichline = FIRST)
 		then
 			if(rowcnt > 0)
 			then
-				-- when WRITING to SRAM, rowcnt is to high(+1)
+				-- when WRITING to SRAM, rowcnt is too high(+1), see [MARK1]
 				sram_ctrl.addr(8 downto 0) <= conv_std_logic_vector((rowcnt-1), 9);
 			else
 				sram_ctrl.addr(8 downto 0) <= "000000000";
@@ -194,9 +295,13 @@ begin
 			-- when READING from SRAM no additional cylce is needed to get proper data
 			sram_ctrl.addr(8 downto 0) <= conv_std_logic_vector(rowcnt, 9);
 		end if;
+		-- ... so save 2 Byte at one adress, ignore bits 10-19:
 		sram_ctrl.addr(19 downto 9) <= (others => '0');
 		
-		-- rising edge of FVAL -> NEW FRAME starts
+		--
+		-- NEW FRAME
+		--
+		-- rising edge of FVAL
 		if(fval_old /= fval and fval = '1')
 		then
 			if(frameCnt < 3)
@@ -217,15 +322,20 @@ begin
 			firstPixel_next <= '0';
 		end if;
 		
+		
 		if (lval = '0')
 		then
 			rowcnt_next  <= 0;
-dp_cnt_next <= 0;
+			dp_cnt_next <= 0;
 			burstCnt_next <= 0;
 			firstPixel_next <= '0';
 		end if;
 		
-		if(lval_old /= lval and lval = '1')
+		--
+		-- NEW LINE
+		--
+		-- rising edge of LVAL
+		if(lval_old /= lval and lval = '1' and fval = '1')
 		then
 			linecnt_next <= linecnt + 1;
 			
@@ -240,8 +350,9 @@ dp_cnt_next <= 0;
 			end if;
 		end if;
 		
-		
+		--
 		-- PROCESS BAYER PIXEL PATTERN
+		--
 		-- rising edge of pxclk -> valid BAYER data from cam
 		if fval = '1' and lval = '1' and pixclk_old /= pixclk and pixclk = '1'
 		then	
@@ -265,13 +376,13 @@ dp_cnt_next <= 0;
 					-- buffer RED value
 					sram_buf_next(7 downto 0) <= pixdata(11 downto 4);		
 					-- prepare next SRAM adress
-					-- because SRAM values+address will be written with NEXT - signals, this rowcnt is too high
+					-- because SRAM values+address will be written with NEXT - signals, this rowcnt is too high[MARK1]
 					rowcnt_next  <= rowcnt + 1;
 					firstPixel_next <= '0';
 													
-					end if;
+			end if;
 								
-			-- SECOND LINE: calculate new pixels
+			-- SECOND LINE: calculate new pixels and save to DP-RAM(1pixel from DP-RAM will become 2x2 miniframe @ SVGA
 			else
 				-- save BLUE part of pixel
 				if( firstPixel = '0' )
@@ -283,7 +394,9 @@ dp_cnt_next <= 0;
 					-- must be done here because DP-RAM seems to need DATA and ADRESS first, then one cylce later WR_EN:
 					if(rowcnt > 0)
 					then
-						dp_wren <= '0';
+-- disabled TEMP to test with memINIT file
+dp_wren <= '0';
+--dp_wren <= '1';
 					end if;
 					
 				else
@@ -291,20 +404,37 @@ dp_cnt_next <= 0;
 					dp_cnt_next <= dp_cnt + 1;
 					rowcnt_next  <= rowcnt + 1;
 							
-					-- get pixeldata from corresponding first line, save in SRAM
+					-- get pixeldata from corresponding first line, save in DP RAM
 					-- proper adress was already set one cycle earlier
 										
 					-- FIXME:ignore G2 for now...
 					
 					-- reading from SRAM: 
-					--dp_buf_next(23 downto 16)   <= sram_data(7  downto 0);
-					--dp_buf_next(15 downto 8)  <= sram_data(15 downto 8);
-					--dp_buf_next(7 downto 0) <= pixelB;
-					dp_data(23 downto 16)   <= sram_data(7  downto 0);
-					dp_data(15 downto 8)  <= sram_data(15 downto 8);
-					dp_data(7 downto 0) <= pixelB;
+				-- disabled TEMP to test with memINIT file
+dp_buf_next(23 downto 16)   <= sram_data(7  downto 0);
+dp_buf_next(15 downto 8)  <= sram_data(15 downto 8);
+dp_buf_next(7 downto 0) <= pixelB;
+				
+--
+--
+--	
+-- TODO:
+-- we just got a NEW RGB pixel, so this is the place to convert the RGB-pixel to yCbCr and apply the skinfilter!
+-- there are 400 x 240 of that pixels
+-- 1. save all of that 1bit - pixels to a DP-ram-instance
+-- 2. apply erosion filter
+-- 3. apply xxx- filter
+-- 4. create histogramm, find maximal-values
+--
+-- MAYBE 2d - array will be a better choice...?
+-- 
+--
+
 					burstCnt_next <= burstCnt + 1;
-					
+				
+					-- because pixelburstReady is directly a port(no *_next - signals used)
+					-- it will get signal too early(16. DP-Pixel will be written in the next cycle
+					-- should be no problem because dispctrl must 'catch up'
 					if( burstCnt = PIXELBURSTLEN)
 					then
 						pixelburstReady <= '1';
@@ -344,6 +474,9 @@ dp_cnt_next <= 0;
 		dp_buf <= x"00000000";
 		sram_buf <= x"0000";
 		
+		startErosion <= '0';
+		startDilation <= '0';
+		
 	else
 		if rising_edge(clk)
 		then
@@ -367,6 +500,9 @@ dp_cnt_next <= 0;
 			
 			dp_buf <= dp_buf_next;
 			sram_buf <= sram_buf_next;
+			
+			startErosion <= startErosion_next;
+			startDilation <= startDilation_next;
 		end if;
 	end if;
 	end process;

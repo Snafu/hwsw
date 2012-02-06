@@ -90,8 +90,8 @@ architecture rtl of i2cmaster is
 	signal sdc_counter		: integer range 0 to 5010;
 	signal sdc_counter_next	: integer range 0 to 5010;
 	
-	signal sda_buf				: std_logic;
-	signal sda_buf_next		: std_logic;
+	signal sda_buf				: std_ulogic;
+	signal sda_buf_next		: std_ulogic;
 	
 	signal data_buffer		: std_logic_vector(23 downto 0);
 	signal data_buffer_next	: std_logic_vector(23 downto 0);
