@@ -243,61 +243,16 @@ begin
 		when STARTBLOCK =>
 			output.start := '1';
 			output.data := rddata;
-			colors_sig(0) <= rddata;
 			output.colcnt := output.colcnt + '1';
-			blockPartCount_sig_n <= 0;
+			pixelCount := pixelCount + 1;
 
-			writeState := PIXELA;
-
-		when PIXELA =>
-			output.start := '1';
-			if ahbready = '1' then
-				colors_sig(1) <= rddata;
-				output.address := output.address + "100";
-				writeState := PIXELB;
-				pixelCount := pixelCount + 1;
-			end if;
-
-		when PIXELB =>
-			output.start := '1';
-			if ahbready = '1' then
-				output.address := output.address - "100" + x"c80";
-				writeState := PIXELC;
-			end if;
-
-		when PIXELC =>
-			output.start := '1';
-			if ahbready = '1' then
-				output.address := output.address + "100";
-				writeState := PIXELD;
-			end if;
-		
-		when PIXELD =>
-			output.start := '1';
-			if ahbready = '1' then
-				output.address := output.address - x"c80" + "100";
-				output.colcnt := output.colcnt + '1';
-				output.data := rddata;
-
-				if blockPartCount_sig = 15 then
-					output.start := '0';
-					numBlocks := numBlocks - 1;
-					writeState := IDLE;
-				else
-					blockPartCount_sig_n <= blockPartCount_sig + 1;
-					writeState := PIXELA;
-				end if;
-
-			end if;	
-
+			writeState := HANDLEBLOCK;
 
 		when HANDLEBLOCK =>
 			output.start := '1';
 			if ahbready = '1' then
 				output.address := output.address + "100";
 				output.data := rddata;
-				--output.data := "00000000000000000000000" & dpaddr(8 downto 0); --dbg
-
 
 				-- end of block
 				if output.address(5 downto 2) = "0000" then
@@ -310,6 +265,7 @@ begin
 				end if;
 			end if;
 
+		when others =>
 		end case; -- writeState_sig
 
 		if pixelCount = 512 then
@@ -323,7 +279,7 @@ begin
 		if output.colcnt = conv_std_logic_vector(MAXCOL,10) then
 			output.colcnt := "0000000000";
 			output.rowcnt := output.rowcnt + '1';
-			output.address := output.address + x"c80";
+			output.address := output.address + x"640";
 		end if;
 
 		-- increment row counter
@@ -335,7 +291,7 @@ begin
 		end if;
 
 		--dbg ram-readout test
-		if output.data := x"00000000" then
+		if output.data = x"00000000" then
 			output.data := x"000000ff";
 		end if;
 
