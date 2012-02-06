@@ -91,7 +91,7 @@ entity top is
 		
 
 		-- TESTSIGNALE
-		blockrdy_dbg			: out std_logic;
+		blockrdy			: in std_logic; --dbg
 		clk_test				:	out std_logic;
 		pxl_clk_out			:	out std_logic;
 		cam_resetN_dbg	: out std_logic;
@@ -462,22 +462,24 @@ begin
   dispctrl0 : dispctrl
     generic map
     (
-	   pindex => 1,
-		paddr => 16#002#,
-      pmask => 16#fff#,
-		hindex => 2
+			pindex => 1,
+			paddr => 16#002#,
+			pmask => 16#fff#,
+			hindex => 2
     )
     port map
     (
-		rst => syncrst,
-		clk => clk,
-		apbi => apbi,
-		apbo => apbo(1),
-		ahbi => grlib_ahbmi,
-		ahbo => disp_ahbmo,
-		rdaddress => rdaddress_sig,
-		rddata => q_sig,
-		blockrdy => pxReady_sig
+			rst => syncrst,
+			clk => clk,
+			apbi => apbi,
+			apbo => apbo(1),
+			ahbi => grlib_ahbmi,
+			ahbo => disp_ahbmo,
+			fval => cam_fval,
+			rdaddress => rdaddress_sig,
+			rddata => q_sig,
+			blockrdy => pxReady_sig
+			--blockrdy => blockrdy --dbg
     );  
 	
 	-----------------------------------------------------------------------------
@@ -491,9 +493,9 @@ begin
 		rdaddress	=> rdaddress_sig,
 		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
--- HARI: use sysclk as INPUT/OUTPUT clock, should be ok
---wrclock		=> cam_pixclk,
-wrclock		=> clk,
+		-- HARI: use sysclk as INPUT/OUTPUT clock, should be ok
+		--wrclock		=> cam_pixclk,
+		wrclock		=> clk,
 		wren			=> wren_sig,
 		q				=> q_sig
 	);
@@ -527,7 +529,6 @@ wrclock		=> clk,
 			pixelburstReady => pxReady_sig
     ); 
 	 
-	 blockrdy_dbg <= pxReady_sig;
   
   -----------------------------------------------------------------------------
   -- Scarts extension modules

@@ -283,7 +283,7 @@ dp_cnt_next <= 0;
 					-- must be done here because DP-RAM seems to need DATA and ADRESS first, then one cylce later WR_EN:
 					if(rowcnt > 0)
 					then
-						dp_wren <= '0';
+						--dp_wren <= '0';
 					end if;
 					
 				else
@@ -313,6 +313,9 @@ dp_cnt_next <= 0;
 				end if;	
 			end if;
 		end if;
+
+
+		dp_wren <= '0';
 			
   end process; 
   
