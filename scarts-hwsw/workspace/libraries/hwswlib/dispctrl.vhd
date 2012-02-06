@@ -60,6 +60,8 @@ architecture rtl of dispctrl is
 	constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0000000";
 	constant FIFOEND : std_logic_vector(31 downto 0) := x"E0176FFC";
 	constant NOFACE : std_logic_vector(9 downto 0) := "1111111111";
+	constant MAXCOL : integer := 400;
+	constant MAXROW : integer := 240;
 
   constant REVISION : amba_version_type := 0; 
   constant VENDOR_HWSW: amba_vendor_type := 16#08#;
@@ -91,7 +93,7 @@ architecture rtl of dispctrl is
 		start			: std_logic;
   end record;
 
-	signal numBlocks_sig,numBlocks_sig_n : INTEGER range 0 to 1000;
+	signal numPixels_sig,numPixels_sig_n : INTEGER range 0 to 1000;
 	signal pixCount_sig,pixCount_sig_n : INTEGER range 0 to 512;
   
 	signal facebox_sig,facebox_sig_n	: facebox_t;
@@ -101,10 +103,9 @@ architecture rtl of dispctrl is
 	signal dpaddr_sig,dpaddr_sig_n : std_logic_vector(8 downto 0);
 	signal dpdata_sig,dpdata_sig_n : std_logic_vector(31 downto 0);
 
-	signal ahbready_sig : std_logic;
-	signal blockready_sig, blockready_sig_n : std_logic;
+	signal blockready_sig,blockready_sig_n : std_logic;
 	signal update_sig,update_sig_n : std_logic; --dbg
---signal color_sig,color_sig_n : std_logic_vector(23 downto 0);
+	signal ahbready_sig : std_logic; --dbg
   
 begin
 
@@ -116,24 +117,23 @@ begin
   apbo.pindex  <= pindex;
   apbo.pconfig <= PCONFIG;
   
-  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy,blockready_sig,update_sig,dpdata_sig,dpaddr_sig,writeState_sig,numBlocks_sig,pixCount_sig,rddata)
+  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy,blockready_sig,update_sig,dpdata_sig,dpaddr_sig,writeState_sig,numPixels_sig,pixCount_sig,rddata)
     variable apbwrite	: std_logic;
     variable apbrdata : std_logic_vector(31 downto 0);
   	variable output	: write_t;
 		variable facebox	: facebox_t;
-		variable numBlocks : INTEGER range -10 to 100;
+		variable numPixels : INTEGER range -10 to 100;
 		variable pixCount : INTEGER range 0 to 512;
 		variable writeState : writestate_type;
 		variable dpaddr : std_logic_vector(8 downto 0);
 		variable dpdata : std_logic_vector(31 downto 0);
 		variable ahbready : std_logic;
 		variable update : std_logic; --dbg
---variable color : std_logic_vector(23 downto 0); --dbg
   begin
 		
 		output := output_sig;
 		facebox := facebox_sig;
-		numBlocks := numBlocks_sig;
+		numPixels := numPixels_sig;
 		pixCount := pixCount_sig;
 		writeState := writeState_sig;
 		dpaddr := dpaddr_sig;
@@ -141,7 +141,6 @@ begin
 	
 		apbrdata := (others => '0');
 		update := update_sig;
---color := color_sig;
 		
 	  ---------------------------------------------------------------------------
 	  -- Control. Handles the APB accesses and stores the internal registers
@@ -193,7 +192,7 @@ begin
 	  -- Control reset
 	  ---------------------------------------------------------------------------
 	  if rst = '0' then
-			numBlocks := 0;
+			numPixels := 0;
 			
 			facebox.top := NOFACE;
 			facebox.left := NOFACE;
@@ -209,9 +208,7 @@ begin
 			dpaddr := (others => '0');
 			dpdata := (others => '0');
 			update := '0'; --dbg
-pixCount := 0;
-
---color := x"000000"; --dbg
+			pixCount := 0;
 		end if;
 
 
@@ -220,11 +217,11 @@ pixCount := 0;
 		---------------------------------------------------------------------------
 		 
 		ahbready := dmao.ready;
-		ahbready_sig <= ahbready; --dbg
+		ahbready_sig <= dmao.ready;
 
 		if blockready_sig /= blockrdy and blockrdy = '1' then
-		--if update_sig /= update and update = '1' then
-			numBlocks := numBlocks + 1;
+		--if update_sig /= update and update = '1' then --dbg
+			numPixels := numPixels + 16;
 		end if;
 
 
@@ -232,23 +229,55 @@ pixCount := 0;
 
 		case writeState is
 		when IDLE =>
-			if numBlocks > 0 then
+			if numPixels > 0 then
 				writeState := STARTBLOCK;
 			end if;
 
 		when STARTBLOCK =>
 			output.start := '1';
-output.data := rddata;
+			output.data := rddata;
 			pixCount := pixCount + 1;
 			output.colcnt := output.colcnt + '1';
 
-			writeState := HANDLEBLOCK;
+			writeState := PIXELA;
+
+		when PIXELA =>
+			output.start := '1';
+			if ahbready = '1' then
+				output.address := output.address + "100";
+				writeState := PIXELB;
+			end if;
+
+		when PIXELB =>
+			output.start := '1';
+			if ahbready = '1' then
+				output.address := output.address - "100" + x"c80";
+				writeState := PIXELC;
+			end if;
+
+		when PIXELC =>
+			output.start := '1';
+			if ahbready = '1' then
+				output.address := output.address + "100";
+				writeState := PIXELD;
+			end if;
+		
+		when PIXELD =>
+			output.start := '1';
+			if ahbready = '1' then
+				output.start := '0';
+				output.address := output.address - x"c80" + "100";
+				numPixels := numPixels - 1;
+
+				writeState := IDLE;
+			end if;	
+
 
 		when HANDLEBLOCK =>
 			output.start := '1';
 			if ahbready = '1' then
 				output.address := output.address + "100";
-output.data := rddata;
+				output.data := rddata;
 				--output.data := "00000000000000000000000" & dpaddr(8 downto 0); --dbg
 
 
@@ -256,7 +285,7 @@ output.data := rddata;
 				if output.address(5 downto 2) = "0000" then
 					output.start := '0';
 					writeState := IDLE;
-					numBlocks := numBlocks - 1;
+					numPixels := numPixels - 1;
 				else
 					pixCount := pixCount + 1;
 					output.colcnt := output.colcnt + '1';
@@ -265,7 +294,7 @@ output.data := rddata;
 
 		end case; -- writeState_sig
 
---if pixCount = 512 then
+		--if pixCount = 512 then
 		if pixCount = 400 then
 			pixCount := 0;
 		end if;
@@ -273,32 +302,29 @@ output.data := rddata;
 		dpaddr := conv_std_logic_vector(pixCount,9);
 
 		-- increment column counter
-		if output.colcnt = conv_std_logic_vector(800,10) then
+		if output.colcnt = conv_std_logic_vector(MAXCOL,10) then
 			output.colcnt := "0000000000";
 			output.rowcnt := output.rowcnt + '1';
 		end if;
 
 		-- increment row counter
-		if output.rowcnt = conv_std_logic_vector(480,10) then
+		if output.rowcnt = conv_std_logic_vector(MAXROW,10) then
 			output.rowcnt := "0000000000";
 			output.address := FIFOSTART;
 			-- refresh face position
 			output.face := facebox_sig;
---color := color + "10";
 		end if;
 
 		--output.data := x"00ff0000";
---output.data := "00000000" & color;
 
 		-- update signals
---color_sig_n <= color; --dbg
 		update_sig_n <= update; --dbg
 		blockready_sig_n <= blockrdy;
 		dpaddr_sig_n <= dpaddr;
 		facebox_sig_n <= facebox;
 		output_sig_n <= output;
 		pixCount_sig_n <= pixCount;
-		numBlocks_sig_n <= numBlocks;
+		numPixels_sig_n <= numPixels;
 		writeState_sig_n <= writeState;
 		
     apbo.prdata <= apbrdata;
@@ -329,7 +355,6 @@ output.data := rddata;
   reg_proc : process(clk)
   begin
     if rising_edge(clk) then
---color_sig <= color_sig_n; --dbg
 			update_sig <= update_sig_n; --dbg
 			blockready_sig <= blockready_sig_n;
 
@@ -340,7 +365,7 @@ output.data := rddata;
 			facebox_sig <= facebox_sig_n;
 			output_sig <= output_sig_n;
 			pixCount_sig <= pixCount_sig_n;
-			numBlocks_sig <= numBlocks_sig_n;
+			numPixels_sig <= numPixels_sig_n;
 			writeState_sig <= writeState_sig_n;
 
     end if;
