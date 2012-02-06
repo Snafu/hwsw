@@ -20,3 +20,4 @@ scarts-hwsw/workspace/hwsw_de2-115/modelsim/*/
 *.log
 *.out
 *.toc
+*.swp
