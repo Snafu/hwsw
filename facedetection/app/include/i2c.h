@@ -8,7 +8,7 @@
 #define i2c_write(reg,word)	{ \
 	I2CCONFIG_STATUS = (((uint8_t) reg)<<16) | ((uint16_t) word); \
 	uint32_t j; \
-	for(j = 0; j < 1300; j++) asm volatile("nop\n\t"); \
+	for(j = 0; j < 2300; j++) asm volatile("nop\n\t"); \
 	}
 
 extern void initCamera(void);

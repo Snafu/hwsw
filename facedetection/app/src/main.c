@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 	while(1)
 	{
 		i2c_write(0x0b, 0x04);
-		for(i = 0; i < 500; i++)
+		for(i = 0; i < 130; i++)
 		{
 			for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
 		}

@@ -91,7 +91,7 @@ entity top is
 		
 
 		-- TESTSIGNALE
-		blockrdy			: in std_logic; --dbg
+		blockrdy_dbg		: out std_logic;
 		clk_test				:	out std_logic;
 		pxl_clk_out			:	out std_logic;
 		cam_resetN_dbg	: out std_logic;
@@ -529,7 +529,8 @@ begin
 			pixelburstReady => pxReady_sig
     ); 
 	 
-  
+	blockrdy_dbg <= pxReady_sig;
+	
   -----------------------------------------------------------------------------
   -- Scarts extension modules
   -----------------------------------------------------------------------------
