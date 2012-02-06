@@ -259,6 +259,10 @@ begin
 					output.start := '0';
 					writeState := IDLE;
 					numBlocks := numBlocks - 1;
+					-- skip 400 pixels
+					if output.colcnt = conv_std_logic_vector(MAXCOL,10) then
+						output.address := output.address + x"640";
+					end if;
 				else
 					pixelCount := pixelCount + 1;
 				end if;
@@ -286,11 +290,6 @@ begin
 			output.address := FIFOSTART;
 			-- refresh face position
 			output.face := facebox_sig;
-		end if;
-
-		-- skip rest of line
-		if output.colcnt = conv_std_logic_vector(0,10) and output.rowcnt /= conv_std_logic_vector(0,10) then
-			output.address := output.address + x"640";
 		end if;
 
 		--dbg ram-readout test
