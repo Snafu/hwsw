@@ -120,7 +120,7 @@ begin
   apbo.pindex  <= pindex;
   apbo.pconfig <= PCONFIG;
   
-  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy,blockready_sig,dpdata_sig,dpaddr_sig,writeState_sig,numBlocks_sig,pixelCount_sig,rddata)
+  control_proc : process(rst,apbi,dmai,dmao,facebox_sig,output_sig,blockrdy,blockready_sig,dpdata_sig,dpaddr_sig,writeState_sig,numBlocks_sig,pixelCount_sig,rddata)
     variable apbwrite	: std_logic;
     variable apbrdata : std_logic_vector(31 downto 0);
   	variable output	: write_t;
@@ -194,8 +194,8 @@ begin
 			output.colcnt := (others => '0');
 			output.rowcnt := (others => '0');
 
-			writeState := NOINIT;
-			--writeState := IDLE; --dbg
+			--writeState := NOINIT;
+			writeState := IDLE; --dbg
 			dpaddr := (others => '0');
 			dpdata := (others => '0');
 			pixelCount := 0;
@@ -224,14 +224,28 @@ begin
 			end if;
 
 		when IDLE =>
-			--output.data := rddata;
 			if numBlocks > 0 then
+				output.start := '1';
+				--output.data := rddata;
+
 				writeState := STARTBLOCK;
 			end if;
 
 		when STARTBLOCK =>
 			output.start := '1';
-			--output.data := rddata;
+			output.data := rddata;
+			output.address := output.address + "100";
+			output.colcnt := output.colcnt + '1';
+			pixelCount := pixelCount + 1;
+
+			writeState := WAITREADY;
+
+		when WAITREADY =>
+			output.start := '1';
+			output.data := rddata;
+			output.address := output.address + "100";
+			output.colcnt := output.colcnt + '1';
+			--pixelCount := pixelCount + 1;
 
 			writeState := HANDLEBLOCK;
 
@@ -257,8 +271,12 @@ begin
 				output.colcnt := output.colcnt + '1';
 				pixelCount := pixelCount + 1;
 				numBlocks := numBlocks - 1;
-				writeState := IDLE;
+				writeState := UPDATEDPADDR;
 			end if;
+
+		when UPDATEDPADDR =>
+			pixelCount := pixelCount + 1;
+			writeState := IDLE;
 
 		when others =>
 		end case; -- writeState_sig
@@ -285,7 +303,7 @@ begin
 			output.face := facebox_sig;
 		end if;
 
-		--output.data := "00000000000000000000000" & dpaddr; --dbg
+		output.data := "00000000000000000000000" & dpaddr; --dbg
 		dpaddr := conv_std_logic_vector(pixelCount,9);
 
 		-- update signals
