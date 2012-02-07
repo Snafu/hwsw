@@ -59,8 +59,11 @@ end ;
 architecture rtl of dispctrl is
   
 	constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0000000";
-	constant FIFOEND : std_logic_vector(31 downto 0) := x"E0176FFC";
+	--constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0173180";
+	constant FIFOEND : std_logic_vector(31 downto 0) := x"E0177000";
 	constant NOFACE : std_logic_vector(9 downto 0) := "1111111111";
+	constant COLORA : std_logic_vector(31 downto 0) := x"00CC0000";
+	constant COLORB : std_logic_vector(31 downto 0) := x"0000CC00";
 	constant MAXCOL : integer := 401;
 	constant MAXROW : integer := 240;
 
@@ -71,13 +74,6 @@ architecture rtl of dispctrl is
      0 => ahb_device_reg ( VENDOR_HWSW, HWSW_DISPCTRL, 0, REVISION, 0),
      1 => apb_iobar(paddr, pmask));
     
-
-  type state_type is (running, not_running, reset);
-  type job_type is (idle, busy);
-
-  signal dmai	: ahb_dma_in_type;
-  signal dmao	: ahb_dma_out_type;
-	
 	type facebox_t is record
 		top					: std_logic_vector(9 downto 0);
 		left				: std_logic_vector(9 downto 0);
@@ -86,259 +82,111 @@ architecture rtl of dispctrl is
 	end record;
 
   type write_t is record
-		face			: facebox_t;
-		colcnt		: std_logic_vector(9 downto 0);
-		rowcnt		: std_logic_vector(9 downto 0);
 		address 	: std_logic_vector(31 downto 0);
 		data			: std_logic_vector(31 downto 0);
-		start			: std_logic;
   end record;
+	
+	type writestate_t is (NOINIT,IDLE,STARTBLOCK,WAITREADY,HANDLEBLOCK,FINISHBLOCK,UPDATEDPADDR);
 
-	type colors_t is array (0 to 3) of std_logic_vector(31 downto 0);
-
-	signal numBlocks_sig,numBlocks_sig_n : INTEGER range 0 to 1000;
-	signal pixelCount_sig,pixelCount_sig_n : INTEGER range 0 to 512;
-  signal blockPartCount_sig,blockPartCount_sig_n : INTEGER range 0 to 16;
-
-	signal facebox_sig,facebox_sig_n	: facebox_t;
-  signal output_sig,output_sig_n	: write_t;
-
-	signal writeState_sig,writeState_sig_n : writestate_type;
-	signal dpaddr_sig,dpaddr_sig_n : std_logic_vector(8 downto 0);
-	signal dpdata_sig,dpdata_sig_n : std_logic_vector(31 downto 0);
-
-	signal blockready_sig,blockready_sig_n : std_logic;
-	signal ahbready_sig : std_logic; --dbg
-  signal fval_old,fval_old_n : std_logic;
+  signal dmai	: ahb_dma_in_type;
+  signal dmao	: ahb_dma_out_type;
+	
+	signal writeState, writeState_n : writestate_t := NOINIT;
+	signal fval_old, fval_old_n : std_logic := '0';
+	signal blockrdy_old, blockrdy_old_n : std_logic := '0';
+	signal blockCount, blockCount_n : integer range 0 to 63 := 0;
+	signal output, output_n : write_t;
+	signal pixeladdr, pixeladdr_n : std_logic_vector(8 downto 0) := "000000000";
 begin
 
-  ahb_master : ahbmst generic map (hindex, hirq, VENDOR_HWSW,
-	HWSW_DISPCTRL, 0, 3, 0)
-  port map (rst, clk, dmai, dmao, ahbi, ahbo);     
-
-  apbo.pirq    <= (others => '0');
-  apbo.pindex  <= pindex;
-  apbo.pconfig <= PCONFIG;
+  ahb_master : ahbmst generic map (hindex, hirq, VENDOR_HWSW, HWSW_DISPCTRL, 0, 3, 0)
+  port map (rst, clk, dmai, dmao, ahbi, ahbo);
   
-  control_proc : process(rst,apbi,dmai,dmao,facebox_sig,output_sig,blockrdy,blockready_sig,dpdata_sig,dpaddr_sig,writeState_sig,numBlocks_sig,pixelCount_sig,rddata)
-    variable apbwrite	: std_logic;
-    variable apbrdata : std_logic_vector(31 downto 0);
-  	variable output	: write_t;
-		variable facebox	: facebox_t;
-		variable numBlocks : INTEGER range -10 to 100;
-		variable pixelCount : INTEGER range 0 to 512;
-		variable writeState : writestate_type;
-		variable dpaddr : std_logic_vector(8 downto 0);
-		variable dpdata : std_logic_vector(31 downto 0);
-		variable ahbready : std_logic;
+  control_proc : process(rst,dmai,dmao,fval,blockrdy,writeState,pixeladdr,rddata)
+		variable wout : write_t;
   begin
+
+		writeState_n <= writeState;
+		fval_old_n <= fval;
+		blockrdy_old_n <= blockrdy;
+		blockCount_n <= blockCount;
+		pixeladdr_n <= pixeladdr;
+		wout := output;
 		
-		output := output_sig;
-		facebox := facebox_sig;
-		numBlocks := numBlocks_sig;
-		pixelCount := pixelCount_sig;
-		writeState := writeState_sig;
-		dpaddr := dpaddr_sig;
-		dpdata := dpdata_sig;
-	
-		apbrdata := (others => '0');
-		blockPartCount_sig_n <= blockPartCount_sig;
-		fval_old_n <= fval_old;
+		dmai.start <= '0';
 
-	  ---------------------------------------------------------------------------
-	  -- Control. Handles the APB accesses and stores the internal registers
-	  ---------------------------------------------------------------------------
-	  apbwrite :=  apbi.psel(pindex) and apbi.pwrite and apbi.penable;
-	  case apbi.paddr(5 downto 2)  is
-	  when "0000" =>
-	    if apbwrite = '1' then
-			end if;
-			apbrdata := x"DEADBABE";
-	  when "0001" =>
-	    -- Color register
-	    --if apbwrite = '1' then
-	    --	writectrl.data := apbi.pwdata;
-	    --end if;
-			--apbrdata := controlSig.data;
-		when "0010" =>
-			-- TopLeft address
-			if apbwrite = '1' then
-				facebox.top := apbi.pwdata(25 downto 16);
-				facebox.left := apbi.pwdata(9 downto 0);
-			end if;
-			apbrdata := "000000" & facebox_sig.top & "000000" & facebox_sig.left;
-		when "0011" =>
-			-- BottomRight address
-			if apbwrite = '1' then
-				facebox.bottom := apbi.pwdata(25 downto 16);
-				facebox.right := apbi.pwdata(9 downto 0);
-			end if;
-			apbrdata := "000000" & facebox_sig.bottom & "000000" & facebox_sig.right;
-	  when others =>
-	  end case;
-		         
-	
-	  ---------------------------------------------------------------------------
-	  -- Control reset
-	  ---------------------------------------------------------------------------
-	  if rst = '0' then
-			numBlocks := 0;
-			
-			facebox.top := NOFACE;
-			facebox.left := NOFACE;
-			facebox.bottom := NOFACE;
-			facebox.right := NOFACE;
-
-			output.address := FIFOSTART;
-			output.face := facebox;
-			output.colcnt := (others => '0');
-			output.rowcnt := (others => '0');
-
-			--writeState := NOINIT;
-			writeState := IDLE; --dbg
-			dpaddr := (others => '0');
-			dpdata := (others => '0');
-			pixelCount := 0;
-			blockPartCount_sig_n <= 0;
+		if rst = '1' and blockrdy_old /= blockrdy and blockrdy = '1' then
+			blockCount_n <= blockCount + 1;
 		end if;
-
-
-		---------------------------------------------------------------------------
-		-- Do write
-		---------------------------------------------------------------------------
-		 
-		ahbready := dmao.ready;
-		ahbready_sig <= dmao.ready;
-
-		if rst = '1' and blockready_sig /= blockrdy and blockrdy = '1' then
-			numBlocks := numBlocks + 1;
-		end if;
-
-
-	 	output.start := '0';
 
 		case writeState is
 		when NOINIT =>
 			if rst = '1' and fval_old /= fval and fval = '1' then
-				writeState := IDLE;
+				writeState_n <= IDLE;
 			end if;
 
 		when IDLE =>
-			if numBlocks > 0 then
-				output.start := '1';
-				--output.data := rddata;
-			--output.address := output.address + "100";
-			output.colcnt := output.colcnt + '1';
-			pixelCount := pixelCount + 1;
-
-				writeState := STARTBLOCK;
+			if blockCount > 0 then
+				writeState_n <= STARTBLOCK;
 			end if;
 
 		when STARTBLOCK =>
-			output.start := '1';
-			output.data := rddata;
-			output.address := output.address + "100";
-			output.colcnt := output.colcnt + '1';
-			pixelCount := pixelCount + 1;
-
-			writeState := WAITREADY;
-
-		when WAITREADY =>
-			output.start := '1';
-			output.data := rddata;
-			output.address := output.address + "100";
-			output.colcnt := output.colcnt + '1';
-			pixelCount := pixelCount + 1;
-
-			writeState := HANDLEBLOCK;
+			writeState_n <= HANDLEBLOCK;
+			wout.data := rddata;
 
 		when HANDLEBLOCK =>
-			output.start := '1';
-			if ahbready = '1' then
-				output.address := output.address + "100";
-				output.data := rddata;
-				--output.colcnt := output.colcnt + '1';
-				--pixelCount := pixelCount + 1;
+			dmai.start <= '1';
+			if dmao.ready = '1' then
+				--if output.data = COLORA then
+				--	wout.data := COLORB;
+				--else
+				--	wout.data := COLORA;
+				--end if;
 
-				-- end of block
-				if output.address(5 downto 2) = x"0" then
-					output.start := '0';
-					writeState := FINISHBLOCK;
+				wout.data := rddata;
+				wout.address := output.address + 4;
+				if pixeladdr = conv_std_logic_vector(399,9) then
+					pixeladdr_n <= "000000000";
 				else
-					output.colcnt := output.colcnt + '1';
-					pixelCount := pixelCount + 1;
+					pixeladdr_n <= pixeladdr + '1';
+				end if;
+
+				if wout.address(5 downto 2) = "0000" then
+					dmai.start <= '0';
+					blockCount_n <= blockCount - 1;
+					writeState_n <= IDLE;
+					wout.address := output.address + 4;
+				end if;
+				if wout.address = FIFOEND then
+					wout.address := FIFOSTART;
 				end if;
 			end if;
 
-		when FINISHBLOCK =>
-			if ahbready = '1' then
-				--output.address := output.address + "100";
-				--output.data := rddata;
-				--output.colcnt := output.colcnt + '1';
-				--pixelCount := pixelCount + 1;
-				writeState := UPDATEDPADDR;
-			end if;
-
-		when UPDATEDPADDR =>
-			--pixelCount := pixelCount + 1;
-			--output.colcnt := output.colcnt + '1';
-			numBlocks := numBlocks - 1;
-			writeState := IDLE;
-
 		when others =>
-		end case; -- writeState_sig
-
-		if pixelCount = 512 then
-		--if pixelCount = 400 then
-			pixelCount := 0;
-		end if;
-
-		-- increment column counter
-		if output.colcnt = conv_std_logic_vector(MAXCOL,10) then
-			output.colcnt := "0000000000";
-			output.rowcnt := output.rowcnt + '1';
-			pixelCount := 0;
-			-- skip last 400 pixels of each row
-			output.address := output.address + x"640";
-		end if;
-
-		-- increment row counter
-		if output.rowcnt = conv_std_logic_vector(MAXROW,10) then
-			output.rowcnt := "0000000000";
-			output.address := FIFOSTART;
-			-- refresh face position
-			output.face := facebox_sig;
-		end if;
-
-		--output.data := "00000000000000000000000" & dpaddr; --dbg
-		dpaddr := conv_std_logic_vector(pixelCount,9);
-
-		-- update signals
-		blockready_sig_n <= blockrdy;
-		dpaddr_sig_n <= dpaddr;
-		facebox_sig_n <= facebox;
-		output_sig_n <= output;
-		pixelCount_sig_n <= pixelCount;
-		numBlocks_sig_n <= numBlocks;
-		writeState_sig_n <= writeState;
+		end case;
 		
-    apbo.prdata <= apbrdata;
+		output_n <= wout;
+		rdaddress <= pixeladdr_n;
+		
 		dmai.burst <= '1';
 		dmai.irq <= '0';
 		dmai.size <= "010";
 		dmai.write <= '1';
 		dmai.busy <= '0';
-		if ((output_sig.rowcnt = output_sig.face.top or output_sig.rowcnt = output_sig.face.bottom)
-				and (output_sig.colcnt >= output_sig.face.left and output_sig.colcnt <= output_sig.face.right))
-			 or
-			 ((output_sig.colcnt = output_sig.face.left or output_sig.colcnt = output_sig.face.right)
-			  and (output_sig.rowcnt >= output_sig.face.top and output_sig.rowcnt <= output_sig.face.bottom)) then
-			dmai.wdata <= x"0000ff00";
-		else
-			dmai.wdata <= output_sig.data;
-		end if;
-		dmai.address <= output_sig.address;
-		dmai.start <= output_sig.start;
+		dmai.wdata <= wout.data;
+		dmai.address <= wout.address;
+
+		--if ((output_sig.rowcnt = output_sig.face.top or output_sig.rowcnt = output_sig.face.bottom)
+		--		and (output_sig.colcnt >= output_sig.face.left and output_sig.colcnt <= output_sig.face.right))
+		--	 or
+		--	 ((output_sig.colcnt = output_sig.face.left or output_sig.colcnt = output_sig.face.right)
+		--	  and (output_sig.rowcnt >= output_sig.face.top and output_sig.rowcnt <= output_sig.face.bottom)) then
+		--	dmai.wdata <= x"0000ff00";
+		--else
+		--	dmai.wdata <= output_sig.data;
+		--end if;
+		--dmai.address <= output_sig.address;
+		--dmai.start <= output_sig.start;
 			
   end process;
   
@@ -347,32 +195,26 @@ begin
   -----------------------------------------------------------------------------
   -- Registers in system clock domain
   -----------------------------------------------------------------------------
-  reg_proc : process(clk)
+  reg_proc : process(rst,clk)
   begin
     if rising_edge(clk) then
-			fval_old <= fval_old_n;
-			blockready_sig <= blockready_sig_n;
-
-			dpaddr_sig <= dpaddr_sig_n;
-			dpdata_sig <= rddata;
-			rdaddress <= dpaddr_sig_n;
-
-			facebox_sig <= facebox_sig_n;
-			output_sig <= output_sig_n;
-			pixelCount_sig <= pixelCount_sig_n;
-			numBlocks_sig <= numBlocks_sig_n;
-			writeState_sig <= writeState_sig_n;
-			blockPartCount_sig <= blockPartCount_sig_n;
-
+			if rst = '0' then
+				writeState <= IDLE;
+				fval_old <= '0';
+				blockrdy_old <= '0';
+				blockCount <= 0;
+				output.address <= FIFOSTART;
+				output.data <= COLORA;
+				pixeladdr <= "000000000";
+			else
+				writeState <= writeState_n;
+				fval_old <= fval_old_n;
+				blockrdy_old <= blockrdy_old_n;
+				blockCount <= blockCount_n;
+				output <= output_n;
+				pixeladdr <= pixeladdr_n;
+			end if;
     end if;
   end process;
- 
-  -- Boot message
-  -- pragma translate_off
-  bootmsg : report_version 
-    generic map (
-      "dispctrl" & tost(hindex) & ": Display data controller rev " &
-      tost(REVISION) & ", AHB access size: " & tost(ahbaccsz) & " bits");
-  -- pragma translate_on 
 end;
 

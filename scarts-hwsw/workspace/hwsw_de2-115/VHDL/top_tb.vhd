@@ -58,7 +58,6 @@ architecture behaviour of top_tb is
 	signal	wraddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
 
 	signal blockrdy : std_logic;
-	signal writestate : writestate_type;
 	signal ahbready : std_logic;
   
   file appFile : text  open read_mode is "app.srec";
