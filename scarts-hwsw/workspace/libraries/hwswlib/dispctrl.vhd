@@ -61,7 +61,7 @@ architecture rtl of dispctrl is
 	constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0000000";
 	constant FIFOEND : std_logic_vector(31 downto 0) := x"E0176FFC";
 	constant NOFACE : std_logic_vector(9 downto 0) := "1111111111";
-	constant MAXCOL : integer := 400;
+	constant MAXCOL : integer := 401;
 	constant MAXROW : integer := 240;
 
   constant REVISION : amba_version_type := 0; 
@@ -227,6 +227,9 @@ begin
 			if numBlocks > 0 then
 				output.start := '1';
 				--output.data := rddata;
+			--output.address := output.address + "100";
+			output.colcnt := output.colcnt + '1';
+			pixelCount := pixelCount + 1;
 
 				writeState := STARTBLOCK;
 			end if;
@@ -245,7 +248,7 @@ begin
 			output.data := rddata;
 			output.address := output.address + "100";
 			output.colcnt := output.colcnt + '1';
-			--pixelCount := pixelCount + 1;
+			pixelCount := pixelCount + 1;
 
 			writeState := HANDLEBLOCK;
 
@@ -254,28 +257,32 @@ begin
 			if ahbready = '1' then
 				output.address := output.address + "100";
 				output.data := rddata;
-				output.colcnt := output.colcnt + '1';
-				pixelCount := pixelCount + 1;
+				--output.colcnt := output.colcnt + '1';
+				--pixelCount := pixelCount + 1;
 
 				-- end of block
-				if output.address(5 downto 2) = x"F" then
+				if output.address(5 downto 2) = x"0" then
 					output.start := '0';
 					writeState := FINISHBLOCK;
+				else
+					output.colcnt := output.colcnt + '1';
+					pixelCount := pixelCount + 1;
 				end if;
 			end if;
 
 		when FINISHBLOCK =>
 			if ahbready = '1' then
-				output.address := output.address + "100";
-				output.data := rddata;
-				output.colcnt := output.colcnt + '1';
-				pixelCount := pixelCount + 1;
-				numBlocks := numBlocks - 1;
+				--output.address := output.address + "100";
+				--output.data := rddata;
+				--output.colcnt := output.colcnt + '1';
+				--pixelCount := pixelCount + 1;
 				writeState := UPDATEDPADDR;
 			end if;
 
 		when UPDATEDPADDR =>
-			pixelCount := pixelCount + 1;
+			--pixelCount := pixelCount + 1;
+			--output.colcnt := output.colcnt + '1';
+			numBlocks := numBlocks - 1;
 			writeState := IDLE;
 
 		when others =>
@@ -303,7 +310,7 @@ begin
 			output.face := facebox_sig;
 		end if;
 
-		output.data := "00000000000000000000000" & dpaddr; --dbg
+		--output.data := "00000000000000000000000" & dpaddr; --dbg
 		dpaddr := conv_std_logic_vector(pixelCount,9);
 
 		-- update signals
