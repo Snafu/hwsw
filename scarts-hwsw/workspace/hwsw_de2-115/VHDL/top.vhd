@@ -91,6 +91,7 @@ entity top is
 		
 
 		-- TESTSIGNALE
+		--blockrdy				: in std_logic; --dbg
 		blockrdy_dbg		: out std_logic;
 		clk_test				:	out std_logic;
 		pxl_clk_out			:	out std_logic;
@@ -494,8 +495,8 @@ begin
 		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
 		-- HARI: use sysclk as INPUT/OUTPUT clock, should be ok
-		--wrclock		=> cam_pixclk,
-		wrclock		=> clk,
+		wrclock		=> cam_pixclk,
+		--wrclock		=> clk,
 		wren			=> wren_sig,
 		q				=> q_sig
 	);

@@ -108,7 +108,6 @@ architecture rtl of dispctrl is
 	signal dpdata_sig,dpdata_sig_n : std_logic_vector(31 downto 0);
 
 	signal blockready_sig,blockready_sig_n : std_logic;
-	signal update_sig,update_sig_n : std_logic; --dbg
 	signal ahbready_sig : std_logic; --dbg
   signal fval_old,fval_old_n : std_logic;
 begin
@@ -121,7 +120,7 @@ begin
   apbo.pindex  <= pindex;
   apbo.pconfig <= PCONFIG;
   
-  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy,blockready_sig,update_sig,dpdata_sig,dpaddr_sig,writeState_sig,numBlocks_sig,pixelCount_sig,rddata)
+  control_proc : process(rst,apbi,dmao,facebox_sig,output_sig,blockrdy,blockready_sig,dpdata_sig,dpaddr_sig,writeState_sig,numBlocks_sig,pixelCount_sig,rddata)
     variable apbwrite	: std_logic;
     variable apbrdata : std_logic_vector(31 downto 0);
   	variable output	: write_t;
@@ -132,7 +131,6 @@ begin
 		variable dpaddr : std_logic_vector(8 downto 0);
 		variable dpdata : std_logic_vector(31 downto 0);
 		variable ahbready : std_logic;
-		variable update : std_logic; --dbg
   begin
 		
 		output := output_sig;
@@ -144,7 +142,6 @@ begin
 		dpdata := dpdata_sig;
 	
 		apbrdata := (others => '0');
-		update := update_sig;
 		blockPartCount_sig_n <= blockPartCount_sig;
 		fval_old_n <= fval_old;
 
@@ -154,20 +151,7 @@ begin
 	  apbwrite :=  apbi.psel(pindex) and apbi.pwrite and apbi.penable;
 	  case apbi.paddr(5 downto 2)  is
 	  when "0000" =>
-	    -- FB start address
-	    --if apbwrite = '1' then
-			--	if apbi.pwdata(0) = '1' then
-			--		writectrl.write_en := '1';
-			--	else
-			--		writectrl.write_en := '0';
-	    --	end if;
-			--end if;
 	    if apbwrite = '1' then
-				if apbi.pwdata(0) = '1' then
-					update := '1';
-				else
-					update := '0';
-	    	end if;
 			end if;
 			apbrdata := x"DEADBABE";
 	  when "0001" =>
@@ -211,9 +195,9 @@ begin
 			output.rowcnt := (others => '0');
 
 			writeState := NOINIT;
+			--writeState := IDLE; --dbg
 			dpaddr := (others => '0');
 			dpdata := (others => '0');
-			update := '0'; --dbg
 			pixelCount := 0;
 			blockPartCount_sig_n <= 0;
 		end if;
@@ -227,7 +211,6 @@ begin
 		ahbready_sig <= dmao.ready;
 
 		if rst = '1' and blockready_sig /= blockrdy and blockrdy = '1' then
-		--if update_sig /= update and update = '1' then --dbg
 			numBlocks := numBlocks + 1;
 		end if;
 
@@ -241,14 +224,14 @@ begin
 			end if;
 
 		when IDLE =>
+			--output.data := rddata;
 			if numBlocks > 0 then
 				writeState := STARTBLOCK;
 			end if;
 
 		when STARTBLOCK =>
 			output.start := '1';
-			output.data := rddata;
-			pixelCount := pixelCount + 1;
+			--output.data := rddata;
 
 			writeState := HANDLEBLOCK;
 
@@ -256,21 +239,25 @@ begin
 			output.start := '1';
 			if ahbready = '1' then
 				output.address := output.address + "100";
-				output.colcnt := output.colcnt + '1';
 				output.data := rddata;
+				output.colcnt := output.colcnt + '1';
+				pixelCount := pixelCount + 1;
 
 				-- end of block
-				if output.address(5 downto 2) = "0000" then
+				if output.address(5 downto 2) = x"F" then
 					output.start := '0';
-					writeState := IDLE;
-					numBlocks := numBlocks - 1;
-					-- skip 400 pixels
-					if output.colcnt = conv_std_logic_vector(MAXCOL,10) then
-						output.address := output.address + x"640";
-					end if;
-				else
-					pixelCount := pixelCount + 1;
+					writeState := FINISHBLOCK;
 				end if;
+			end if;
+
+		when FINISHBLOCK =>
+			if ahbready = '1' then
+				output.address := output.address + "100";
+				output.data := rddata;
+				output.colcnt := output.colcnt + '1';
+				pixelCount := pixelCount + 1;
+				numBlocks := numBlocks - 1;
+				writeState := IDLE;
 			end if;
 
 		when others =>
@@ -280,13 +267,14 @@ begin
 		--if pixelCount = 400 then
 			pixelCount := 0;
 		end if;
-		
 
 		-- increment column counter
 		if output.colcnt = conv_std_logic_vector(MAXCOL,10) then
 			output.colcnt := "0000000000";
 			output.rowcnt := output.rowcnt + '1';
 			pixelCount := 0;
+			-- skip last 400 pixels of each row
+			output.address := output.address + x"640";
 		end if;
 
 		-- increment row counter
@@ -297,19 +285,10 @@ begin
 			output.face := facebox_sig;
 		end if;
 
+		--output.data := "00000000000000000000000" & dpaddr; --dbg
 		dpaddr := conv_std_logic_vector(pixelCount,9);
 
-		--dbg ram-readout test
-		--if output.data = x"00000000" then
-		--	output.data := x"000000ff";
-		--end if;
-
-		--output.data := x"00FFA500";
-
-		--output.data := "00000000000000000000000" & dpaddr; --dbg
-
 		-- update signals
-		update_sig_n <= update; --dbg
 		blockready_sig_n <= blockrdy;
 		dpaddr_sig_n <= dpaddr;
 		facebox_sig_n <= facebox;
@@ -347,7 +326,6 @@ begin
   begin
     if rising_edge(clk) then
 			fval_old <= fval_old_n;
-			update_sig <= update_sig_n; --dbg
 			blockready_sig <= blockready_sig_n;
 
 			dpaddr_sig <= dpaddr_sig_n;
