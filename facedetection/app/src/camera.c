@@ -46,7 +46,7 @@ void initCamera(void)
 	// mirror rows
 	i2c_write(0x20,(1<<15));
 	// snapshot mode
-	i2c_write(0x1e,(0x4006 | (1<<8)));
+	i2c_write(0x1e,0x4006 | (1<<8) | (1<<9));
 
 
 	/*

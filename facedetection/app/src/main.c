@@ -177,15 +177,16 @@ int main(int argc, char **argv)
 		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
 	}
 	*/
-	for(i = 0; i < 300; i++)
+	for(i = 0; i < 1000; i++)
 	{
-		UPDATE_GLCD();
-		for(j = 0; j < 30; j++) asm volatile("nop\n\t");
+		for(j = 0; j < 1000; j++) asm volatile("nop\n\t");
 	}
+	dis7seg_displayHexUInt32(&dispHandle, 0, 0x28008135);  
 
 	while(1)
 	{
 		i2c_write(0x0b, 0x04);
+		i2c_write(0x0b, 0x00);
 		for(i = 0; i < 130; i++)
 		{
 			for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
