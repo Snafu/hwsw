@@ -184,16 +184,18 @@ begin
 --				end if;
 
 				-- end of block
-				if wout.address(5 downto 2) - 4 = "0000" then
-					dmai.start <= '0';
+				if wout.address(5 downto 2) = "0000" then
 					pixelCount_n <= 0;
-					blockCount_n <= blockCount - 1;
 					--blockCount_n <= 0;
-					writeState_n <= IDLE;
+					writeState_n <= FINISHBLOCK;
 				else
 					pixeladdr_n <= pixeladdr + '1';
 				end if;
 			end if;
+
+		when FINISHBLOCK =>
+			writeState_n <= IDLE;
+			blockCount_n <= blockCount - 1;
 
 		when others =>
 		end case;
