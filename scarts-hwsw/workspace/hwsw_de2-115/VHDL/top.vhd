@@ -93,29 +93,46 @@ entity top is
 		-- TESTSIGNALE
 		--blockrdy				: in std_logic; --dbg
 		blockrdy_dbg		: out std_logic;
-		clk_test				:	out std_logic;
+		whichLine_top_dbg	: out std_logic;
+		sysclk				:	out std_logic;
 		pxl_clk_out			:	out std_logic;
 		cam_resetN_dbg	: out std_logic;
 		
+		sysclk_fourth		: out std_logic;
+		
 		cam_fval_dbg		: out std_logic;
 		cam_lval_dbg		: out std_logic;
-		cam_pixdata_dbg	: out std_logic_vector(11 downto 0)
+		cam_pixdata_dbg	: out std_logic_vector(11 downto 0);
+		
+		burstCount_dbg		: out std_logic_vector(4 downto 0)
   );
 end top;
 
 architecture behaviour of top is
   
+	-- clock signals
+	signal cam_xclk_sig			: std_logic;
+	signal sysclk_fourth_sig		: std_logic;
+  
 	-- kamera signals
 	signal pxReady_sig		: std_logic;
+	signal whichLine_sig		: std_logic;
+	signal pixclk_sync		: std_logic;
+	
+	signal burstCount_dbg_sig : std_logic_vector(4 downto 0);
+	
+	-- kamera SYNCRONIZED signals
+	signal cam_fval_sync		: std_logic;
+	signal cam_lval_sync		: std_logic;
   
   -- dpram
-	signal data_sig			:  STD_LOGIC_VECTOR (31 DOWNTO 0);
-	signal rdaddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
-	signal rdclock_sig		:  STD_LOGIC ;
-	signal wraddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
-	signal wrclock_sig		:  STD_LOGIC  := '1';
-	signal wren_sig			:  STD_LOGIC  := '0';
-	signal q_sig				:  STD_LOGIC_VECTOR (31 DOWNTO 0);
+--	signal data_sig			:  STD_LOGIC_VECTOR (31 DOWNTO 0);
+--	signal rdaddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
+--	signal rdclock_sig		:  STD_LOGIC ;
+--	signal wraddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
+--	signal wrclock_sig		:  STD_LOGIC  := '1';
+--	signal wren_sig			:  STD_LOGIC  := '0';
+--	signal q_sig				:  STD_LOGIC_VECTOR (31 DOWNTO 0);
   
   
   signal scarts_i    : scarts_in_type;
@@ -446,16 +463,12 @@ begin
 	i2c_sda_dbg <= i2co_pin.sda;
 	
 	i2c_trigger <= i2c_config_sel;
-	clk_test <= clk;
-	
+		
 	cam_resetN	<= syncrst;
 	cam_resetN_dbg <= syncrst;
 	
-	cam_xclk <= cam_clock;
-	pxl_clk_out <= cam_pixclk;
-	
-	cam_lval_dbg <= cam_lval;
-	cam_fval_dbg <= cam_fval;
+	--cam_xclk <= cam_clock;
+	pxl_clk_out <= cam_pixclk;	
 	cam_pixdata_dbg <= cam_pixdata;
 	
 	-----------------------------------------------------------------------------
@@ -502,7 +515,6 @@ begin
 		wren			=> wren_sig,
 		q				=> q_sig
 	);
-	
 	------------------------------------------------------------------------------- 
 	--- Kamera readout
 	-----------------------------------------------------------------------------
@@ -519,20 +531,29 @@ begin
     (
 			rst			=> syncrst,
 			clk			=> clk,
-			pixclk		=> cam_pixclk,
-			fval			=> cam_fval,
-			lval			=> cam_lval,
+			pixclk		=> pixclk_sync,
+			fval			=> cam_fval_sync,
+			lval			=> cam_lval_sync,
 			pixdata		=> cam_pixdata,
-			sram_ctrl	=> cam_sram_ctrl,
-			sram_data	=> cam_sram_data,
+	--sram_ctrl	=> cam_sram_ctrl,
+	--sram_data	=> cam_sram_data,
 			
-			dp_data		=> data_sig,
-			dp_wren		=> wren_sig,
-			dp_wraddr	=> wraddress_sig,
-			pixelburstReady => pxReady_sig
+	--dp_data		=> data_sig,
+	--dp_wren		=> wren_sig,
+	--dp_wraddr	=> wraddress_sig,
+			pixelburstReady => pxReady_sig,
+			
+			whichLine_dbg => whichLine_sig,
+			burstCount_dbg => burstCount_dbg_sig
     ); 
 	 
+	burstCount_dbg <= burstCount_dbg_sig;
+
 	blockrdy_dbg <= pxReady_sig;
+	
+	sysclk <= clk;
+	cam_xclk <= cam_xclk_sig;
+	sysclk_fourth <= sysclk_fourth_sig;
 	
   -----------------------------------------------------------------------------
   -- Scarts extension modules
@@ -624,23 +645,22 @@ begin
   process(cam_counter)
   begin
   
-	cam_counter_next <= cam_counter;
-	
+	cam_counter_next <= cam_counter + 1;
+				
 	if(cam_counter < 2)
 	then
-			cam_clock <= '0';
-	else
-			cam_clock <= '1';
-	end if;
-	
-	cam_counter_next <= cam_counter + 1;
-	
-	if(cam_counter = 3)
+		cam_xclk_sig <= '0';
+		sysclk_fourth_sig <= '0';
+	elsif(cam_counter = 3)
 	then
+		cam_xclk_sig <= '1';
+		sysclk_fourth_sig <= '1';
 		cam_counter_next <= 0;
+	else
+		cam_xclk_sig <= '1';
+		sysclk_fourth_sig <= '1';
 	end if;
-  
-  
+   
   end process;
   
   reg : process(clk)
@@ -651,6 +671,17 @@ begin
       --
       syncrst <= rst;
 		
+		--
+		-- synronizer stage for connections cam-instance <--> cam-HW
+		--
+		cam_fval_dbg  <= cam_fval;
+		cam_fval_sync <= cam_fval;
+		
+		cam_lval_dbg  <= cam_lval;
+		cam_lval_sync <= cam_lval;
+		
+		pixclk_sync <= cam_pixclk;
+				
 		cam_counter <= cam_counter_next;
     end if;
   end process;
