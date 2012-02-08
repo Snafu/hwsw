@@ -116,7 +116,7 @@ int main(int argc, char **argv)
 	// DISPCTRL initialization
 	dis7seg_displayHexUInt32(&dispHandle, 0, DISPCTRL_STATUS);  
 
-	mini_uart_write(&aux_uart_handle, (char *)"I2C WRITE", sizeof("I2C WRITE"));
+//mini_uart_write(&aux_uart_handle, (char *)"I2C WRITE", sizeof("I2C WRITE"));
 	
 	// CAM initialization
 	initCamera();
@@ -177,17 +177,21 @@ int main(int argc, char **argv)
 		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
 	}
 	*/
-	for(i = 0; i < 1000; i++)
+
+/*
+	for(i = 0; i < 300; i++)
 	{
-		for(j = 0; j < 1000; j++) asm volatile("nop\n\t");
+		UPDATE_GLCD();
+		for(j = 0; j < 30; j++) asm volatile("nop\n\t");
 	}
-	dis7seg_displayHexUInt32(&dispHandle, 0, 0x28008135);  
+*/
+
 
 	while(1)
 	{
-		i2c_write(0x0b, 0x04);
-		i2c_write(0x0b, 0x00);
-		for(i = 0; i < 130; i++)
+		i2c_write(0x0b, 0x04);	// SET TRIGGER
+		i2c_write(0x0b, 0x00); 	// RESET TRIGGER BIT
+		for(i = 0; i < 70; i++)
 		{
 			for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
 		}

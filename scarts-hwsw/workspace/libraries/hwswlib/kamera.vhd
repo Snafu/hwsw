@@ -44,9 +44,9 @@ entity kamera is
 		--sram_ctrl		: out sram_ctrl_t;
 		--sram_data		: buffer std_logic_vector(15 downto 0);
 		
-		--dp_data			: out std_logic_vector(31 downto 0);
-		--dp_wren			: out std_logic;
-		--dp_wraddr		: out std_logic_vector(8 downto 0);
+		dp_data			: out std_logic_vector(31 downto 0);
+		dp_wren			: out std_logic;
+		dp_wraddr		: out std_logic_vector(8 downto 0);
 		
 		pixelburstReady	: out std_logic;
 		
@@ -134,15 +134,15 @@ begin
 							burstCount_n <= 0;
 							pixelburstReady_n <= '1';
 						end if;
-						
+		
 					end if;
 				end if;
 			
 			end if;
 
 		end if;
-		
-		if(pixelCount = 399)
+						
+		if(pixelCount = 400)
 		then
 			pixelCount_n <= 0;
 			if(whichLine = FIRST)
@@ -152,6 +152,7 @@ begin
 				whichLine_n <= FIRST;
 			end if;
 		end if;
+		
   end process; 
   
 

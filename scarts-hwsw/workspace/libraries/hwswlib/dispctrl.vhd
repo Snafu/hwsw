@@ -21,8 +21,6 @@ library grlib;
 use grlib.amba.all;
 use grlib.stdlib.all;
 use grlib.devices.all;
---library techmap;
---use techmap.gencomp.all;
 library gaisler;
 use gaisler.misc.all;
 

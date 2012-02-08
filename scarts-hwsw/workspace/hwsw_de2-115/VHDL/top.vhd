@@ -18,7 +18,6 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
 
 use work.top_pkg.all;
 use work.scarts_pkg.all;
@@ -88,6 +87,7 @@ entity top is
 		cam_sram_data	: buffer std_logic_vector(15 downto 0);
 		cam_resetN		: out std_logic;
 		cam_xclk			: out std_logic;
+		cam_trigger		: out std_logic;		-- hardware trigger for camera
 		
 
 		-- TESTSIGNALE
@@ -194,8 +194,6 @@ architecture behaviour of top is
   -- signals for AUX UART
   signal aux_uart_sel      : std_ulogic;
   signal aux_uart_exto     : module_out_type;
-
-	signal syn_pixclk				: std_logic;
   
   
   component altera_pll IS
@@ -295,7 +293,7 @@ begin
     grlib_ahbmo(0).hindex   <=  0;
 
     grlib_ahbmo(1)          <=  svga_ahbmo;
-	 grlib_ahbmo(2)			 <=  disp_ahbmo;
+	grlib_ahbmo(2)			<=  disp_ahbmo;
   end process;
 
 
@@ -471,6 +469,10 @@ begin
 	pxl_clk_out <= cam_pixclk;	
 	cam_pixdata_dbg <= cam_pixdata;
 	
+	-- see camera register 0x0B, page 20
+	-- INVERT_TRIGGER must be set by i2cconfig when this pin is LOW
+	cam_trigger <= '0';	
+	
 	-----------------------------------------------------------------------------
 	-- DISPLAY controller
 	-----------------------------------------------------------------------------	
@@ -510,11 +512,12 @@ begin
 		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
 		-- HARI: use sysclk as INPUT/OUTPUT clock, should be ok
-		wrclock		=> cam_pixclk,
-		--wrclock		=> clk,
+		--wrclock		=> cam_pixclk,
+		wrclock		=> clk,
 		wren			=> wren_sig,
 		q				=> q_sig
 	);
+	
 	------------------------------------------------------------------------------- 
 	--- Kamera readout
 	-----------------------------------------------------------------------------
@@ -538,9 +541,9 @@ begin
 	--sram_ctrl	=> cam_sram_ctrl,
 	--sram_data	=> cam_sram_data,
 			
-	--dp_data		=> data_sig,
-	--dp_wren		=> wren_sig,
-	--dp_wraddr	=> wraddress_sig,
+	dp_data		=> data_sig,
+	dp_wren		=> wren_sig,
+	dp_wraddr	=> wraddress_sig,
 			pixelburstReady => pxReady_sig,
 			
 			whichLine_dbg => whichLine_sig,
@@ -550,6 +553,7 @@ begin
 	burstCount_dbg <= burstCount_dbg_sig;
 
 	blockrdy_dbg <= pxReady_sig;
+	whichLine_top_dbg <= whichLine_sig;
 	
 	sysclk <= clk;
 	cam_xclk <= cam_xclk_sig;
