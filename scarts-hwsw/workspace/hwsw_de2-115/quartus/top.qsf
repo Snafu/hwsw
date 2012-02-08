@@ -373,7 +373,6 @@ set_location_assignment PIN_AF20 -to burstCount_dbg[3]
 set_location_assignment PIN_AE20 -to burstCount_dbg[2]
 set_location_assignment PIN_AH22 -to burstCount_dbg[1]
 set_location_assignment PIN_AG22 -to burstCount_dbg[0]
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/hwswlib.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/dispctrl.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/kameralib.vhd
@@ -442,3 +441,4 @@ set_global_assignment -name VHDL_FILE ../VHDL/top_pkg.vhd
 set_global_assignment -name VHDL_FILE ../VHDL/top.vhd
 set_global_assignment -name SDC_FILE top.sdc
 set_global_assignment -name QIP_FILE ../VHDL/altera_pll.qip
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
