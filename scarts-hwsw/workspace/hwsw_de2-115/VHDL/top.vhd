@@ -177,6 +177,8 @@ architecture behaviour of top is
   -- signals for AUX UART
   signal aux_uart_sel      : std_ulogic;
   signal aux_uart_exto     : module_out_type;
+
+	signal syn_pixclk				: std_logic;
   
   
   component altera_pll IS

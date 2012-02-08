@@ -444,11 +444,17 @@ dp_buf_next(7 downto 0) <= pixelB;
 					-- should be no problem because dispctrl must 'catch up'
 					if( burstCnt = PIXELBURSTLEN)
 					then
-						pixelburstReady <= '1';
+						--pixelburstReady <= '1';
 						burstCnt_next <= 0;
 					end if;					
 				end if;	
 			end if;
+		end if;
+
+		dp_wren <= '0';
+
+		if frameCnt = 3 then
+			pixelburstReady <= '1';
 		end if;
 			
   end process; 
