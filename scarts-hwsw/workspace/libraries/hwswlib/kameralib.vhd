@@ -74,14 +74,16 @@ package kameralib is
 			fval			: in std_logic;
 			lval			: in std_logic;
 			pixdata		: in std_logic_vector(11 downto 0);
-			sram_ctrl	: out sram_ctrl_t;
-			sram_data	: buffer std_logic_vector(15 downto 0);
+			--sram_ctrl	: out sram_ctrl_t;
+			--sram_data	: buffer std_logic_vector(15 downto 0);
 			
-			dp_data		: out std_logic_vector(31 downto 0);
-			dp_wren		: out std_logic;
-			dp_wraddr	: out std_logic_vector(8 downto 0);
-			pixelburstReady : out std_logic
+			--dp_data		: out std_logic_vector(31 downto 0);
+			--dp_wren		: out std_logic;
+			--dp_wraddr	: out std_logic_vector(8 downto 0);
+			pixelburstReady : out std_logic;
 			
+			whichLine_dbg	: out std_logic;
+			burstCount_dbg	: out std_logic_vector(4 downto 0)			
 			);
 	end component;
 
