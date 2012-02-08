@@ -126,13 +126,13 @@ architecture behaviour of top is
 	signal cam_lval_sync		: std_logic;
   
   -- dpram
---	signal data_sig			:  STD_LOGIC_VECTOR (31 DOWNTO 0);
---	signal rdaddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
---	signal rdclock_sig		:  STD_LOGIC ;
---	signal wraddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
---	signal wrclock_sig		:  STD_LOGIC  := '1';
---	signal wren_sig			:  STD_LOGIC  := '0';
---	signal q_sig				:  STD_LOGIC_VECTOR (31 DOWNTO 0);
+	signal data_sig			:  STD_LOGIC_VECTOR (31 DOWNTO 0);
+	signal rdaddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
+	signal rdclock_sig		:  STD_LOGIC ;
+	signal wraddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
+	signal wrclock_sig		:  STD_LOGIC  := '1';
+	signal wren_sig			:  STD_LOGIC  := '0';
+	signal q_sig				:  STD_LOGIC_VECTOR (31 DOWNTO 0);
   
   
   signal scarts_i    : scarts_in_type;

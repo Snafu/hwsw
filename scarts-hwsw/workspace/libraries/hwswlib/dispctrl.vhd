@@ -21,8 +21,8 @@ library grlib;
 use grlib.amba.all;
 use grlib.stdlib.all;
 use grlib.devices.all;
-library techmap;
-use techmap.gencomp.all;
+--library techmap;
+--use techmap.gencomp.all;
 library gaisler;
 use gaisler.misc.all;
 
@@ -62,8 +62,10 @@ architecture rtl of dispctrl is
 	--constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0173180";
 	constant FIFOEND : std_logic_vector(31 downto 0) := x"E0177000";
 	constant NOFACE : std_logic_vector(9 downto 0) := "1111111111";
-	constant COLORA : std_logic_vector(31 downto 0) := x"00CC0000";
-	constant COLORB : std_logic_vector(31 downto 0) := x"0000CC00";
+	constant COLORA : std_logic_vector(31 downto 0) := x"00FF0000";
+	constant COLORB : std_logic_vector(31 downto 0) := x"0000FF00";
+	constant COLORC : std_logic_vector(31 downto 0) := x"000000FF";
+	constant COLORD : std_logic_vector(31 downto 0) := x"00FFFFFF";
 	constant MAXCOL : integer := 401;
 	constant MAXROW : integer := 240;
 
@@ -86,17 +88,20 @@ architecture rtl of dispctrl is
 		data			: std_logic_vector(31 downto 0);
   end record;
 	
-	type writestate_t is (NOINIT,IDLE,STARTBLOCK,WAITREADY,HANDLEBLOCK,FINISHBLOCK,UPDATEDPADDR);
+	type writestate_t is (NOINIT,IDLE,STARTBLOCK,RESTART,WAITREADY,HANDLEBLOCK,FINISHBLOCK,UPDATEDPADDR);
 
   signal dmai	: ahb_dma_in_type;
   signal dmao	: ahb_dma_out_type;
 	
 	signal writeState, writeState_n : writestate_t := NOINIT;
 	signal fval_old, fval_old_n : std_logic := '0';
-	signal blockrdy_old, blockrdy_old_n : std_logic := '0';
-	signal blockCount, blockCount_n : integer range 0 to 63 := 0;
+	signal blockrdy_old, blockrdy_old_n : std_logic;
+	signal blockCount, blockCount_n : integer range 0 to 63;
 	signal output, output_n : write_t;
 	signal pixeladdr, pixeladdr_n : std_logic_vector(8 downto 0) := "000000000";
+	signal pixelCount, pixelCount_n : integer range 0 to 16 := 0;
+	signal dostart, dostart_n : std_logic := '0';
+	signal done, done_n : std_logic;
 begin
 
   ahb_master : ahbmst generic map (hindex, hirq, VENDOR_HWSW, HWSW_DISPCTRL, 0, 3, 0)
@@ -111,11 +116,22 @@ begin
 		blockrdy_old_n <= blockrdy;
 		blockCount_n <= blockCount;
 		pixeladdr_n <= pixeladdr;
+		pixelCount_n <= pixelCount;
+		dostart_n <= dostart;
 		wout := output;
+		done_n <= done;
 		
-		dmai.start <= '0';
+		
+		dmai.burst <= '1';
+		dmai.irq <= '0';
+		dmai.size <= "010";
+		dmai.write <= '1';
+		dmai.busy <= '0';
+		dmai.wdata <= output.data;
+		dmai.address <= output.address;
+		dmai.start <= '0'; --dostart;
 
-		if rst = '1' and blockrdy_old /= blockrdy and blockrdy = '1' then
+		if rst = '1' and blockrdy_old /= blockrdy and blockrdy = '1' then -- and done = '0' then
 			blockCount_n <= blockCount + 1;
 		end if;
 
@@ -128,53 +144,84 @@ begin
 		when IDLE =>
 			if blockCount > 0 then
 				writeState_n <= STARTBLOCK;
+				--wout.data := rddata;
+				--wout.data := COLORA;
+				--pixeladdr_n <= pixeladdr + 1;
 			end if;
 
 		when STARTBLOCK =>
-			writeState_n <= HANDLEBLOCK;
+			--wout.address := output.address + 4;
 			wout.data := rddata;
+			--wout.data := COLORA;
+			dmai.start <= '1';
+			dostart_n <= '1';
+			--pixelCount_n <= pixelCount + 1;
+			pixeladdr_n <= pixeladdr + 1;
+			writeState_n <= HANDLEBLOCK;
+
+		when RESTART =>
+			dmai.start <= '1';
+			dostart_n <= '1';
+			--pixelCount_n <= pixelCount + 1;
+			writeState_n <= HANDLEBLOCK;
 
 		when HANDLEBLOCK =>
+			--dostart_n <= '1';
 			dmai.start <= '1';
 			if dmao.ready = '1' then
-				--if output.data = COLORA then
-				--	wout.data := COLORB;
-				--else
-				--	wout.data := COLORA;
-				--end if;
+				if output.data = COLORA then
+					wout.data := COLORB;
+				elsif output.data = COLORB then
+					wout.data := COLORC;
+				elsif output.data = COLORC then
+					wout.data := COLORD;
+				else
+					wout.data := COLORA;
+				end if;
 
 				wout.data := rddata;
 				wout.address := output.address + 4;
-				if pixeladdr = conv_std_logic_vector(399,9) then
-					pixeladdr_n <= "000000000";
-				else
-					pixeladdr_n <= pixeladdr + '1';
-				end if;
+				pixeladdr_n <= pixeladdr + '1';
 
+				
+--				-- end of burst
+--				if pixelCount < 15 then
+--					pixelCount_n <= pixelCount + 1;
+--				else
+--					dmai.start <= '0';
+--					--dostart_n <= '0';
+--					wout.address := output.address;
+--					writeState_n <= RESTART;
+--				end if;
+
+				-- end of block
 				if wout.address(5 downto 2) = "0000" then
 					dmai.start <= '0';
+					--dostart_n <= '0';
+					pixelCount_n <= 0;
 					blockCount_n <= blockCount - 1;
+					--blockCount_n <= 0;
 					writeState_n <= IDLE;
-					wout.address := output.address + 4;
-				end if;
-				if wout.address = FIFOEND then
-					wout.address := FIFOSTART;
+					done_n <= '1';
+				else
+			--		pixeladdr_n <= pixeladdr + '1';
 				end if;
 			end if;
 
 		when others =>
 		end case;
+
+		if pixeladdr = conv_std_logic_vector(399,9) then
+			pixeladdr_n <= "000000000";
+		end if;
+
+		-- stay within framebuffer
+		if wout.address = FIFOEND then
+			wout.address := FIFOSTART;
+		end if;
 		
 		output_n <= wout;
-		rdaddress <= pixeladdr_n;
-		
-		dmai.burst <= '1';
-		dmai.irq <= '0';
-		dmai.size <= "010";
-		dmai.write <= '1';
-		dmai.busy <= '0';
-		dmai.wdata <= wout.data;
-		dmai.address <= wout.address;
+		rdaddress <= pixeladdr;
 
 		--if ((output_sig.rowcnt = output_sig.face.top or output_sig.rowcnt = output_sig.face.bottom)
 		--		and (output_sig.colcnt >= output_sig.face.left and output_sig.colcnt <= output_sig.face.right))
@@ -206,6 +253,9 @@ begin
 				output.address <= FIFOSTART;
 				output.data <= COLORA;
 				pixeladdr <= "000000000";
+				pixelCount <= 0;
+				dostart <= '0';
+				done <= '0';
 			else
 				writeState <= writeState_n;
 				fval_old <= fval_old_n;
@@ -213,6 +263,9 @@ begin
 				blockCount <= blockCount_n;
 				output <= output_n;
 				pixeladdr <= pixeladdr_n;
+				pixelCount <= pixelCount_n;
+				dostart <= dostart_n;
+				done <= done_n;
 			end if;
     end if;
   end process;
