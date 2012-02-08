@@ -127,65 +127,8 @@ int main(int argc, char **argv)
 	
 	// slew rate settings
 	// 1024 | 868 | 2
-/*
-	// red -> yellow
-	for(i = 0; i < 0xff; i++)
-	{
-		DISPCTRL_COLOR = 0x00ff0000 + (i<<8);
-		DISPCTRL_STATUS = 0;
-		DISPCTRL_STATUS = DISPCTRL_UPDATE;
-		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-	}
-	// yello -> green
-	for(i = 0; i < 0xff; i++)
-	{
-		DISPCTRL_COLOR = 0x00ffff00 - (i<<16);
-		DISPCTRL_STATUS = 0;
-		DISPCTRL_STATUS = DISPCTRL_UPDATE;
-		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-	}
-	// green -> cyan
-	for(i = 0; i < 0xff; i++)
-	{
-		DISPCTRL_COLOR = 0x0000ff00 + i;
-		DISPCTRL_STATUS = 0;
-		DISPCTRL_STATUS = DISPCTRL_UPDATE;
-		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-	}
-	// cyan -> blue
-	for(i = 0; i < 0xff; i++)
-	{
-		DISPCTRL_COLOR = 0x0000ffff - (i<<8);
-		DISPCTRL_STATUS = 0;
-		DISPCTRL_STATUS = DISPCTRL_UPDATE;
-		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-	}
-	// blue -> violet
-	for(i = 0; i < 0xff; i++)
-	{
-		DISPCTRL_COLOR = 0x000000ff + (i<<16);
-		DISPCTRL_STATUS = 0;
-		DISPCTRL_STATUS = DISPCTRL_UPDATE;
-		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-	}
-	// violet -> red
-	for(i = 0; i < 0xff; i++)
-	{
-		DISPCTRL_COLOR = 0x00ff00ff - i;
-		DISPCTRL_STATUS = 0;
-		DISPCTRL_STATUS = DISPCTRL_UPDATE;
-		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-	}
-	*/
 
-/*
-	for(i = 0; i < 300; i++)
-	{
-		UPDATE_GLCD();
-		for(j = 0; j < 30; j++) asm volatile("nop\n\t");
-	}
-*/
-
+	dis7seg_displayHexUInt32(&dispHandle, 0, 0x2b00b1e5);  
 
 	while(1)
 	{

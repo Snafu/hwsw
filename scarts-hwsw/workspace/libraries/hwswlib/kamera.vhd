@@ -94,6 +94,7 @@ begin
 		whichLine_n <= whichLine;
 		whichPixel_n <= whichPixel;	
 		burstCount_n <= burstCount;
+		dp_wren <= '0';
 		
 		-- see datasheet page 55: capture data on FALLING EDGE of pixclock
 		if(pixclk = '0' and pixclk /= pixclk_old)

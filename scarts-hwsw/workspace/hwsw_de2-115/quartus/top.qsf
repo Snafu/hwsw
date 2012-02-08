@@ -441,4 +441,6 @@ set_global_assignment -name VHDL_FILE ../VHDL/top_pkg.vhd
 set_global_assignment -name VHDL_FILE ../VHDL/top.vhd
 set_global_assignment -name SDC_FILE top.sdc
 set_global_assignment -name QIP_FILE ../VHDL/altera_pll.qip
+set_global_assignment -name HEX_FILE ../../libraries/hwswlib/dp_pixelram_init.hex
+set_global_assignment -name QIP_FILE ../../libraries/hwswlib/dp_pixelram.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

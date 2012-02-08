@@ -105,8 +105,9 @@ architecture behaviour of top_tb is
 
 			-- TESTSIGNALE
 			blockrdy				: in std_logic;
+			blockrdy_dbg		: out std_logic;
 
-			clk_test				:	out std_logic;
+			sysclk					:	out std_logic;
 			pxl_clk_out			:	out std_logic;
 			cam_resetN_dbg	: out std_logic;
 
@@ -287,13 +288,19 @@ begin
   begin
 
 		blockrdy <= '0';
+		cam_fval <= '0';
     rst <= RST_ACT;
     D_Rxd <= '1';
     aux_uart_rx <= '1';
     icwait(100);
     rst <= not RST_ACT;
 		
-		icwait(500);
+		icwait(100);
+		cam_fval <= '1';
+		icwait(10);
+		cam_fval <= '0';
+		icwait(10);
+
 		for A in 0 to 240 loop
 			for I in 0 to 24 loop
 				blockrdy <= '1';

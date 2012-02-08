@@ -466,7 +466,7 @@ begin
 	cam_resetN_dbg <= syncrst;
 	
 	--cam_xclk <= cam_clock;
-	pxl_clk_out <= cam_pixclk;	
+	pxl_clk_out <= pixclk_sync;	
 	cam_pixdata_dbg <= cam_pixdata;
 	
 	-- see camera register 0x0B, page 20
@@ -493,7 +493,7 @@ begin
 			apbo => apbo(1),
 			ahbi => grlib_ahbmi,
 			ahbo => disp_ahbmo,
-			fval => cam_fval,
+			fval => cam_fval_sync,
 			rdaddress => rdaddress_sig,
 			rddata => q_sig,
 			blockrdy => pxReady_sig
