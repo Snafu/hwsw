@@ -363,8 +363,6 @@ set_location_assignment PIN_AE3 -to cam_sram_data[12]
 set_location_assignment PIN_AE4 -to cam_sram_data[13]
 set_location_assignment PIN_AF3 -to cam_sram_data[14]
 set_location_assignment PIN_AG3 -to cam_sram_data[15]
-set_location_assignment PIN_G24 -to cam_xclk
-set_location_assignment PIN_AD15 -to pxl_clk_out
 set_location_assignment PIN_AC19 -to whichLine_top_dbg
 set_location_assignment PIN_G25 -to cam_trigger
 set_location_assignment PIN_AC21 -to sysclk
@@ -441,4 +439,8 @@ set_global_assignment -name VHDL_FILE ../VHDL/top_pkg.vhd
 set_global_assignment -name VHDL_FILE ../VHDL/top.vhd
 set_global_assignment -name SDC_FILE top.sdc
 set_global_assignment -name QIP_FILE ../VHDL/altera_pll.qip
+set_global_assignment -name MISC_FILE "/homes/w0727156/Desktop/HWSW_FRESH_WITH_PROPER_SCARTS_PROJECT/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.dpf"
+set_location_assignment PIN_G24 -to cam_pll
+set_location_assignment PIN_AD15 -to pxl_clk_dbg
+set_global_assignment -name QIP_FILE ../../libraries/hwswlib/dp_pixelram.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
