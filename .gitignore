@@ -22,3 +22,17 @@ scarts-hwsw/workspace/hwsw_de2-115/modelsim/*/
 *.toc
 *.swp
 *.orig
+scarts-hwsw/workspace/hwsw_de2-115/modelsim/.nfs*
+scarts-hwsw/workspace/hwsw_de2-115/quartus/top.cdf
+scarts-hwsw/workspace/hwsw_de2-115/quartus/top.dpf
+scarts-hwsw/workspace/hwsw_de2-115/quartus/top.frf
+scarts-hwsw/workspace/hwsw_de2-115/quartus/top.map.smsg
+scarts-hwsw/workspace/hwsw_de2-115/quartus/top.srf
+scarts-hwsw/workspace/hwsw_de2-115/quartus/top.tis_db_list.ddb
+transcript
+*.srec
+facedetection/app/main
+facedetection/app/main.txt
+*.tga
+scarts-hwsw/workspace/hwsw_de2-115/modelsim/vsim.wlf
+scarts-hwsw/workspace/hwsw_de2-115/modelsim/modelsim.ini

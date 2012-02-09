@@ -1,12 +1,11 @@
 -----------------------------------------------------------------------------
 -- Entity:      kamera
 -- File:        kamera.vhd
--- Author:      Christopher Gabriel
+-- Author:      Harald Glanzer
 -- Modified:    
--- Contact:     stuff@c-gabriel.at
+-- Contact:     hari@powpow.at
 -- Description: Cam readout
 -----------------------------------------------------------------------------
--- GRLIB2 CORE
 -- VENDOR:      VENDOR_HWSW
 -- DEVICE:      HWSW_CAM
 -- VERSION:     0
@@ -122,10 +121,13 @@ architecture rtl of kamera is
 	
 	signal dp_buf			: std_logic_vector(31 downto 0);
 	signal dp_buf_next	: std_logic_vector(31 downto 0);
+	
+	signal sram_data_buf			: std_logic_vector(15 downto 0);
+	signal sram_data_buf_next	: std_logic_vector(15 downto 0);
 		  
 begin
 
-	readout : process(rst, fval, fval_old, lval, lval_old, whichline, pixdata ,pixclk, pixclk_old, rowcnt, pixelG, pixelB, dp_cnt, sram_data, firstPixel, firstPixel_next, burstCnt, burstCnt_next, linecnt, frameCnt)
+	readout : process(rst, fval, fval_old, lval, lval_old, whichline, pixdata ,pixclk, pixclk_old, rowcnt, pixelG, pixelB, dp_cnt, sram_data, firstPixel, firstPixel_next, burstCnt, burstCnt_next, linecnt, frameCnt, pixelR, dp_buf, sram_data_buf)
 	begin
 						
 		burstCnt_next <= burstCnt;
@@ -150,20 +152,9 @@ begin
 		dp_buf_next <= dp_buf;
 		
 		burstCnt_next <= burstCnt;
-						
---		if(frameCnt = 0)
---		then
---			dp_data <= x"00000000";	
---		elsif(frameCnt = 1)
---		then
---			dp_data <= x"000000FF";
---		elsif(frameCnt = 2)
---		then
---			dp_data <= x"0000FF00";
---		else
---			dp_data <= x"00FF0000";
---		end if;
 		
+		sram_data_buf_next <= sram_data_buf;
+							
 		-- DUALPORT RAM CONTROL
 		-- DATA -> RAM: always assert signals here - WR_EN will get falling flank
 		
@@ -172,8 +163,16 @@ begin
 		dp_wren <= '0';
 		
 		-- SRAM CONTROL
-		sram_data <= "0000000000000000";
+		--sram_data <= "0000000000000000";
+		sram_data <= sram_data_buf;
+		
+if(whichLine = SECOND)
+then
 		sram_ctrl.we <= '1';	
+else
+		sram_ctrl.we <= '0';	
+end if;
+
 		-- can be LOW all the time according to datasheet
 		sram_ctrl.oe <= '0';
 		sram_ctrl.ce <= '0';
@@ -233,20 +232,27 @@ begin
 		if fval = '1' and lval = '1' and pixclk_old /= pixclk and pixclk = '0'
 		then				
 			-- FIRST LINE: save COMPLETE line to SRAM
+			-- Pattern: G1 - R - G1 - R ...
 			if(whichline = FIRST)
 			then
+	
 				if( firstPixel = '0' )
 				then
 					firstPixel_next <= '1';
 					pixelG_next <= pixdata(11 downto 4);
+		
 				else
 					-- save pixels from 'first' lines(Bayer: G1|R|G1|R... )
 					-- save RED pixel and buffered GREEN1 pixel
 					-- proper adress was already set one cylce earlier
 					sram_ctrl.we <= '0';
 		
-					sram_data(7 downto 0) <= pixdata(11 downto 4);		-- this is the RED share of the pixel
-					sram_data(15 downto 8) <= pixelG;						-- this is the GREEN_1 share of the pixel
+					--sram_data(7 downto 0) <= pixdata(11 downto 4);		-- this is the RED share of the pixel
+					--sram_data(15 downto 8) <= pixelG;						-- this is the GREEN_1 share of the pixel
+					
+					sram_data_buf_next(7 downto 0)  <= pixdata(11 downto 4);
+					sram_data_buf_next(15 downto 8) <= pixelG;
+					
 					-- ... and prepare next SRAM adress
 					rowcnt_next  <= rowcnt + 1;
 					firstPixel_next <= '0';
@@ -254,6 +260,7 @@ begin
 					end if;
 								
 			-- SECOND LINE: calculate new pixels
+			-- Pattern: B - G2 - B - G2 - B ...
 			else
 				-- save BLUE part of pixel
 				if( firstPixel = '0' )
@@ -261,7 +268,7 @@ begin
 					firstPixel_next <= '1';
 					pixelB_next <= pixdata(11 downto 4);
 					
-					-- save the last 4 Pixel to DP-RAM
+					-- save the Pixel to DP-RAM
 					-- must be done here because DP-RAM seems to need DATA and ADRESS first, one cylce later WR_EN:
 					if(rowcnt > 0)
 					then
@@ -275,13 +282,13 @@ begin
 								
 					-- get pixeldata from corresponding first line, save in SRAM
 					-- proper adress was already set one cycle earlier
-										
-					-- ignore G2 for now...
-					--dp_buf_next(23 downto 16)   <= x"00";
-					dp_buf_next(23 downto 16)   <= sram_data(7  downto 0);
-					dp_buf_next(15 downto 8)  <= sram_data(15 downto 8);
-					--dp_buf_next(15 downto 8)  <= pixdata(11 downto 4);
-					dp_buf_next(7 downto 0) <= pixelB;
+											
+		
+					-- so SOLLTE es funktionieren
+					dp_buf_next(23 downto 16)   <= sram_data(7  downto 0);		-- save Red
+					dp_buf_next(15 downto 8)  <= pixdata(11 downto 4);			-- save Green / TODO: mittelwert G1+G2
+					--dp_buf_next(15 downto 8)  <= sram_data(15 downto 8);
+					dp_buf_next(7 downto 0) <= pixelB;								-- save Blue
 					burstCnt_next <= burstCnt + 1;
 					
 					if( burstCnt = PIXELBURSTLEN)
@@ -322,6 +329,7 @@ begin
 		
 		dp_buf <= x"00000000";
 		burstCnt <= 0;
+		sram_data_buf <=  x"0000";
 		
 	else
 		if rising_edge(clk)
@@ -346,6 +354,8 @@ begin
 			burstCnt <= burstCnt_next;
 			
 			dp_buf <= dp_buf_next;
+			
+			sram_data_buf <= sram_data_buf_next;
 
 			if( whichLine_next = FIRST)
 				then

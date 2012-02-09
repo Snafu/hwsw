@@ -37,7 +37,7 @@ void initCamera(void)
 
 	// shutter width - lower byte
 	// default 0x797
-	i2c_write(0x09, 600);					// schaut halbwegs OK aus!
+	i2c_write(0x09, 500);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
 		
 	// pause restart
 //	i2c_write(0x0b,3);
@@ -62,8 +62,6 @@ void initCamera(void)
 
 i2c_write(0x1e,(0x4006 | (1<<8) | (1<<9)));	// FUNKT --> INVERT TRIGGER SETZEN da HW-trigger-pin auf LOW?????
 
-
-// SHUTTER WIDTH UPPER / LOWER setzen!!
 
 	// unpause restart
 	//i2c_write(0x0b,1);

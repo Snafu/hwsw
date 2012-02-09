@@ -17,6 +17,20 @@
 #include "dispctrl.h"
 #include "i2c.h"
 
+/*
+ * 	hari: additional extension for signalling completion of camera-i2c-config
+*/
+#define signal_init()     { \
+        INIT_DONE_STATUS = (0xFF); \
+        uint32_t j; \
+        for(j = 0; j < 2300; j++) asm volatile("nop\n\t"); \
+        }
+
+#define INIT_DONE_STATUS (*(volatile int *const) (INIT_DONE_BADDR))
+#define INIT_DONE_BADDR ((uint32_t)-416)
+
+
+// 	address -384 --> i2c.h
 #define AUX_UART_BADDR ((uint32_t)-352)
 #define COUNTER_BADDR ((uint32_t)-320)
 #define DISP_BADDR    ((uint32_t)-288)
@@ -121,6 +135,8 @@ int main(int argc, char **argv)
 	// CAM initialization
 	initCamera();
 
+	signal_init();		// cam - config completed. signal it to who it belongs(dispctrl so far)
+
 	uint32_t i;
 	uint32_t j;
 
@@ -191,10 +207,10 @@ int main(int argc, char **argv)
 	{
 		i2c_write(0x0b, 0x04);	// SET TRIGGER
 	//	i2c_write(0x0b, 0x00); 	// RESET TRIGGER BIT
-	//	for(i = 0; i < 20; i++)
-	//	{
+//		for(i = 0; i < 20; i++)
+//		{
 			for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-	//	}
+//		}
 	}
 	
 	DRAW_RECT(0,0,0,0);

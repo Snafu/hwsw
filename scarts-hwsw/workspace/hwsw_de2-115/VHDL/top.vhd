@@ -118,6 +118,7 @@ architecture behaviour of top is
 	signal pxReady_sig		: std_logic;
 	signal whichLine_sig		: std_logic;
 	signal pixclk_sync		: std_logic;
+	signal cam_pixdata_sync	: std_logic_vector(11 downto 0);
 	
 	signal burstCount_dbg_sig : std_logic_vector(4 downto 0);
 	
@@ -195,6 +196,8 @@ architecture behaviour of top is
   signal aux_uart_sel      : std_ulogic;
   signal aux_uart_exto     : module_out_type;
   
+  -- extension module: signal when camera is configured by i2c
+  signal hw_initialized		: std_logic;
   
   component altera_pll IS
     PORT
@@ -485,7 +488,10 @@ begin
 			fval => cam_fval,
 			rdaddress => rdaddress_sig,
 			rddata => q_sig,
-			blockrdy => pxReady_sig
+			blockrdy => pxReady_sig,
+			
+			init_ready    => hw_initialized		-- HARI: signal by sw-extension AFTER i2c init
+			
 			--blockrdy => blockrdy --dbg
     );  
 	
@@ -526,9 +532,10 @@ begin
 			pixclk		=> pixclk_sync,
 			fval			=> cam_fval_sync,
 			lval			=> cam_lval_sync,
-			pixdata		=> cam_pixdata,
-	sram_ctrl	=> cam_sram_ctrl,
-	sram_data	=> cam_sram_data,
+		pixdata		=> cam_pixdata_sync,
+		--pixdata		=> cam_pixdata,
+			sram_ctrl	=> cam_sram_ctrl,
+			sram_data	=> cam_sram_data,
 			
 			dp_data		=> data_sig,
 			dp_wren		=> wren_sig,
@@ -603,6 +610,7 @@ begin
     counter_segsel <= '0';
     aux_uart_sel <= '0';
 	 i2c_config_sel <= '0';
+	 hw_initialized <= '0'; 
     
     if scarts_o.extsel = '1' then
       case scarts_o.addr(14 downto 5) is
@@ -617,7 +625,10 @@ begin
           aux_uart_sel <= '1';
 		  when "1111110100" => -- (-384)
 			-- I2C config 
-				i2c_config_sel <= '1'; 
+				i2c_config_sel <= '1'; 	
+			when "1111110011" => -- (-416)
+			-- I2C config 
+				hw_initialized <= '1'; 
         when others =>
           null;
       end case;
@@ -682,6 +693,7 @@ begin
 		pixclk_sync <= cam_pixclk;
 				
 		cam_counter <= cam_counter_next;
+		cam_pixdata_sync <= cam_pixdata;
     end if;
   end process;
 
