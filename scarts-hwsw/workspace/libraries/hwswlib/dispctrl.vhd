@@ -47,10 +47,12 @@ entity dispctrl is
     apbo      : out apb_slv_out_type;
     ahbi      : in  ahb_mst_in_type;
     ahbo      : out ahb_mst_out_type;
-		fval			: in std_logic;
-		rdaddress : out std_logic_vector(8 downto 0);
-		rddata    : in std_logic_vector(31 downto 0);
-		blockrdy  : in std_logic
+	fval			: in std_logic;
+	rdaddress : out std_logic_vector(8 downto 0);
+	rddata    : in std_logic_vector(31 downto 0);
+	blockrdy  : in std_logic;
+	
+	init_ready	: in std_logic
     );
 
 end ;
@@ -59,7 +61,10 @@ architecture rtl of dispctrl is
   
 	constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0000000";
 	--constant FIFOSTART : std_logic_vector(31 downto 0) := x"E00BBE40"; --dbg
-	constant FIFOEND : std_logic_vector(31 downto 0) := x"E0177000";
+	constant FIFOEND : std_logic_vector(31 downto 0) := x"E00BB800"; --dbg
+	--constant FIFOEND : std_logic_vector(31 downto 0) := x"E0177000";
+	--constant FIFOEND : std_logic_vector(31 downto 0) := x"E00C5B20";
+	
 	constant NOFACE : std_logic_vector(9 downto 0) := "1111111111";
 	constant COLORA : std_logic_vector(31 downto 0) := x"00FF0000";
 	constant COLORB : std_logic_vector(31 downto 0) := x"0000FF00";
@@ -87,16 +92,17 @@ architecture rtl of dispctrl is
 		data			: std_logic_vector(31 downto 0);
   end record;
 	
-	type writestate_t is (NOINIT,IDLE,STARTBLOCK,RESTART,WAITREADY,HANDLEBLOCK,FINISHBLOCK,UPDATEDPADDR);
+	type writestate_t is (WAIT_INIT, NOINIT,IDLE,STARTBLOCK,RESTART,WAITREADY,HANDLEBLOCK,FINISHBLOCK,UPDATEDPADDR);
 
   signal dmai	: ahb_dma_in_type;
   signal dmao	: ahb_dma_out_type;
 	
-	signal writeState, writeState_n : writestate_t := NOINIT;
+	signal writeState, writeState_n : writestate_t := WAIT_INIT;
+	--signal writeState, writeState_n : writestate_t := NOINIT;
 	signal fval_old, fval_old_n : std_logic := '0';
+	signal init_old, init_old_n : std_logic := '0';
 	signal blockrdy_old, blockrdy_old_n : std_logic;
 	signal blockCount, blockCount_n : integer range 0 to 1023;
-	signal foocount,foocount_n : integer range 0 to 1023;
 	signal output, output_n : write_t;
 	signal pixeladdr, pixeladdr_n : std_logic_vector(8 downto 0) := "000000000";
 	signal pixelCount, pixelCount_n : integer range 0 to 16 := 0;
@@ -105,7 +111,7 @@ begin
   ahb_master : ahbmst generic map (hindex, hirq, VENDOR_HWSW, HWSW_DISPCTRL, 0, 3, 0)
   port map (rst, clk, dmai, dmao, ahbi, ahbo);
   
-  control_proc : process(rst,ahbi,dmai,dmao,fval,fval_old,blockrdy,writeState,pixeladdr,rddata,blockCount,pixelCount,output,blockrdy_old)
+  control_proc : process(rst,ahbi,dmai,dmao,fval,fval_old,blockrdy,writeState,pixeladdr,rddata,blockCount,pixelCount,output,blockrdy_old,init_ready,init_old)
 		variable wout : write_t;
 		variable ahbready : std_logic;
 		variable start : std_logic;
@@ -121,16 +127,23 @@ begin
 		wout := output;
 		start := '0';
 		ahbready := dmao.ready;
-		foocount_n <= foocount;
+		init_old_n <= init_ready;
 
 		ahbready_dbg <= ahbready;
 
 		if rst = '1' and blockrdy_old /= blockrdy and blockrdy = '1' then
 			blocks := blocks + 1;
-			foocount_n <= foocount + 1;
 		end if;
 
 		case writeState is
+		
+		-- wait for i2c - initialization, signaled by extension module
+		when WAIT_INIT =>
+			if  init_old /= init_ready and init_ready = '1' then
+				writeState_n <= NOINIT;
+				blockCount_n <= 0;
+			end if;
+			
 		when NOINIT =>
 			if rst = '1' and fval_old /= fval and fval = '1' then
 				writeState_n <= IDLE;
@@ -177,8 +190,6 @@ begin
 					pixelCount_n <= 0;
 					--blockCount_n <= 0;
 					writeState_n <= FINISHBLOCK;
-				else
-				--	pixeladdr_n <= pixeladdr + '1';
 				end if;
 			end if;
 
@@ -197,6 +208,7 @@ begin
 		-- stay within framebuffer
 		if output.address >= FIFOEND then
 			wout.address := FIFOSTART;
+			pixeladdr_n <= "000000000";
 		end if;
 		
 		output_n <= wout;
@@ -236,13 +248,14 @@ begin
   begin
     if rising_edge(clk) then
 			if rst = '0' then
-				writeState <= NOINIT;
+				writeState <= WAIT_INIT;
 				fval_old <= '0';
 				blockrdy_old <= '0';
 				blockCount <= 0;
 				output.address <= FIFOSTART;
 				output.data <= x"00FFFFFF";
 				pixelCount <= 0;
+				init_old <= '0';
 			else
 				writeState <= writeState_n;
 				fval_old <= fval_old_n;
@@ -250,7 +263,8 @@ begin
 				blockCount <= blockCount_n;
 				output <= output_n;
 				pixelCount <= pixelCount_n;
-				foocount <= foocount_n;
+				
+				init_old <= init_old_n;
 			end if;
     elsif falling_edge(clk) then
 			if rst = '0' then

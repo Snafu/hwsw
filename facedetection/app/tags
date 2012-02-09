@@ -4,13 +4,13 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.8	//
-AUX_UART_BADDR	src/main.c	20;"	d	file:
+AUX_UART_BADDR	src/main.c	34;"	d	file:
 BACKGROUND_COLOR_B	src/erodeDilateFilter.c	8;"	d	file:
 BACKGROUND_COLOR_G	src/erodeDilateFilter.c	7;"	d	file:
 BACKGROUND_COLOR_R	src/erodeDilateFilter.c	6;"	d	file:
 CB_HIGH	src/skinFilter.c	9;"	d	file:
 CB_LOW	src/skinFilter.c	5;"	d	file:
-COUNTER_BADDR	src/main.c	21;"	d	file:
+COUNTER_BADDR	src/main.c	35;"	d	file:
 CR_HIGH	src/skinFilter.c	10;"	d	file:
 CR_LOW	src/skinFilter.c	6;"	d	file:
 DISPCTRL_BASE	include/dispctrl.h	4;"	d
@@ -19,7 +19,7 @@ DISPCTRL_COLOR	include/dispctrl.h	6;"	d
 DISPCTRL_STATUS	include/dispctrl.h	5;"	d
 DISPCTRL_TL	include/dispctrl.h	7;"	d
 DISPCTRL_UPDATE	include/dispctrl.h	14;"	d
-DISP_BADDR	src/main.c	22;"	d	file:
+DISP_BADDR	src/main.c	36;"	d	file:
 DRAW_RECT	include/dispctrl.h	10;"	d
 FILTER_DILATE	include/filters.h	7;"	d
 FILTER_ERODE	include/filters.h	6;"	d
@@ -33,9 +33,11 @@ I2CCONFIG_BADDR	include/i2c.h	4;"	d
 I2CCONFIG_DATA	include/i2c.h	6;"	d
 I2CCONFIG_STATUS	include/i2c.h	5;"	d
 I2C_H	include/i2c.h	2;"	d
-LEDS	src/main.c	23;"	d	file:
-SCREEN_HEIGHT	src/main.c	27;"	d	file:
-SCREEN_WIDTH	src/main.c	26;"	d	file:
+INIT_DONE_BADDR	src/main.c	30;"	d	file:
+INIT_DONE_STATUS	src/main.c	29;"	d	file:
+LEDS	src/main.c	37;"	d	file:
+SCREEN_HEIGHT	src/main.c	41;"	d	file:
+SCREEN_WIDTH	src/main.c	40;"	d	file:
 SDRAM_BANKSIZE_128MB	include/sdram.h	38;"	d
 SDRAM_BANKSIZE_16MB	include/sdram.h	35;"	d
 SDRAM_BANKSIZE_256MB	include/sdram.h	39;"	d
@@ -85,7 +87,7 @@ SVGA_VLINELEN	include/svga.h	24;"	d
 SVGA_VPORCH	include/svga.h	21;"	d
 SVGA_VVIDEOLEN	include/svga.h	18;"	d
 UPDATE_GLCD	include/dispctrl.h	13;"	d
-WAIT_TIME	src/main.c	24;"	d	file:
+WAIT_TIME	src/main.c	38;"	d	file:
 WINDOW_LENGTH	src/erodeDilateFilter.c	4;"	d	file:
 WINDOW_OFFSET	src/erodeDilateFilter.c	5;"	d	file:
 Y_HIGH	src/skinFilter.c	8;"	d	file:
@@ -126,6 +128,7 @@ rect_t	include/detectFace.h	/^} rect_t;$/;"	t	typeref:struct:__anon1
 rgb_color_t	include/image.h	/^} rgb_color_t;$/;"	t	typeref:struct:__anon2
 screenData	src/main.c	/^static volatile uint32_t *screenData;$/;"	v	file:
 sdramBytesAllocated	src/main.c	/^static uint32_t sdramBytesAllocated;$/;"	v	file:
+signal_init	src/main.c	23;"	d	file:
 skinFilter	src/skinFilter.c	/^void skinFilter(image_t *inputImage, image_t *outputImage)$/;"	f
 topLeftX	include/detectFace.h	/^  uint16_t topLeftX;$/;"	m	struct:__anon1
 topLeftY	include/detectFace.h	/^  uint16_t topLeftY;$/;"	m	struct:__anon1

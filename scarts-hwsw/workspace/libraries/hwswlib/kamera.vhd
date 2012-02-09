@@ -1,12 +1,11 @@
 -----------------------------------------------------------------------------
 -- Entity:      kamera
 -- File:        kamera.vhd
--- Author:      Christopher Gabriel
+-- Author:      Harald Glanzer
 -- Modified:    
--- Contact:     stuff@c-gabriel.at
+-- Contact:     hari@powpow.at
 -- Description: Cam readout
 -----------------------------------------------------------------------------
--- GRLIB2 CORE
 -- VENDOR:      VENDOR_HWSW
 -- DEVICE:      HWSW_CAM
 -- VERSION:     0
@@ -18,7 +17,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
-use ieee.numeric_std.all;
 
 library work;
 use work.kameralib.all;
@@ -41,8 +39,8 @@ entity kamera is
 		fval				: in std_logic;
 		lval				: in std_logic;
 		pixdata			: in std_logic_vector(11 downto 0);
-		--sram_ctrl		: out sram_ctrl_t;
-		--sram_data		: buffer std_logic_vector(15 downto 0);
+		sram_ctrl		: out sram_ctrl_t;
+		sram_data		: buffer std_logic_vector(15 downto 0);
 		
 		dp_data			: out std_logic_vector(31 downto 0);
 		dp_wren			: out std_logic;
@@ -56,104 +54,252 @@ entity kamera is
 end ;
 
 architecture rtl of kamera is
-	constant ROWSIZE : integer := 800;
-	constant LINESIZE : integer := 480;
-	constant BLOCKSIZE : integer := 32;
-
-	type state_t is (NOINIT,IDLE,LINEA,LINEB);
+  
+  constant PIXELBURSTLEN	: integer := 15;
+  
+  type sram_ctrl_t is record
+		addr		: std_logic_vector(19 downto 0);
+		we			: std_logic;
+		oe			: std_logic;
+		ce			: std_logic;
+		ub			: std_logic;
+		lb			: std_logic;
+	end record;
 	
-	type count_t is (FIRST, SECOND);
-
-	signal pixState, pixState_n : state_t := NOINIT;
-	signal fval_old, fval_old_n : std_logic := '1';
-	signal lval_old, lval_old_n : std_logic := '1';
-	signal pixclk_old, pixclk_old_n : std_logic := '0';
-	signal pixelCount, pixelCount_n : integer range 0 to 400 := 0;
-	signal burstCount, burstCount_n : integer range 0 to 20 := 0;
-	signal pixelburstReady_n : std_logic := '0';
-	signal lineCount, lineCount_n : integer range 0 to LINESIZE;
-	signal rowCount, rowCount_n : integer range 0 to ROWSIZE;
-	signal whichLine, whichLine_n : count_t;
-	signal whichPixel, whichPixel_n : count_t;
+	type sram_t is record
+		addr		: std_logic_vector(19 downto 0);
+		data		: std_logic_vector(15 downto 0);
+		we			: std_logic;
+		oe			: std_logic;
+		ce			: std_logic;
+		ub			: std_logic;
+		lb			: std_logic;
+	end record;
 	
+	type color_t is (R,G,B);
+	type pixel_t is array(color_t'left to color_t'right) of std_logic_vector(7 downto 0);
+	type pixline_t is array(1 to 800) of pixel_t;
+	type line_t is (FIRST, SECOND);
+	
+	signal pixclk_old			: std_logic;
+	signal pixclk_old_next	: std_logic;
+	
+	signal fval_old		: std_logic;
+	signal fval_old_next	: std_logic;
+	
+	signal lval_old		: std_logic;
+	signal lval_old_next	: std_logic;
+  
+	signal rowcnt			: integer range 0 to 500;
+	signal rowcnt_next	: integer range 0 to 500;
+	signal linecnt			: integer range 0 to 500;
+	signal linecnt_next	: integer range 0 to 500;
+	
+	signal whichline		: line_t;
+	signal whichline_next: line_t;
+	
+	signal pixelB			: std_logic_vector(7 downto 0);
+	signal pixelB_next	: std_logic_vector(7 downto 0);
+	
+	signal pixelG			: std_logic_vector(7 downto 0);
+	signal pixelG_next	: std_logic_vector(7 downto 0);
+	
+	signal pixelR			: std_logic_vector(7 downto 0);
+	signal pixelR_next	: std_logic_vector(7 downto 0);
+	
+	signal dp_cnt			: integer range 0 to 500;
+	signal dp_cnt_next	: integer range 0 to 500;
+	
+	signal firstPixel			: std_logic;
+	signal firstPixel_next	: std_logic;
+	
+	signal burstCnt		:	integer range 0 to 30;
+	signal burstCnt_next	:	integer range 0 to 30;
+	
+	signal frameCnt		:	integer range 0 to 10;
+	signal frameCnt_next	:	integer range 0 to 10;
+	
+	signal dp_buf			: std_logic_vector(31 downto 0);
+	signal dp_buf_next	: std_logic_vector(31 downto 0);
+	
+	signal sram_data_buf			: std_logic_vector(15 downto 0);
+	signal sram_data_buf_next	: std_logic_vector(15 downto 0);
+		  
 begin
 
-	readout : process(rst,clk,fval,fval_old,lval,lval_old,pixclk,pixclk_old,pixState,pixelCount,lineCount,rowCount,whichLine, whichPixel, burstCount)
-		variable fval_rising : std_logic;
-		variable lval_rising : std_logic;
-		variable pixclk_rising : std_logic;
+	readout : process(rst, fval, fval_old, lval, lval_old, whichline, pixdata ,pixclk, pixclk_old, rowcnt, pixelG, pixelB, dp_cnt, sram_data, firstPixel, firstPixel_next, burstCnt, burstCnt_next, linecnt, frameCnt, pixelR, dp_buf, sram_data_buf)
 	begin
-		pixState_n <= pixState;
-		fval_old_n <= fval;
-		lval_old_n <= lval;
-		pixclk_old_n <= pixclk;
-		pixelCount_n <= pixelCount;
-		pixelburstReady_n <= '0';
-		lineCount_n <= lineCount;
-		rowCount_n <= rowCount;
-		whichLine_n <= whichLine;
-		whichPixel_n <= whichPixel;	
-		burstCount_n <= burstCount;
+						
+		burstCnt_next <= burstCnt;
+		firstPixel_next <= firstPixel;			
+		
+		rowcnt_next <= rowcnt;
+		linecnt_next <= linecnt;
+		pixelG_next <= pixelG;
+		pixelB_next <= pixelB;
+		pixelR_next <= pixelR;
+		
+		whichline_next <= whichline;	
+		fval_old_next <= fval;
+		lval_old_next <= lval;
+		pixclk_old_next <= pixclk;
+				
+		pixelburstReady <= '0';
+		
+		frameCnt_next <= frameCnt;
+		
+		dp_cnt_next <= dp_cnt;	
+		dp_buf_next <= dp_buf;
+		
+		burstCnt_next <= burstCnt;
+		
+		sram_data_buf_next <= sram_data_buf;
+							
+		-- DUALPORT RAM CONTROL
+		-- DATA -> RAM: always assert signals here - WR_EN will get falling flank
+		
+		dp_data <= dp_buf;	
+		dp_wraddr(8 downto 0) <= conv_std_logic_vector(dp_cnt, 9);
 		dp_wren <= '0';
 		
-		-- see datasheet page 55: capture data on FALLING EDGE of pixclock
-		if(pixclk = '0' and pixclk /= pixclk_old)
-		then
-			-- reset ALL COUNTERS
-			if(fval = '0' and lval = '0')
-			then
-				lineCount_n <= 0;
-				rowCount_n <= 0;
-				whichLine_n <= FIRST;
-				pixelCount_n <= 0;
-				
-			--  wait for LVAL
-			elsif(fval = '1' and lval = '0')
-			then
-				burstCount_n <= 0;
-				
-			-- ILLEGAL state - should not happen
-			elsif(fval = '0' and lval = '1')
-			then
-			
-			-- NEW pixeldata!
-			elsif(fval = '1' and lval = '1')
-			then
-				if(whichPixel = FIRST)
-				then
-					whichPixel_n <= SECOND;
-				else
-					whichPixel_n <= FIRST;
-					
-					pixelCount_n <= pixelCount + 1;		-- only count every 2nd pixelfragment
-					
-					if(whichLine = SECOND)
-					then
-						burstCount_n <= burstCount + 1;
-						if(burstCount = 15)
-						then
-							burstCount_n <= 0;
-							pixelburstReady_n <= '1';
-						end if;
+		-- SRAM CONTROL
+		--sram_data <= "0000000000000000";
+		sram_data <= sram_data_buf;
 		
-					end if;
-				end if;
-			
-			end if;
+if(whichLine = SECOND)
+then
+		sram_ctrl.we <= '1';	
+else
+		sram_ctrl.we <= '0';	
+end if;
 
-		end if;
-						
-		if(pixelCount = 400)
+		-- can be LOW all the time according to datasheet
+		sram_ctrl.oe <= '0';
+		sram_ctrl.ce <= '0';
+		sram_ctrl.ub <= '0';
+		sram_ctrl.lb <= '0';	
+		-- we only need 9 bit adress: 800 pixel per line, but SRAM-datawidth=16bit
+		-- so save 2 Byte at one adress, ignore bits 10-19
+		sram_ctrl.addr(8 downto 0) <= conv_std_logic_vector(rowcnt, 9);
+		sram_ctrl.addr(19 downto 9) <= (others => '0');
+		
+		-- rising edge of FVAL -> NEW FRAME starts
+		if(fval_old /= fval and fval = '1')
 		then
-			pixelCount_n <= 0;
-			if(whichLine = FIRST)
+			if(frameCnt < 3)
 			then
-				whichLine_n <= SECOND;
+				frameCnt_next <= frameCnt + 1;
 			else
-				whichLine_n <= FIRST;
+				frameCnt_next <= 0;
+			end if;		
+		end if;
+		
+		if(fval = '0')
+		then
+			whichline_next <= FIRST;
+			rowcnt_next  <= 0;
+			linecnt_next <= 0;
+			dp_cnt_next <= 0;
+			burstCnt_next <= 0;
+			firstPixel_next <= '0';
+		end if;
+		
+		if (lval = '0')
+		then
+			rowcnt_next  <= 0;
+			dp_cnt_next <= 0;
+			burstCnt_next <= 0;
+			firstPixel_next <= '0';
+		end if;
+		
+		if(lval_old /= lval and lval = '1')
+		then
+			linecnt_next <= linecnt + 1;
+			
+			if(linecnt /= 0)
+			then
+				if(whichline = FIRST)
+				then
+					whichline_next <= SECOND;
+				else
+					whichline_next <= FIRST;
+				end if;
 			end if;
 		end if;
 		
+				
+		-- FALLING edge of pxclk -> valid BAYER data from cam
+		if fval = '1' and lval = '1' and pixclk_old /= pixclk and pixclk = '0'
+		then				
+			-- FIRST LINE: save COMPLETE line to SRAM
+			-- Pattern: G1 - R - G1 - R ...
+			if(whichline = FIRST)
+			then
+	
+				if( firstPixel = '0' )
+				then
+					firstPixel_next <= '1';
+					pixelG_next <= pixdata(11 downto 4);
+		
+				else
+					-- save pixels from 'first' lines(Bayer: G1|R|G1|R... )
+					-- save RED pixel and buffered GREEN1 pixel
+					-- proper adress was already set one cylce earlier
+					sram_ctrl.we <= '0';
+		
+					--sram_data(7 downto 0) <= pixdata(11 downto 4);		-- this is the RED share of the pixel
+					--sram_data(15 downto 8) <= pixelG;						-- this is the GREEN_1 share of the pixel
+					
+					sram_data_buf_next(7 downto 0)  <= pixdata(11 downto 4);
+					sram_data_buf_next(15 downto 8) <= pixelG;
+					
+					-- ... and prepare next SRAM adress
+					rowcnt_next  <= rowcnt + 1;
+					firstPixel_next <= '0';
+													
+					end if;
+								
+			-- SECOND LINE: calculate new pixels
+			-- Pattern: B - G2 - B - G2 - B ...
+			else
+				-- save BLUE part of pixel
+				if( firstPixel = '0' )
+				then
+					firstPixel_next <= '1';
+					pixelB_next <= pixdata(11 downto 4);
+					
+					-- save the Pixel to DP-RAM
+					-- must be done here because DP-RAM seems to need DATA and ADRESS first, one cylce later WR_EN:
+					if(rowcnt > 0)
+					then
+						dp_wren <= '1';
+					end if;
+					
+				else
+					firstPixel_next <= '0';
+					dp_cnt_next <= dp_cnt + 1;
+					rowcnt_next  <= rowcnt + 1;
+								
+					-- get pixeldata from corresponding first line, save in SRAM
+					-- proper adress was already set one cycle earlier
+											
+		
+					-- so SOLLTE es funktionieren
+					dp_buf_next(23 downto 16)   <= sram_data(7  downto 0);		-- save Red
+					dp_buf_next(15 downto 8)  <= pixdata(11 downto 4);			-- save Green / TODO: mittelwert G1+G2
+					--dp_buf_next(15 downto 8)  <= sram_data(15 downto 8);
+					dp_buf_next(7 downto 0) <= pixelB;								-- save Blue
+					burstCnt_next <= burstCnt + 1;
+					
+					if( burstCnt = PIXELBURSTLEN)
+					then
+						pixelburstReady <= '1';
+						burstCnt_next <= 0;
+					end if;					
+				end if;	
+			end if;
+		end if;
+			
   end process; 
   
 
@@ -163,44 +309,63 @@ begin
   reg_proc : process(clk, rst)
   begin
   	if(rst = '0')
+	then
+		pixclk_old <= '0';
+		fval_old <= '0';
+		lval_old <= '0';
+		rowcnt <=  0;
+		linecnt <= 0;
+		dp_cnt <= 0;
+		
+		whichline <= FIRST;
+		
+		pixelB <= "00000000";
+		pixelG <= "00000000";
+		pixelR <= "00000000";
+		
+		firstPixel <= '0';
+		burstCnt <= 0;
+		frameCnt <= 0;
+		
+		dp_buf <= x"00000000";
+		burstCnt <= 0;
+		sram_data_buf <=  x"0000";
+		
+	else
+		if rising_edge(clk)
 		then
-			pixState <= NOINIT;
-			fval_old <= '0';
-			lval_old <= '0';
-			pixclk_old <= '0';
-			pixelCount <= 0;
-			pixelburstReady <= '0';
-			lineCount <= 0;
-			rowCount <= 0;
-			whichLine <= FIRST;
-			whichLine_dbg <= '0';
-			whichPixel <= FIRST;
-			burstCount <= 0;
-		else
-			if rising_edge(clk)
-			then
-				pixState <= pixState_n;
-				fval_old <= fval_old_n;
-				lval_old <= lval_old_n;
-				pixclk_old <= pixclk_old_n;
-				pixelCount <= pixelCount_n;
-				pixelburstReady <= pixelburstReady_n;
-				lineCount <= lineCount_n;
-				rowCount <= rowCount_n;
-				whichLine <= whichLine_n;
-				
-				if( whichLine_n = FIRST)
+			pixclk_old <= pixclk_old_next;
+			fval_old <= fval_old_next;
+			lval_old <= lval_old_next;
+			rowcnt <= rowcnt_next;
+			linecnt <= linecnt_next;
+			
+			dp_cnt <= dp_cnt_next;
+			
+			whichline <= whichline_next;
+			
+			pixelB <= pixelB_next;
+			pixelG <= pixelG_next;
+			pixelR <= pixelR_next;
+							
+			firstPixel <= firstPixel_next;	
+			burstCnt <= burstCnt_next;
+			frameCnt <= frameCnt_next;
+			burstCnt <= burstCnt_next;
+			
+			dp_buf <= dp_buf_next;
+			
+			sram_data_buf <= sram_data_buf_next;
+
+			if( whichLine_next = FIRST)
 				then
 					whichLine_dbg <= '0';
 				else
 					whichLine_dbg <= '1';
-				end if;
-				whichPixel <= whichPixel_n;
-				burstCount <= burstCount_n;
-				
-				burstCount_dbg <= conv_std_logic_vector(burstCount_n, 5);
 			end if;
+			burstCount_dbg <= conv_std_logic_vector(burstCnt_next, 5);
 		end if;
-	end process;
+	end if;
+	end process; 
 end;
 
