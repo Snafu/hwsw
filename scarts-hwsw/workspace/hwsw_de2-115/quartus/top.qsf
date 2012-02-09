@@ -370,6 +370,14 @@ set_location_assignment PIN_AF20 -to burstCount_dbg[3]
 set_location_assignment PIN_AE20 -to burstCount_dbg[2]
 set_location_assignment PIN_AH22 -to burstCount_dbg[1]
 set_location_assignment PIN_AG22 -to burstCount_dbg[0]
+set_global_assignment -name MISC_FILE "/homes/w0727156/Desktop/HWSW_FRESH_WITH_PROPER_SCARTS_PROJECT/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.dpf"
+set_location_assignment PIN_G24 -to cam_pll
+set_location_assignment PIN_AD15 -to pxl_clk_dbg
+# set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+# set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+set_location_assignment PIN_AF16 -to ahbready_dbg
+
+set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/buttons.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/hwswlib.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/dispctrl.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/kameralib.vhd
@@ -438,12 +446,26 @@ set_global_assignment -name VHDL_FILE ../VHDL/top_pkg.vhd
 set_global_assignment -name VHDL_FILE ../VHDL/top.vhd
 set_global_assignment -name SDC_FILE top.sdc
 set_global_assignment -name QIP_FILE ../VHDL/altera_pll.qip
-set_global_assignment -name MISC_FILE "/homes/w0727156/Desktop/HWSW_FRESH_WITH_PROPER_SCARTS_PROJECT/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.dpf"
-set_location_assignment PIN_G24 -to cam_pll
-set_location_assignment PIN_AD15 -to pxl_clk_dbg
 set_global_assignment -name QIP_FILE ../../libraries/hwswlib/dp_pixelram.qip
-# set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
-# set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
-set_location_assignment PIN_AF16 -to ahbready_dbg
-
+set_location_assignment PIN_AC24 -to sw10
+set_location_assignment PIN_AB25 -to sw9
+set_location_assignment PIN_AC25 -to sw8
+set_location_assignment PIN_AB26 -to sw7
+set_location_assignment PIN_AD26 -to sw6
+set_location_assignment PIN_AC26 -to sw5
+set_location_assignment PIN_AB27 -to sw4
+set_location_assignment PIN_AD27 -to sw3
+set_location_assignment PIN_AC27 -to sw2
+set_location_assignment PIN_AC28 -to sw1
+set_location_assignment PIN_AB28 -to sw0
+set_location_assignment PIN_R24 -to key3
+set_location_assignment PIN_N21 -to key2
+set_location_assignment PIN_M21 -to key1
+set_location_assignment PIN_Y23 -to sw17
+set_location_assignment PIN_Y24 -to sw16
+set_location_assignment PIN_AA22 -to sw15
+set_location_assignment PIN_AA23 -to sw14
+set_location_assignment PIN_AA24 -to sw13
+set_location_assignment PIN_AB23 -to sw12
+set_location_assignment PIN_AB24 -to sw11
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

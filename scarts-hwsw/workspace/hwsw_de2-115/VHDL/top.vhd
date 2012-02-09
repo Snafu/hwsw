@@ -88,7 +88,30 @@ entity top is
 		cam_resetN		: out std_logic;
 		cam_pll			: out std_logic;
 		cam_trigger		: out std_logic;		-- hardware trigger for camera
-		
+
+		-- BUTTONS
+		key3			: in std_logic;
+		key2			: in std_logic;
+		key1			: in std_logic;
+			
+		sw17			: in std_logic;
+		sw16			: in std_logic;
+		sw15			: in std_logic;
+		sw14			: in std_logic;
+		sw13			: in std_logic;
+		sw12			: in std_logic;
+		sw11			: in std_logic;
+		sw10			: in std_logic;
+		sw9				: in std_logic;
+		sw8				: in std_logic;
+		sw7				: in std_logic;
+		sw6				: in std_logic;
+		sw5				: in std_logic;
+		sw4				: in std_logic;
+		sw3				: in std_logic;
+		sw2				: in std_logic;
+		sw1				: in std_logic;
+		sw0				: in std_logic;
 
 		-- TESTSIGNALE
 		--blockrdy				: in std_logic; --dbg
@@ -180,6 +203,10 @@ architecture behaviour of top is
   signal vga_clk_sel    : std_logic_vector(1 downto 0);
   signal svga_ahbmo     : ahb_mst_out_type;
   
+	-- signals for BUTTONS Extension Module
+  signal buttons_config_sel  : std_ulogic;
+  signal buttons_exto : module_out_type;
+
   -- signals for DISPLAY Controller
   signal disp_ahbmo		: ahb_mst_out_type;
   
@@ -467,15 +494,50 @@ begin
 	i2c_trigger <= i2c_config_sel;
 	
 	-----------------------------------------------------------------------------
+	-- BUTTONS / Extension Module
+	-----------------------------------------------------------------------------	
+
+	but0 : buttons
+		port map
+		(
+			rst			=> syncrst,
+			clk			=> clk,
+			extsel	=> buttons_config_sel,
+			exti		=> exti,
+			exto		=> buttons_exto,
+			
+			key3		=> key3,
+			key2		=> key2,
+			key1		=> key1,
+
+			sw17		=> sw17,
+			sw16		=> sw16,
+			sw15		=> sw15,
+			sw14		=> sw14,
+			sw13		=> sw13,
+			sw12		=> sw12,
+			sw11		=> sw11,
+			sw10		=> sw10,
+			sw9			=> sw9,
+			sw8			=> sw8,
+			sw7			=> sw7,
+			sw6			=> sw6,
+			sw5			=> sw5,
+			sw4			=> sw4,
+			sw3			=> sw3,
+			sw2			=> sw2,
+			sw1			=> sw1,
+			sw0			=> sw0
+		);
+
+	
+	-----------------------------------------------------------------------------
 	-- DISPLAY controller
 	-----------------------------------------------------------------------------	
 	
   dispctrl0 : dispctrl
     generic map
     (
-			pindex => 1,
-			paddr => 16#002#,
-			pmask => 16#fff#,
 			hindex => 2
     )
     port map
@@ -483,8 +545,6 @@ begin
 			ahbready_dbg => ahbready_dbg,
 			rst => syncrst,
 			clk => clk,
-			apbi => apbi,
-			apbo => apbo(1),
 			ahbi => grlib_ahbmi,
 			ahbo => disp_ahbmo,
 			fval => cam_fval_sync,
@@ -504,15 +564,12 @@ begin
 	dp_pixelram_inst : dp_pixelram
 	PORT MAP
 	(
+		clock			=> clk,
 		data     	=> data_sig,
 		rdaddress	=> rdaddress_sig,
-		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
-		-- HARI: use sysclk as INPUT/OUTPUT clock, should be ok
-		--wrclock		=> cam_pixclk,
-		wrclock		=> clk,
 		wren			=> wren_sig,
-		q				=> q_sig
+		q					=> q_sig
 	);
 	
 	------------------------------------------------------------------------------- 
@@ -522,20 +579,20 @@ begin
   cam0 : kamera
     generic map
     (
-	   pindex => 2,
-		paddr => 16#004#,
+	   	pindex => 2,
+			paddr => 16#004#,
       pmask => 16#fff#,
-		hindex => 3
+			hindex => 3
     )
     port map
     (
-			rst			=> syncrst,
-			clk			=> clk,
+			rst				=> syncrst,
+			clk				=> clk,
 			pixclk		=> pixclk_sync,
 			fval			=> cam_fval_sync,
 			lval			=> cam_lval_sync,
-		pixdata		=> cam_pixdata_sync,
-		--pixdata		=> cam_pixdata,
+			pixdata		=> cam_pixdata_sync,
+			--pixdata		=> cam_pixdata,
 			sram_ctrl	=> cam_sram_ctrl,
 			sram_data	=> cam_sram_data,
 			
@@ -611,8 +668,9 @@ begin
     dis7segsel <= '0';
     counter_segsel <= '0';
     aux_uart_sel <= '0';
-	 i2c_config_sel <= '0';
-	 hw_initialized <= '0'; 
+		i2c_config_sel <= '0';
+		hw_initialized <= '0'; 
+		buttons_config_sel <= '0';
     
     if scarts_o.extsel = '1' then
       case scarts_o.addr(14 downto 5) is
@@ -625,12 +683,15 @@ begin
         when "1111110101" => -- (-352)
           -- AUX UART
           aux_uart_sel <= '1';
-		  when "1111110100" => -- (-384)
-			-- I2C config 
-				i2c_config_sel <= '1'; 	
-			when "1111110011" => -- (-416)
-			-- I2C config 
-				hw_initialized <= '1'; 
+				when "1111110100" => -- (-384)
+					-- I2C config
+					i2c_config_sel <= '1';
+				when "1111110011" => -- (-416)
+					-- HW INIT config 
+					hw_initialized <= '1'; 
+				when "1111110010" => -- (-448)
+					-- BUTTONS config 
+					buttons_config_sel <= '1'; 
         when others =>
           null;
       end case;
@@ -638,7 +699,7 @@ begin
     
     extdata := (others => '0');
     for i in extdata'left downto extdata'right loop
-      extdata(i) := dis7segexto.data(i) or counter_exto.data(i) or aux_uart_exto.data(i); 
+      extdata(i) := dis7segexto.data(i) or counter_exto.data(i) or aux_uart_exto.data(i) or buttons_exto.data(i); 
     end loop;
 
     scarts_i.data <= (others => '0');

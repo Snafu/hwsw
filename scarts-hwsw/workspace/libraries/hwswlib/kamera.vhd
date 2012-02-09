@@ -119,6 +119,7 @@ architecture rtl of kamera is
 	signal frameCnt		:	integer range 0 to 10;
 	signal frameCnt_next	:	integer range 0 to 10;
 	
+	signal wren				: std_logic;
 	signal dp_buf			: std_logic_vector(31 downto 0);
 	signal dp_buf_next	: std_logic_vector(31 downto 0);
 	
@@ -158,9 +159,8 @@ begin
 		-- DUALPORT RAM CONTROL
 		-- DATA -> RAM: always assert signals here - WR_EN will get falling flank
 		
-		dp_data <= dp_buf;	
 		dp_wraddr(8 downto 0) <= conv_std_logic_vector(dp_cnt, 9);
-		dp_wren <= '0';
+		wren <= '0';
 		
 		-- SRAM CONTROL
 		--sram_data <= "0000000000000000";
@@ -272,7 +272,7 @@ end if;
 					-- must be done here because DP-RAM seems to need DATA and ADRESS first, one cylce later WR_EN:
 					if(rowcnt > 0)
 					then
-						dp_wren <= '1';
+						--wren <= '1';
 					end if;
 					
 				else
@@ -299,7 +299,7 @@ end if;
 				end if;	
 			end if;
 		end if;
-			
+
   end process; 
   
 
@@ -327,6 +327,7 @@ end if;
 		burstCnt <= 0;
 		frameCnt <= 0;
 		
+		dp_wren <= '0';
 		dp_buf <= x"00000000";
 		burstCnt <= 0;
 		sram_data_buf <=  x"0000";
@@ -353,7 +354,6 @@ end if;
 			frameCnt <= frameCnt_next;
 			burstCnt <= burstCnt_next;
 			
-			dp_buf <= dp_buf_next;
 			
 			sram_data_buf <= sram_data_buf_next;
 
@@ -364,6 +364,14 @@ end if;
 					whichLine_dbg <= '1';
 			end if;
 			burstCount_dbg <= conv_std_logic_vector(burstCnt_next, 5);
+		end if;
+
+		-- dp_pixelram latches on rising edge
+		if falling_edge(clk)
+		then
+			dp_wren <= wren;
+			dp_data <= dp_buf;
+			dp_buf <= dp_buf_next;
 		end if;
 	end if;
 	end process; 

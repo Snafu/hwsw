@@ -27,7 +27,7 @@ package top_pkg is
   constant CLK_FREQ : integer range 1 to integer'high := 50000000;
 
   constant AHB_SLAVE_COUNT : natural := 2;
-  constant APB_SLAVE_COUNT : natural := 3;
+  constant APB_SLAVE_COUNT : natural := 2;
 
   constant VENDOR_TEST     : amba_vendor_type := 16#FF#;
   constant TEST_SCARTS     : amba_device_type := 16#000#;

@@ -4,13 +4,22 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.8	//
-AUX_UART_BADDR	src/main.c	34;"	d	file:
+AUX_UART_BADDR	src/main.c	36;"	d	file:
 BACKGROUND_COLOR_B	src/erodeDilateFilter.c	8;"	d	file:
 BACKGROUND_COLOR_G	src/erodeDilateFilter.c	7;"	d	file:
 BACKGROUND_COLOR_R	src/erodeDilateFilter.c	6;"	d	file:
+BLACK_LVL_CAL_REG	include/camera.h	30;"	d
+BUTTONS_BADDR	include/buttons.h	4;"	d
+BUTTONS_DATA	include/buttons.h	6;"	d
+BUTTONS_H	include/buttons.h	2;"	d
+BUTTONS_STATUS	include/buttons.h	5;"	d
+CAMERA_H	include/camera.h	2;"	d
 CB_HIGH	src/skinFilter.c	9;"	d	file:
 CB_LOW	src/skinFilter.c	5;"	d	file:
-COUNTER_BADDR	src/main.c	35;"	d	file:
+CLOCK_CONTROL_REG	include/camera.h	4;"	d
+COL_ADDRESS_MODE_REG	include/camera.h	23;"	d
+COL_SIZE_REG	include/camera.h	21;"	d
+COUNTER_BADDR	src/main.c	37;"	d	file:
 CR_HIGH	src/skinFilter.c	10;"	d	file:
 CR_LOW	src/skinFilter.c	6;"	d	file:
 DISPCTRL_BASE	include/dispctrl.h	4;"	d
@@ -19,7 +28,7 @@ DISPCTRL_COLOR	include/dispctrl.h	6;"	d
 DISPCTRL_STATUS	include/dispctrl.h	5;"	d
 DISPCTRL_TL	include/dispctrl.h	7;"	d
 DISPCTRL_UPDATE	include/dispctrl.h	14;"	d
-DISP_BADDR	src/main.c	36;"	d	file:
+DISP_BADDR	src/main.c	38;"	d	file:
 DRAW_RECT	include/dispctrl.h	10;"	d
 FILTER_DILATE	include/filters.h	7;"	d
 FILTER_ERODE	include/filters.h	6;"	d
@@ -29,15 +38,31 @@ FOREGROUND_COLOR_G	src/detectFace.c	8;"	d	file:
 FOREGROUND_COLOR_G	src/erodeDilateFilter.c	10;"	d	file:
 FOREGROUND_COLOR_R	src/detectFace.c	7;"	d	file:
 FOREGROUND_COLOR_R	src/erodeDilateFilter.c	9;"	d	file:
+GAIN_BLUE_REG	include/camera.h	14;"	d
+GAIN_GREEN1_REG	include/camera.h	12;"	d
+GAIN_GREEN2_REG	include/camera.h	13;"	d
+GAIN_RED_REG	include/camera.h	11;"	d
 I2CCONFIG_BADDR	include/i2c.h	4;"	d
 I2CCONFIG_DATA	include/i2c.h	6;"	d
 I2CCONFIG_STATUS	include/i2c.h	5;"	d
 I2C_H	include/i2c.h	2;"	d
-INIT_DONE_BADDR	src/main.c	30;"	d	file:
-INIT_DONE_STATUS	src/main.c	29;"	d	file:
-LEDS	src/main.c	37;"	d	file:
-SCREEN_HEIGHT	src/main.c	41;"	d	file:
-SCREEN_WIDTH	src/main.c	40;"	d	file:
+INIT_DONE_BADDR	src/main.c	32;"	d	file:
+INIT_DONE_STATUS	src/main.c	31;"	d	file:
+KEY1	include/buttons.h	/^typedef enum {KEY1,KEY2,KEY3} keys_t;$/;"	e	enum:__anon1
+KEY2	include/buttons.h	/^typedef enum {KEY1,KEY2,KEY3} keys_t;$/;"	e	enum:__anon1
+KEY3	include/buttons.h	/^typedef enum {KEY1,KEY2,KEY3} keys_t;$/;"	e	enum:__anon1
+LEDS	src/main.c	39;"	d	file:
+OUTPUT_CONTROL_REG	include/camera.h	8;"	d
+PIXEL_CLOCK_CONTROL_REG	include/camera.h	7;"	d
+PLL_CONFIG1_REG	include/camera.h	5;"	d
+PLL_CONFIG2_REG	include/camera.h	6;"	d
+READ_MODE1_REG	include/camera.h	25;"	d
+READ_MODE2_REG	include/camera.h	26;"	d
+RESTART_REG	include/camera.h	28;"	d
+ROW_ADDRESS_MODE_REG	include/camera.h	22;"	d
+ROW_SIZE_REG	include/camera.h	20;"	d
+SCREEN_HEIGHT	src/main.c	43;"	d	file:
+SCREEN_WIDTH	src/main.c	42;"	d	file:
 SDRAM_BANKSIZE_128MB	include/sdram.h	38;"	d
 SDRAM_BANKSIZE_16MB	include/sdram.h	35;"	d
 SDRAM_BANKSIZE_256MB	include/sdram.h	39;"	d
@@ -67,6 +92,9 @@ SDRAM_REFRESH_EN	include/sdram.h	28;"	d
 SDRAM_TCD	include/sdram.h	30;"	d
 SDRAM_TRFC	include/sdram.h	31;"	d
 SDRAM_TRP	include/sdram.h	29;"	d
+SHUTTERW_LOWER_REG	include/camera.h	17;"	d
+SHUTTERW_UPPER_REG	include/camera.h	16;"	d
+SHUTTER_DELAY_REG	include/camera.h	18;"	d
 STEP_SIZE	src/detectFace.c	10;"	d	file:
 SVGA_BASE	include/svga.h	4;"	d
 SVGA_CLUT	include/svga.h	15;"	d
@@ -86,8 +114,13 @@ SVGA_VIDEO_LENGTH	include/svga.h	6;"	d
 SVGA_VLINELEN	include/svga.h	24;"	d
 SVGA_VPORCH	include/svga.h	21;"	d
 SVGA_VVIDEOLEN	include/svga.h	18;"	d
+TEST_PATTERN_BARW_REG	include/camera.h	36;"	d
+TEST_PATTERN_BLUE_REG	include/camera.h	35;"	d
+TEST_PATTERN_CTRL_REG	include/camera.h	32;"	d
+TEST_PATTERN_GREEN_REG	include/camera.h	33;"	d
+TEST_PATTERN_REG_REG	include/camera.h	34;"	d
 UPDATE_GLCD	include/dispctrl.h	13;"	d
-WAIT_TIME	src/main.c	38;"	d	file:
+WAIT_TIME	src/main.c	40;"	d	file:
 WINDOW_LENGTH	src/erodeDilateFilter.c	4;"	d	file:
 WINDOW_OFFSET	src/erodeDilateFilter.c	5;"	d	file:
 Y_HIGH	src/skinFilter.c	8;"	d	file:
@@ -99,40 +132,43 @@ _detectFace_h_	include/detectFace.h	2;"	d
 _filters_h_	include/filters.h	2;"	d
 _image_h_	include/image.h	2;"	d
 aux_uart_handle	src/main.c	/^static mini_uart_handle_t aux_uart_handle;$/;"	v	file:
-b	include/image.h	/^	uint8_t b;$/;"	m	struct:__anon2
-bottomRightX	include/detectFace.h	/^  uint16_t bottomRightX;$/;"	m	struct:__anon1
-bottomRightY	include/detectFace.h	/^  uint16_t bottomRightY;$/;"	m	struct:__anon1
-cb	include/image.h	/^	uint8_t cb;$/;"	m	struct:__anon3
+b	include/image.h	/^	uint8_t b;$/;"	m	struct:__anon3
+bottomRightX	include/detectFace.h	/^  uint16_t bottomRightX;$/;"	m	struct:__anon2
+bottomRightY	include/detectFace.h	/^  uint16_t bottomRightY;$/;"	m	struct:__anon2
+cb	include/image.h	/^	uint8_t cb;$/;"	m	struct:__anon4
 computeSingleImage	src/main.c	/^void computeSingleImage(const char *sourcePath, const char *targetPath)$/;"	f
 counterHandle	src/main.c	/^static module_handle_t counterHandle;$/;"	v	file:
-cr	include/image.h	/^	uint8_t cr;$/;"	m	struct:__anon3
-data	include/image.h	/^	unsigned char *data;$/;"	m	struct:__anon4
-dataLength	include/image.h	/^	uint32_t dataLength;$/;"	m	struct:__anon4
+cr	include/image.h	/^	uint8_t cr;$/;"	m	struct:__anon4
+data	include/image.h	/^	unsigned char *data;$/;"	m	struct:__anon5
+dataLength	include/image.h	/^	uint32_t dataLength;$/;"	m	struct:__anon5
 detectFace	src/detectFace.c	/^int detectFace(image_t *faceMask, image_t *rawImage, rect_t *resultRect)$/;"	f
 dispHandle	src/main.c	/^static dis7seg_handle_t dispHandle;$/;"	v	file:
 erodeDilateFilter	src/erodeDilateFilter.c	/^void erodeDilateFilter(image_t *inputImage, image_t *outputImage, uint8_t op)$/;"	f
 freeImage	src/main.c	/^void freeImage(image_t *image) $/;"	f
-g	include/image.h	/^	uint8_t g;$/;"	m	struct:__anon2
+g	include/image.h	/^	uint8_t g;$/;"	m	struct:__anon3
 getIndexBelowThreshold	src/detectFace.c	/^int getIndexBelowThreshold(int *hist, int histLen, int start, int step, int threshold) {$/;"	f
+getKeys	src/buttons.c	/^uint32_t getKeys(void)$/;"	f
 getRGBColorValue	src/image.c	/^rgb_color_t getRGBColorValue(image_t *i, int x, int y)$/;"	f
 getYCbCrColorValue	src/image.c	/^ycbcr_color_t getYCbCrColorValue(image_t *i, int x, int y)$/;"	f
-height	include/image.h	/^	uint32_t height;$/;"	m	struct:__anon4
+height	include/image.h	/^	uint32_t height;$/;"	m	struct:__anon5
 i2c_write	include/i2c.h	8;"	d
-image_t	include/image.h	/^} image_t;$/;"	t	typeref:struct:__anon4
+image_t	include/image.h	/^} image_t;$/;"	t	typeref:struct:__anon5
 initCamera	src/camera.c	/^void initCamera(void)$/;"	f
 initializeImage	src/main.c	/^void initializeImage(image_t *template, image_t *image)$/;"	f
+keys_t	include/buttons.h	/^typedef enum {KEY1,KEY2,KEY3} keys_t;$/;"	t	typeref:enum:__anon1
 main	src/main.c	/^int main(int argc, char **argv)$/;"	f
 paintRectangle	src/detectFace.c	/^void paintRectangle(image_t *image, rect_t *rectangle)$/;"	f
-r	include/image.h	/^	uint8_t r;$/;"	m	struct:__anon2
-rect_t	include/detectFace.h	/^} rect_t;$/;"	t	typeref:struct:__anon1
-rgb_color_t	include/image.h	/^} rgb_color_t;$/;"	t	typeref:struct:__anon2
+r	include/image.h	/^	uint8_t r;$/;"	m	struct:__anon3
+rect_t	include/detectFace.h	/^} rect_t;$/;"	t	typeref:struct:__anon2
+rgb_color_t	include/image.h	/^} rgb_color_t;$/;"	t	typeref:struct:__anon3
 screenData	src/main.c	/^static volatile uint32_t *screenData;$/;"	v	file:
 sdramBytesAllocated	src/main.c	/^static uint32_t sdramBytesAllocated;$/;"	v	file:
-signal_init	src/main.c	23;"	d	file:
+signal_init	src/main.c	25;"	d	file:
 skinFilter	src/skinFilter.c	/^void skinFilter(image_t *inputImage, image_t *outputImage)$/;"	f
-topLeftX	include/detectFace.h	/^  uint16_t topLeftX;$/;"	m	struct:__anon1
-topLeftY	include/detectFace.h	/^  uint16_t topLeftY;$/;"	m	struct:__anon1
+switchVal	src/buttons.c	/^uint32_t switchVal()$/;"	f
+topLeftX	include/detectFace.h	/^  uint16_t topLeftX;$/;"	m	struct:__anon2
+topLeftY	include/detectFace.h	/^  uint16_t topLeftY;$/;"	m	struct:__anon2
 transmitResult	src/main.c	/^void transmitResult(rect_t *resultRect)$/;"	f
-width	include/image.h	/^	uint32_t width;$/;"	m	struct:__anon4
-y	include/image.h	/^	uint8_t y;$/;"	m	struct:__anon3
-ycbcr_color_t	include/image.h	/^} ycbcr_color_t;$/;"	t	typeref:struct:__anon3
+width	include/image.h	/^	uint32_t width;$/;"	m	struct:__anon5
+y	include/image.h	/^	uint8_t y;$/;"	m	struct:__anon4
+ycbcr_color_t	include/image.h	/^} ycbcr_color_t;$/;"	t	typeref:struct:__anon4

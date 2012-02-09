@@ -101,6 +101,30 @@ architecture behaviour of top_tb is
 			cam_sram_data	: inout std_logic_vector(15 downto 0);
 			cam_resetN		:	out std_logic;
 			cam_pll			:	out std_logic;
+			
+			-- BUTTONS
+			key3			: in std_logic;
+			key2			: in std_logic;
+			key1			: in std_logic;
+			
+			sw17			: in std_logic;
+			sw16			: in std_logic;
+			sw15			: in std_logic;
+			sw14			: in std_logic;
+			sw13			: in std_logic;
+			sw12			: in std_logic;
+			sw11			: in std_logic;
+			sw10			: in std_logic;
+			sw9				: in std_logic;
+			sw8				: in std_logic;
+			sw7				: in std_logic;
+			sw6				: in std_logic;
+			sw5				: in std_logic;
+			sw4				: in std_logic;
+			sw3				: in std_logic;
+			sw2				: in std_logic;
+			sw1				: in std_logic;
+			sw0				: in std_logic;
 
 
 			-- TESTSIGNALE

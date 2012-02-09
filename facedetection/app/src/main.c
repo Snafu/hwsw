@@ -16,6 +16,8 @@
 #include "svga.h"
 #include "dispctrl.h"
 #include "i2c.h"
+#include "camera.h"
+#include "buttons.h"
 
 /*
  * 	hari: additional extension for signalling completion of camera-i2c-config
@@ -124,14 +126,6 @@ int main(int argc, char **argv)
 	screenData = (volatile uint32_t *)SDRAM_BASE;
 	memset((void *)screenData, 0, (SCREEN_WIDTH*SCREEN_HEIGHT*4));
 
-
-	mini_uart_write(&aux_uart_handle, (char *)"DISPCTRL INIT", sizeof("DISPCTRL INIT"));
-
-	// DISPCTRL initialization
-	dis7seg_displayHexUInt32(&dispHandle, 0, DISPCTRL_STATUS);  
-
-//mini_uart_write(&aux_uart_handle, (char *)"I2C WRITE", sizeof("I2C WRITE"));
-	
 	// CAM initialization
 	initCamera();
 
@@ -146,24 +140,36 @@ int main(int argc, char **argv)
 
 	dis7seg_displayHexUInt32(&dispHandle, 0, 0x2b00b1e5);  
 
-	while(1)
-	{
+	uint32_t keys, keys_old, value;
+	keys_old = 0;
+	while(1) {
+
 		i2c_write(0x0b, 0x04);	// SET TRIGGER
-	//	i2c_write(0x0b, 0x00); 	// RESET TRIGGER BIT
-//		for(i = 0; i < 20; i++)
-//		{
+		// i2c_write(0x0b, 0x00); 	// RESET TRIGGER BIT
+		
+		for(i = 0; i < 10; i++) {
 			for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-//		}
+		}
+		
+		keys = getKeys();
+		value = switchVal();
+		dis7seg_displayHexUInt32(&dispHandle, 0, value | (keys << 16));  
+
+		/*
+		if(keys != keys_old) {
+			if(keys & (1<<KEY3))
+				i2c_write(GAIN_RED_REG, value);
+			if(keys & (1<<KEY2)) {
+				i2c_write(GAIN_GREEN1_REG, value);
+				i2c_write(GAIN_GREEN2_REG, value);
+			}
+			if(keys & (1<<KEY1))
+				i2c_write(GAIN_BLUE_REG, value);
+		}
+		*/
+
+		keys_old = keys;
 	}
-	
-	DRAW_RECT(0,0,0,0);
-	DISPCTRL_COLOR = 0x000000ff;
-	UPDATE_GLCD();
-	for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-
-
-
-
 
 
 #endif

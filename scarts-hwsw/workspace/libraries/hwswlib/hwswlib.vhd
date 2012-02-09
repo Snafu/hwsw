@@ -33,38 +33,67 @@ use grlib.amba.all;
 use grlib.devices.all;
 use grlib.stdlib.all;
 
-library techmap;
-use techmap.gencomp.all;
 library gaisler;
 use gaisler.misc.all;
 
+use work.scarts_pkg.all;
+
 package hwswlib is
+
 	component dispctrl
-	  generic(
-			pindex      : integer := 0;
-			paddr       : integer := 0;
-			pmask       : integer := 16#fff#;
+	  generic (
 			hindex      : integer := 0;
 			hirq        : integer := 0;
 			ahbaccsz    : integer := 32
 		 );
 	  
 	  port (
-			ahbready_dbg : out std_logic;
-			rst       : in std_logic;           -- Synchronous reset
-			clk       : in std_logic;
-			apbi      : in apb_slv_in_type;
-			apbo      : out apb_slv_out_type;
-			ahbi      : in  ahb_mst_in_type;
-			ahbo      : out ahb_mst_out_type;
-			fval			: in std_logic;
-			rdaddress : out std_logic_vector(8 downto 0);
-			rddata    : in std_logic_vector(31 downto 0);
-			blockrdy  : in std_logic;
-			init_ready	: in std_logic
+			ahbready_dbg	: out std_logic;
+			rst						: in std_logic;           -- Synchronous reset
+			clk     	 	 	: in std_logic;
+			ahbi					: in  ahb_mst_in_type;
+			ahbo    		  : out ahb_mst_out_type;
+			fval					: in std_logic;
+			rdaddress 		: out std_logic_vector(8 downto 0);
+			rddata    		: in std_logic_vector(31 downto 0);
+			blockrdy  		: in std_logic;
+			init_ready		: in std_logic
 		 );
 	end component;
-	
+
+	component buttons is
+		port (
+			rst				: in std_logic;           -- Synchronous reset
+			clk				: in std_logic;
+			
+			extsel		: in	std_logic;
+			exti			: in  module_in_type;
+			exto			: out module_out_type;
+
+			key3			: in std_logic;
+			key2			: in std_logic;
+			key1			: in std_logic;
+			
+			sw17			: in std_logic;
+			sw16			: in std_logic;
+			sw15			: in std_logic;
+			sw14			: in std_logic;
+			sw13			: in std_logic;
+			sw12			: in std_logic;
+			sw11			: in std_logic;
+			sw10			: in std_logic;
+			sw9				: in std_logic;
+			sw8				: in std_logic;
+			sw7				: in std_logic;
+			sw6				: in std_logic;
+			sw5				: in std_logic;
+			sw4				: in std_logic;
+			sw3				: in std_logic;
+			sw2				: in std_logic;
+			sw1				: in std_logic;
+			sw0				: in std_logic
+			);
+	end component;
 	
 end;
 

@@ -10,7 +10,8 @@ SOURCES=src/main.c \
 	src/skinFilter.c \
 	src/erodeDilateFilter.c \
 	src/detectFace.c \
-	src/camera.c
+	src/camera.c \
+	src/buttons.c
 
 OBJECTS=$(SOURCES:.c=.o)
 PROGRAM=main
@@ -38,6 +39,9 @@ $(PROGRAM): $(OBJECTS)
 
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@
+
+install: all
+	../tester/tester main.srec testimages/armstrong_small.tga out.tga
 
 
 clean:
