@@ -109,7 +109,7 @@ BEGIN
 		numwords_b => 512,
 		operation_mode => "DUAL_PORT",
 		outdata_aclr_b => "NONE",
-		outdata_reg_b => "CLOCK1",
+		outdata_reg_b => "UNREGISTERED",
 		power_up_uninitialized => "FALSE",
 		widthad_a => 9,
 		widthad_b => 9,
@@ -170,7 +170,7 @@ END SYN;
 -- Retrieval info: PRIVATE: MIFfilename STRING "../../libraries/hwswlib/dp_pixelram_init.mif"
 -- Retrieval info: PRIVATE: OPERATION_MODE NUMERIC "2"
 -- Retrieval info: PRIVATE: OUTDATA_ACLR_B NUMERIC "0"
--- Retrieval info: PRIVATE: OUTDATA_REG_B NUMERIC "1"
+-- Retrieval info: PRIVATE: OUTDATA_REG_B NUMERIC "0"
 -- Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "0"
 -- Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_MIXED_PORTS NUMERIC "2"
 -- Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_PORT_A NUMERIC "3"
@@ -207,7 +207,7 @@ END SYN;
 -- Retrieval info: CONSTANT: NUMWORDS_B NUMERIC "512"
 -- Retrieval info: CONSTANT: OPERATION_MODE STRING "DUAL_PORT"
 -- Retrieval info: CONSTANT: OUTDATA_ACLR_B STRING "NONE"
--- Retrieval info: CONSTANT: OUTDATA_REG_B STRING "CLOCK1"
+-- Retrieval info: CONSTANT: OUTDATA_REG_B STRING "UNREGISTERED"
 -- Retrieval info: CONSTANT: POWER_UP_UNINITIALIZED STRING "FALSE"
 -- Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "9"
 -- Retrieval info: CONSTANT: WIDTHAD_B NUMERIC "9"
