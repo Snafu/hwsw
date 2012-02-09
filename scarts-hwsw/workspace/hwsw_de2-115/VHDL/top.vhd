@@ -86,7 +86,7 @@ entity top is
 		cam_sram_ctrl	: out sram_ctrl_t;
 		cam_sram_data	: buffer std_logic_vector(15 downto 0);
 		cam_resetN		: out std_logic;
-		cam_xclk			: out std_logic;
+		cam_pll			: out std_logic;
 		cam_trigger		: out std_logic;		-- hardware trigger for camera
 		
 
@@ -95,7 +95,7 @@ entity top is
 		blockrdy_dbg		: out std_logic;
 		whichLine_top_dbg	: out std_logic;
 		sysclk				:	out std_logic;
-		pxl_clk_out			:	out std_logic;
+		pxl_clk_dbg			:	out std_logic;
 		cam_resetN_dbg	: out std_logic;
 		
 		sysclk_fourth		: out std_logic;
@@ -111,8 +111,8 @@ end top;
 architecture behaviour of top is
   
 	-- clock signals
-	signal cam_xclk_sig			: std_logic;
-	signal sysclk_fourth_sig		: std_logic;
+	signal cam_pll_sig			: std_logic;
+	signal sysclk_fourth_sig	: std_logic;
   
 	-- kamera signals
 	signal pxReady_sig		: std_logic;
@@ -461,17 +461,6 @@ begin
 	i2c_sda_dbg <= i2co_pin.sda;
 	
 	i2c_trigger <= i2c_config_sel;
-		
-	cam_resetN	<= syncrst;
-	cam_resetN_dbg <= syncrst;
-	
-	--cam_xclk <= cam_clock;
-	pxl_clk_out <= cam_pixclk;	
-	cam_pixdata_dbg <= cam_pixdata;
-	
-	-- see camera register 0x0B, page 20
-	-- INVERT_TRIGGER must be set by i2cconfig when this pin is LOW
-	cam_trigger <= '0';	
 	
 	-----------------------------------------------------------------------------
 	-- DISPLAY controller
@@ -538,26 +527,32 @@ begin
 			fval			=> cam_fval_sync,
 			lval			=> cam_lval_sync,
 			pixdata		=> cam_pixdata,
-	--sram_ctrl	=> cam_sram_ctrl,
-	--sram_data	=> cam_sram_data,
+	sram_ctrl	=> cam_sram_ctrl,
+	sram_data	=> cam_sram_data,
 			
-	dp_data		=> data_sig,
-	dp_wren		=> wren_sig,
-	dp_wraddr	=> wraddress_sig,
+			dp_data		=> data_sig,
+			dp_wren		=> wren_sig,
+			dp_wraddr	=> wraddress_sig,
 			pixelburstReady => pxReady_sig,
 			
 			whichLine_dbg => whichLine_sig,
 			burstCount_dbg => burstCount_dbg_sig
     ); 
-	 
-	burstCount_dbg <= burstCount_dbg_sig;
-
-	blockrdy_dbg <= pxReady_sig;
-	whichLine_top_dbg <= whichLine_sig;
 	
+	cam_trigger <= '0';		 		-- INVERT_TRIGGER must be set by i2cconfig(reg 0x0B) when this pin is LOW
+	cam_resetN	<= syncrst;			-- disable reset for camera
+	
+	pxl_clk_dbg <= cam_pixclk;		-- pixelclock FROM camera
+	cam_pll <= cam_pll_sig;			-- pll - feed TO camera
+	cam_pixdata_dbg <= cam_pixdata;	
+	
+	-- debugging only
+	cam_resetN_dbg <= syncrst;		
+	blockrdy_dbg <= pxReady_sig;
+	sysclk_fourth <= sysclk_fourth_sig;		-- 12.5 MHz inputclock for camera-pll
 	sysclk <= clk;
-	cam_xclk <= cam_xclk_sig;
-	sysclk_fourth <= sysclk_fourth_sig;
+	burstCount_dbg <= burstCount_dbg_sig;
+	whichLine_top_dbg <= whichLine_sig;
 	
   -----------------------------------------------------------------------------
   -- Scarts extension modules
@@ -653,15 +648,15 @@ begin
 				
 	if(cam_counter < 2)
 	then
-		cam_xclk_sig <= '0';
+		cam_pll_sig <= '0';
 		sysclk_fourth_sig <= '0';
 	elsif(cam_counter = 3)
 	then
-		cam_xclk_sig <= '1';
+		cam_pll_sig <= '1';
 		sysclk_fourth_sig <= '1';
 		cam_counter_next <= 0;
 	else
-		cam_xclk_sig <= '1';
+		cam_pll_sig <= '1';
 		sysclk_fourth_sig <= '1';
 	end if;
    
