@@ -190,11 +190,11 @@ int main(int argc, char **argv)
 	while(1)
 	{
 		i2c_write(0x0b, 0x04);	// SET TRIGGER
-		i2c_write(0x0b, 0x00); 	// RESET TRIGGER BIT
-		for(i = 0; i < 70; i++)
-		{
+	//	i2c_write(0x0b, 0x00); 	// RESET TRIGGER BIT
+	//	for(i = 0; i < 20; i++)
+	//	{
 			for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
-		}
+	//	}
 	}
 	
 	DRAW_RECT(0,0,0,0);
