@@ -86,7 +86,7 @@ entity top is
 		cam_sram_ctrl	: out sram_ctrl_t;
 		cam_sram_data	: buffer std_logic_vector(15 downto 0);
 		cam_resetN		: out std_logic;
-		cam_xclk			: out std_logic;
+		cam_pll			: out std_logic;
 		cam_trigger		: out std_logic;		-- hardware trigger for camera
 		
 
@@ -95,10 +95,11 @@ entity top is
 		blockrdy_dbg		: out std_logic;
 		whichLine_top_dbg	: out std_logic;
 		sysclk				:	out std_logic;
-		pxl_clk_out			:	out std_logic;
+		pxl_clk_dbg			:	out std_logic;
 		cam_resetN_dbg	: out std_logic;
 		
-		sysclk_fourth		: out std_logic;
+		--sysclk_fourth		: out std_logic;
+		ahbready_dbg		: out std_logic;
 		
 		cam_fval_dbg		: out std_logic;
 		cam_lval_dbg		: out std_logic;
@@ -111,8 +112,8 @@ end top;
 architecture behaviour of top is
   
 	-- clock signals
-	signal cam_xclk_sig			: std_logic;
-	signal sysclk_fourth_sig		: std_logic;
+	signal cam_pll_sig			: std_logic;
+	--signal sysclk_fourth_sig		: std_logic;
   
 	-- kamera signals
 	signal pxReady_sig		: std_logic;
@@ -465,8 +466,8 @@ begin
 	cam_resetN	<= syncrst;
 	cam_resetN_dbg <= syncrst;
 	
-	--cam_xclk <= cam_clock;
-	pxl_clk_out <= pixclk_sync;	
+	--cam_pll <= cam_clock;
+	pxl_clk_dbg <= pixclk_sync;	
 	cam_pixdata_dbg <= cam_pixdata;
 	
 	-- see camera register 0x0B, page 20
@@ -487,6 +488,7 @@ begin
     )
     port map
     (
+			ahbready_dbg => ahbready_dbg,
 			rst => syncrst,
 			clk => clk,
 			apbi => apbi,
@@ -556,8 +558,8 @@ begin
 	whichLine_top_dbg <= whichLine_sig;
 	
 	sysclk <= clk;
-	cam_xclk <= cam_xclk_sig;
-	sysclk_fourth <= sysclk_fourth_sig;
+	--cam_pll <= cam_pll_sig;
+	--sysclk_fourth <= sysclk_fourth_sig;
 	
   -----------------------------------------------------------------------------
   -- Scarts extension modules
@@ -650,19 +652,20 @@ begin
   begin
   
 	cam_counter_next <= cam_counter + 1;
+	cam_pll_sig <= '0';
 				
 	if(cam_counter < 2)
 	then
-		cam_xclk_sig <= '0';
-		sysclk_fourth_sig <= '0';
+		cam_pll_sig <= '0';
+		--sysclk_fourth_sig <= '0';
 	elsif(cam_counter = 3)
 	then
-		cam_xclk_sig <= '1';
-		sysclk_fourth_sig <= '1';
+		cam_pll_sig <= '1';
+		--sysclk_fourth_sig <= '1';
 		cam_counter_next <= 0;
-	else
-		cam_xclk_sig <= '1';
-		sysclk_fourth_sig <= '1';
+	--else
+	--	cam_pll_sig <= '0';
+	--	sysclk_fourth_sig <= '1';
 	end if;
    
   end process;
@@ -685,6 +688,7 @@ begin
 		cam_lval_sync <= cam_lval;
 		
 		pixclk_sync <= cam_pixclk;
+		cam_pll <= cam_pll_sig;
 				
 		cam_counter <= cam_counter_next;
     end if;

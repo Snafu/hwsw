@@ -114,6 +114,7 @@ vcom  -work work ../../../VHDL/ext_modules/ext_key_matrix/ext_key_matrix_beh.vhd
 
 vcom  -work work ../VHDL/top_pkg.vhd
 vcom  -work work ../VHDL/top.vhd
+vcom  -work work ../VHDL/top_tb.vhd
 
 vcom  -work gaisler ../../libraries/grlib/lib/gaisler/sim/sim.vhd
 vcom  -work work ../../libraries/grlib/lib/micron/sdram/mt48lc16m16a2.vhd

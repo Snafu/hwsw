@@ -40,6 +40,7 @@ entity dispctrl is
     );
   
   port (
+		ahbready_dbg : out std_logic;
     rst       : in std_logic;           -- Synchronous reset
     clk       : in std_logic;
     apbi      : in apb_slv_in_type;
@@ -94,7 +95,8 @@ architecture rtl of dispctrl is
 	signal writeState, writeState_n : writestate_t := NOINIT;
 	signal fval_old, fval_old_n : std_logic := '0';
 	signal blockrdy_old, blockrdy_old_n : std_logic;
-	signal blockCount, blockCount_n : integer range 0 to 10000;
+	signal blockCount, blockCount_n : integer range 0 to 1023;
+	signal foocount,foocount_n : integer range 0 to 1023;
 	signal output, output_n : write_t;
 	signal pixeladdr, pixeladdr_n : std_logic_vector(8 downto 0) := "000000000";
 	signal pixelCount, pixelCount_n : integer range 0 to 16 := 0;
@@ -103,30 +105,29 @@ begin
   ahb_master : ahbmst generic map (hindex, hirq, VENDOR_HWSW, HWSW_DISPCTRL, 0, 3, 0)
   port map (rst, clk, dmai, dmao, ahbi, ahbo);
   
-  control_proc : process(rst,dmai,dmao,fval,fval_old,blockrdy,writeState,pixeladdr,rddata,blockCount,pixelCount,output,blockrdy_old)
+  control_proc : process(rst,ahbi,dmai,dmao,fval,fval_old,blockrdy,writeState,pixeladdr,rddata,blockCount,pixelCount,output,blockrdy_old)
 		variable wout : write_t;
+		variable ahbready : std_logic;
+		variable start : std_logic;
+		variable blocks : integer range 0 to 1023;
   begin
 
 		writeState_n <= writeState;
 		fval_old_n <= fval;
 		blockrdy_old_n <= blockrdy;
-		blockCount_n <= blockCount;
+		blocks := blockCount;
 		pixeladdr_n <= pixeladdr;
 		pixelCount_n <= pixelCount;
 		wout := output;
-		
-		
-		dmai.burst <= '1';
-		dmai.irq <= '0';
-		dmai.size <= "010";
-		dmai.write <= '1';
-		dmai.busy <= '0';
-		dmai.wdata <= output.data;
-		dmai.address <= output.address;
-		dmai.start <= '0';
+		start := '0';
+		ahbready := dmao.ready;
+		foocount_n <= foocount;
+
+		ahbready_dbg <= ahbready;
 
 		if rst = '1' and blockrdy_old /= blockrdy and blockrdy = '1' then
-			blockCount_n <= blockCount + 1;
+			blocks := blocks + 1;
+			foocount_n <= foocount + 1;
 		end if;
 
 		case writeState is
@@ -136,39 +137,26 @@ begin
 			end if;
 
 		when IDLE =>
-			--if blockCount > 8000 then
-			if blockCount > 1 then --dbg
+			if blocks > 0 then --dbg
 				writeState_n <= STARTBLOCK;
-				wout.data := rddata;
-				--wout.data := COLORA;
-				--pixeladdr_n <= pixeladdr + 1;
 			end if;
 
 		when STARTBLOCK =>
-			--wout.address := output.address + 4;
-			--wout.data := COLORA;
-			dmai.start <= '1';
+			wout.data := rddata;
+			--wout.address := output.address;
 			--pixelCount_n <= pixelCount + 1;
-			pixeladdr_n <= pixeladdr + 1;
+
+			--pixeladdr_n <= pixeladdr + 1;
 			writeState_n <= HANDLEBLOCK;
 
 		when RESTART =>
-			dmai.start <= '1';
+			start := '1';
 			--pixelCount_n <= pixelCount + 1;
 			writeState_n <= HANDLEBLOCK;
 
 		when HANDLEBLOCK =>
-			dmai.start <= '1';
-			if dmao.ready = '1' then
---				if output.data = COLORA then
---					wout.data := COLORB;
---				elsif output.data = COLORB then
---					wout.data := COLORC;
---				elsif output.data = COLORC then
---					wout.data := COLORD;
---				else
---					wout.data := COLORA;
---				end if;
+			start := '1';
+			if ahbready = '1' then
 
 				wout.data := rddata;
 				wout.address := output.address + 4;
@@ -183,34 +171,47 @@ begin
 --					writeState_n <= RESTART;
 --				end if;
 
+				pixeladdr_n <= pixeladdr + '1';
 				-- end of block
 				if wout.address(5 downto 2) = "0000" then
 					pixelCount_n <= 0;
 					--blockCount_n <= 0;
 					writeState_n <= FINISHBLOCK;
 				else
-					pixeladdr_n <= pixeladdr + '1';
+				--	pixeladdr_n <= pixeladdr + '1';
 				end if;
 			end if;
 
 		when FINISHBLOCK =>
 			writeState_n <= IDLE;
-			blockCount_n <= blockCount - 1;
+			blocks := blocks - 1;
 
 		when others =>
 		end case;
 
-		if pixeladdr = conv_std_logic_vector(399,9) then
+		if pixeladdr = conv_std_logic_vector(400,9) then
 			pixeladdr_n <= "000000000";
+			wout.address := wout.address + x"640";
 		end if;
 
 		-- stay within framebuffer
-		if wout.address = FIFOEND then
+		if output.address >= FIFOEND then
 			wout.address := FIFOSTART;
 		end if;
 		
 		output_n <= wout;
+		blockCount_n <= blocks;
 		rdaddress <= pixeladdr;
+		
+		
+		dmai.burst <= '1';
+		dmai.irq <= '0';
+		dmai.size <= "010";
+		dmai.write <= '1';
+		dmai.busy <= '0';
+		dmai.wdata <= output.data;
+		dmai.address <= output.address;
+		dmai.start <= start;
 
 		--if ((output_sig.rowcnt = output_sig.face.top or output_sig.rowcnt = output_sig.face.bottom)
 		--		and (output_sig.colcnt >= output_sig.face.left and output_sig.colcnt <= output_sig.face.right))
@@ -249,6 +250,7 @@ begin
 				blockCount <= blockCount_n;
 				output <= output_n;
 				pixelCount <= pixelCount_n;
+				foocount <= foocount_n;
 			end if;
     elsif falling_edge(clk) then
 			if rst = '0' then

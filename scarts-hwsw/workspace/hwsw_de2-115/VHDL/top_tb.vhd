@@ -100,15 +100,16 @@ architecture behaviour of top_tb is
 			cam_sram_ctrl	: out sram_ctrl_t;
 			cam_sram_data	: inout std_logic_vector(15 downto 0);
 			cam_resetN		:	out std_logic;
-			cam_xclk			:	out std_logic;
+			cam_pll			:	out std_logic;
 
 
 			-- TESTSIGNALE
 			blockrdy				: in std_logic;
 			blockrdy_dbg		: out std_logic;
+			ahbready_dbg		: out std_logic;
 
 			sysclk					:	out std_logic;
-			pxl_clk_out			:	out std_logic;
+			pxl_clk_dbg			:	out std_logic;
 			cam_resetN_dbg	: out std_logic;
 
 			cam_fval_dbg		: out std_logic;
@@ -295,11 +296,11 @@ begin
     icwait(100);
     rst <= not RST_ACT;
 		
-		icwait(100);
+		icwait(500);
 		cam_fval <= '1';
 		icwait(10);
 		cam_fval <= '0';
-		icwait(10);
+		icwait(50);
 
 		for A in 0 to 240 loop
 			for I in 0 to 24 loop

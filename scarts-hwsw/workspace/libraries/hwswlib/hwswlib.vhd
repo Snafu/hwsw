@@ -50,6 +50,7 @@ package hwswlib is
 		 );
 	  
 	  port (
+			ahbready_dbg : out std_logic;
 			rst       : in std_logic;           -- Synchronous reset
 			clk       : in std_logic;
 			apbi      : in apb_slv_in_type;
