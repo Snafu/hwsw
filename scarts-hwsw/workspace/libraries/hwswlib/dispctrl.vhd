@@ -54,20 +54,20 @@ end ;
 architecture rtl of dispctrl is
   
 	-- normal
-	--constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0000000";
-	--constant FIFOEND : std_logic_vector(31 downto 0) := x"E0177000";
-	-- bottomright
-	constant FIFOSTART : std_logic_vector(31 downto 0) := x"E00BBE40";
+	constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0000000";
 	constant FIFOEND : std_logic_vector(31 downto 0) := x"E0177000";
+	-- bottomright
+	--constant FIFOSTART : std_logic_vector(31 downto 0) := x"E00BBE40";
+	--constant FIFOEND : std_logic_vector(31 downto 0) := x"E0177000";
 	
 	constant COLORA : std_logic_vector(31 downto 0) := x"00FF0000";
 	constant COLORB : std_logic_vector(31 downto 0) := x"0000FF00";
 	constant COLORC : std_logic_vector(31 downto 0) := x"000000FF";
 	constant COLORD : std_logic_vector(31 downto 0) := x"00FFFFFF";
-	--constant MAXCOL : integer := 800;
-	--constant MAXROW : integer := 480;
-	constant MAXCOL : integer := 400;
-	constant MAXROW : integer := 240;
+	constant MAXCOL : integer := 800;
+	constant MAXROW : integer := 480;
+	--constant MAXCOL : integer := 400;
+	--constant MAXROW : integer := 240;
 	constant NOFACE : integer := MAXROW;
 
   constant REVISION : amba_version_type := 0; 

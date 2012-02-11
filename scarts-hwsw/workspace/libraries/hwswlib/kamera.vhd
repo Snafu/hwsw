@@ -23,7 +23,6 @@ use grlib.stdlib.all;
 
 library work;
 use work.kameralib.all;
-use work.bayerbuf.all;
 
 
 entity kamera is
@@ -70,14 +69,15 @@ architecture rtl of kamera is
 	signal lastdot, lastdot_next				: std_logic_vector(7 downto 0);
 	signal state, state_next						: state_t;
 	signal rdreq, rdreq_next						: std_logic := '0';
-	signal startconv										: std_logic;
 	signal linecount, linecount_next		: integer range 0 to 480;
 	signal colcount, colcount_next			: std_logic_vector(9 downto 0);
-	signal pixelcount, pixelcount_next	: integer range 0 to 800;
+	signal pixelcount, pixelcount_next	: std_logic_vector(9 downto 0);
 	signal nfval												: std_logic;
-	signal pixel, pixel_next						: pixel_t;
+	signal pixel												: pixel_t;
 	signal dotmatrix, dotmatrix_next		: dotmatrix_t;
-	signal wren													: std_logic;
+	signal convert											: std_logic;
+	signal dpwren												: std_logic;
+	signal dpaddr, dpaddr_next					: std_logic_vector(8 downto 0);
 begin
 
 	nfval <= not fval;
@@ -160,38 +160,58 @@ begin
 		end if;
 	end process;
 
-	fsm : process(state, rdreq, lastdot, lastdot_next, dot, dot_next, linecount, colcount)
+	fsm : process(rst, convert, pixelcount, linecount, colcount)
 	begin
+		-- defaults
 		colcount_next <= colcount;
-		dotmatrix_next <= dotmatrix;
-		pixel_next <= pixel;
 		pixelcount_next <= pixelcount;
-		wren <= '0';
+		dpwren <= '0';
+		dpaddr_next <= dpaddr;
+		pixel <= (others => (others => '0'));
+		pixelburstReady <= '0';
+		
 
-		if rdreq = '1' or pixelcount > 0 then
-			wren <= '1';
+		if convert = '0' then
+			colcount_next <= (others => '0');
+		else
 			colcount_next <= colcount + '1';
-			dotmatrix_next(0)(0) <= dotmatrix(0)(1);
-			dotmatrix_next(0)(1) <= lastdot_next;
-			dotmatrix_next(1)(0) <= dotmatrix(1)(1);
-			dotmatrix_next(1)(1) <= dot_next;
-
-			if colcount(0) = '0' then
-				pixel_next <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
-			else
-				pixel_next <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
+			if colcount = conv_std_logic_vector(800,10) then
+				colcount_next <= (others => '0');
 			end if;
 
 			pixelcount_next <= pixelcount + 1;
-			if pixelcount = 798 then
-				pixelcount_next <= 0;
+			if pixelcount = conv_std_logic_vector(799,10) then
+				pixelcount_next <= (others => '0');
 			end if;
 
-			if colcount < '0' & x"00000003" then
-				pixel_next <= (others => (others => '0'));
-				pixelcount_next <= 0;
-				wren <= '0';
+			-- interpolate pixels TODO: average g1 and g2
+			if colcount(1) = '0' then
+				pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
+			else
+				pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
 			end if;
+
+			dpwren <= '1';
+			dpaddr_next <= dpaddr + '1';
+
+			-- delay pixel counter until first pixel ready
+			if colcount < "0000000010" then
+				pixelcount_next <= (others => '0');
+			else
+			end if;
+
+			-- delay DP RAM write until first pixel ready
+			if colcount < "0000000001" then
+				pixel <= (others => (others => '0'));
+				dpwren <= '0';
+				dpaddr_next <= dpaddr;
+			end if;
+				-- signal block ready
+				if (pixelcount(3 downto 0) = "0000" and pixelcount /= "0000000000")
+					or pixelcount = conv_std_logic_vector(798, 10) then
+					pixelburstReady <= '1';
+				end if;
+
 		end if;
 	end process;
 
@@ -202,13 +222,14 @@ begin
 			dot <= (others => '0');
 			linecount <= 0;
 			rdreq <= '0';
-			startconv <= '0';
 			state <= NOINIT;
 			lastdot <= (others => '0');
 			colcount <= (others => '0');
-			pixel <= (others => (others => '0'));
 			dotmatrix <= (others => (others => (others => '0')));
-			pixelcount <= 0;
+			pixelcount <= (others => '0');
+			convert <= '0';
+
+			dpaddr <= (others => '1');
 		else
 			if rising_edge(pixclk) then
 				dot_nnext <= pixdata(11 downto 4);
@@ -222,13 +243,19 @@ begin
 				colcount <= colcount_next;
 				state <= state_next;
 				rdreq <= rdreq_next;
-				startconv <= rdreq;
-				pixel <= pixel_next;
 				dotmatrix <= dotmatrix_next;
 				pixelcount <= pixelcount_next;
-				dp_wren <= wren;
-				dp_wraddr <= conv_std_logic_vector(pixelcount,9);
-				dp_data <= x"00" & pixel_next(R) & pixel_next(G) & pixel_next(B);
+				convert <= rdreq;
+
+				dpaddr <= dpaddr_next;
+				dp_wren <= dpwren;
+				dp_wraddr <= dpaddr_next;
+				dp_data <= x"00" & pixel(R) & pixel(G) & pixel(B);
+
+				dotmatrix(0)(0) <= dotmatrix(0)(1);
+				dotmatrix(0)(1) <= lastdot_next;
+				dotmatrix(1)(0) <= dotmatrix(1)(1);
+				dotmatrix(1)(1) <= dot_next;
 			end if;
 		end if;
 	end process;

@@ -593,8 +593,8 @@ begin
 			lval			=> cam_lval_sync,
 			pixdata		=> cam_pixdata_sync,
 			--pixdata		=> cam_pixdata,
-			sram_ctrl	=> cam_sram_ctrl,
-			sram_data	=> cam_sram_data,
+			--sram_ctrl	=> cam_sram_ctrl,
+			--sram_data	=> cam_sram_data,
 			
 			dp_data		=> data_sig,
 			dp_wren		=> wren_sig,

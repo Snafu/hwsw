@@ -85,6 +85,18 @@ package kameralib is
 			);
 	end component;
 
+	component bayerbuffer
+		PORT
+		(
+			clock		: IN STD_LOGIC ;
+			data		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
+			rdreq		: IN STD_LOGIC ;
+			sclr	: IN STD_LOGIC ;
+			q		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
+			wrreq		: IN STD_LOGIC
+		);
+	end component;
+
 	component dp_pixelram
 		PORT
     (
