@@ -204,20 +204,20 @@ architecture behaviour of top is
   signal svga_ahbmo     : ahb_mst_out_type;
   
 	-- signals for BUTTONS Extension Module
-  signal buttons_config_sel  : std_ulogic;
-  signal buttons_exto : module_out_type;
+  signal buttons_config_sel	: std_ulogic;
+  signal buttons_exto 			: module_out_type;
 
   -- signals for DISPLAY Controller
   signal disp_ahbmo		: ahb_mst_out_type;
   
   -- signals for i2cmst
 	--signal i2ci_pin			:	i2c_in_type;
-	signal i2co_pin			:	i2c_out_type;
-	
+	signal i2co_pin				:	i2c_out_type;
 	signal i2c_config_sel	:	std_logic	:= '0';
+  signal i2c_exto				: module_out_type;
 	
-	signal cam_clock			: std_logic;
-	signal cam_counter		: integer range 0 to 4;
+	signal cam_clock				: std_logic;
+	signal cam_counter			: integer range 0 to 4;
 	signal cam_counter_next	: integer range 0 to 4;
 
   -- signals for AUX UART
@@ -478,7 +478,7 @@ begin
 			
 			extsel     => i2c_config_sel,			
 			exti       => exti,
-			--exto       => dis7segexto,
+			exto       => i2c_exto,
 			
 			--i2ci	=>	i2ci_pin,
 			i2co	=>	i2co_pin
@@ -551,10 +551,9 @@ begin
 			rdaddress => rdaddress_sig,
 			rddata => q_sig,
 			blockrdy => pxReady_sig,
+			--blockrdy => blockrdy, --dbg
 			
 			init_ready    => hw_initialized		-- HARI: signal by sw-extension AFTER i2c init
-			
-			--blockrdy => blockrdy --dbg
     );  
 	
 	-----------------------------------------------------------------------------
@@ -564,10 +563,11 @@ begin
 	dp_pixelram_inst : dp_pixelram
 	PORT MAP
 	(
-		clock			=> clk,
 		data     	=> data_sig,
 		rdaddress	=> rdaddress_sig,
+		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
+		wrclock		=> pixclk_sync,
 		wren			=> wren_sig,
 		q					=> q_sig
 	);

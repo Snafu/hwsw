@@ -36,3 +36,5 @@ facedetection/app/main.txt
 *.tga
 scarts-hwsw/workspace/hwsw_de2-115/modelsim/vsim.wlf
 scarts-hwsw/workspace/hwsw_de2-115/modelsim/modelsim.ini
+scarts-hwsw/workspace/hwsw_de2-115/quartus/greybox_tmp/*
+scarts-hwsw/workspace/hwsw_de2-115/modelsim/dumpdata.txt

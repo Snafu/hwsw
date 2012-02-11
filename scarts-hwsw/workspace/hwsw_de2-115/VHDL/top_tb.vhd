@@ -220,11 +220,34 @@ begin
       ltm_grest      => ltm_grest,
       aux_uart_rx    => aux_uart_rx,
       aux_uart_tx    => aux_uart_tx,
-			cam_pixclk => cam_pixclk,
-			cam_fval => cam_fval,
-			cam_lval => cam_lval,
-			cam_pixdata => cam_pixdata,
-			blockrdy => blockrdy
+			cam_pixclk	=> cam_pixclk,
+			cam_fval		=> cam_fval,
+			cam_lval		=> cam_lval,
+			cam_pixdata	=> cam_pixdata,
+
+			key3				=> '0',
+			key2				=> '0',
+			key1				=> '0',
+			sw17				=> '0',
+			sw16				=> '0',
+			sw15				=> '0',
+			sw14				=> '0',
+			sw13				=> '0',
+			sw12				=> '0',
+			sw11				=> '0',
+			sw10				=> '0',
+			sw9					=> '0',
+			sw8					=> '0',
+			sw7					=> '0',
+			sw6					=> '0',
+			sw5					=> '0',
+			sw4					=> '0',
+			sw3					=> '0',
+			sw2					=> '0',
+			sw1					=> '0',
+			sw0					=> '0',
+
+			blockrdy		=> blockrdy
       );
 
 
@@ -326,14 +349,15 @@ begin
 		cam_fval <= '0';
 		icwait(50);
 
-		for A in 0 to 240 loop
+		for A in 0 to 480 loop
 			for I in 0 to 24 loop
 				blockrdy <= '1';
 				icwait(1);
 				blockrdy <= '0';
-				icwait(10);
+				icwait(1);
+				wait for 1650 ns;
 			end loop;
-			icwait(500);
+			wait for 2000 ns;
 		end loop;
 
 

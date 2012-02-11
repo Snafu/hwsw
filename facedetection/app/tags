@@ -154,6 +154,7 @@ height	include/image.h	/^	uint32_t height;$/;"	m	struct:__anon5
 i2c_write	include/i2c.h	8;"	d
 image_t	include/image.h	/^} image_t;$/;"	t	typeref:struct:__anon5
 initCamera	src/camera.c	/^void initCamera(void)$/;"	f
+initSVGA	src/main.c	/^void initSVGA(void)$/;"	f
 initializeImage	src/main.c	/^void initializeImage(image_t *template, image_t *image)$/;"	f
 keys_t	include/buttons.h	/^typedef enum {KEY1,KEY2,KEY3} keys_t;$/;"	t	typeref:enum:__anon1
 main	src/main.c	/^int main(int argc, char **argv)$/;"	f

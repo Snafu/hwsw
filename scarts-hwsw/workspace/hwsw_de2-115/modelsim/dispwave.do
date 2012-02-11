@@ -20,11 +20,14 @@ add wave -noupdate -format Logic /top_tb/clk
 add wave -noupdate -format Literal /top_tb/top_1/dispctrl0/writestate
 add wave -noupdate -format Literal -radix hexadecimal /top_tb/top_1/dp_pixelram_inst/q
 add wave -noupdate -format Literal -radix hexadecimal /top_tb/top_1/dp_pixelram_inst/rdaddress
-add wave -noupdate -format Logic /top_tb/top_1/dp_pixelram_inst/wrclock
 add wave -noupdate -format Logic /top_tb/top_1/dp_pixelram_inst/wren
 add wave -noupdate -format Logic /top_tb/top_1/cam0/dp_wren
+add wave -noupdate -format Literal /top_tb/top_1/dispctrl0/row
+add wave -noupdate -format Literal /top_tb/top_1/dispctrl0/col
+add wave -noupdate -format Literal /top_tb/top_1/dispctrl0/blockcount
+add wave -noupdate -format Logic /top_tb/top_1/dispctrl0/fval
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {4650000 ps} 0}
+WaveRestoreCursors {{Cursor 1} {16780000 ps} 0}
 configure wave -namecolwidth 186
 configure wave -valuecolwidth 100
 configure wave -justifyvalue left
@@ -39,4 +42,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {4580163 ps} {4955773 ps}
+WaveRestoreZoom {5819797 ps} {104956853 ps}

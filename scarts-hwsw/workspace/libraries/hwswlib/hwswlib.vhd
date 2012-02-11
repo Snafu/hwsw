@@ -43,9 +43,8 @@ package hwswlib is
 	component dispctrl
 	  generic (
 			hindex      : integer := 0;
-			hirq        : integer := 0;
-			ahbaccsz    : integer := 32
-		 );
+			hirq        : integer := 0
+		);
 	  
 	  port (
 			ahbready_dbg	: out std_logic;
@@ -58,7 +57,18 @@ package hwswlib is
 			rddata    		: in std_logic_vector(31 downto 0);
 			blockrdy  		: in std_logic;
 			init_ready		: in std_logic
-		 );
+		);
+	end component;
+
+	component bayerbuffer
+		PORT
+		(
+			clock		: IN STD_LOGIC ;
+			data		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
+			rdreq		: IN STD_LOGIC ;
+			wrreq		: IN STD_LOGIC ;
+			q		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
+		);
 	end component;
 
 	component buttons is

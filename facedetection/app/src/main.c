@@ -76,6 +76,22 @@ void freeImage(image_t *image)
 }
 
 
+void initSVGA(void)
+{
+	// SVGA initialization (touchscreen)
+	SVGA_STATUS = (1<<1);
+	SVGA_VIDEO_LENGTH = ((SCREEN_HEIGHT-1)<<16) | (SCREEN_WIDTH-1);
+	SVGA_FRONT_PORCH = (10<<16) | 40;
+	SVGA_SYNC_LENGTH = (1<<16) | 1;
+	SVGA_LINE_LENGTH = (526<<16) | 1056;
+	SVGA_FRAME_BUFFER = SDRAM_BASE;
+	SVGA_DYN_CLOCK0 = 30000;
+	SVGA_STATUS = (1<<0) | (3<<4);
+	sdramBytesAllocated += SCREEN_WIDTH*SCREEN_HEIGHT*4;
+	screenData = (volatile uint32_t *)SDRAM_BASE;
+	memset((void *)screenData, 0, (SCREEN_WIDTH*SCREEN_HEIGHT*4));
+}
+
 int main(int argc, char **argv)
 {
 
@@ -113,18 +129,8 @@ int main(int argc, char **argv)
 		SDRAM_COLSIZE_1024 | 
 		SDRAM_CMD_LOAD_CMD_REG | 
 		389;
-
-	// SVGA initialization (touchscreen)
-	SVGA_VIDEO_LENGTH = ((SCREEN_HEIGHT-1)<<16) | (SCREEN_WIDTH-1);
-	SVGA_FRONT_PORCH = (10<<16) | 40;
-	SVGA_SYNC_LENGTH = (1<<16) | 1;
-	SVGA_LINE_LENGTH = (526<<16) | 1056;
-	SVGA_FRAME_BUFFER = SDRAM_BASE;
-	SVGA_DYN_CLOCK0 = 30000;
-	SVGA_STATUS = (1<<0) | (3<<4);
-	sdramBytesAllocated += SCREEN_WIDTH*SCREEN_HEIGHT*4;
-	screenData = (volatile uint32_t *)SDRAM_BASE;
-	memset((void *)screenData, 0, (SCREEN_WIDTH*SCREEN_HEIGHT*4));
+	
+	initSVGA();
 
 	// CAM initialization
 	initCamera();
@@ -155,8 +161,8 @@ int main(int argc, char **argv)
 		value = switchVal();
 		dis7seg_displayHexUInt32(&dispHandle, 0, value | (keys << 16));  
 
-		/*
 		if(keys != keys_old) {
+			/*
 			if(keys & (1<<KEY3))
 				i2c_write(GAIN_RED_REG, value);
 			if(keys & (1<<KEY2)) {
@@ -165,8 +171,10 @@ int main(int argc, char **argv)
 			}
 			if(keys & (1<<KEY1))
 				i2c_write(GAIN_BLUE_REG, value);
+			*/
+			if(keys & (1<<KEY3))
+				initSVGA();
 		}
-		*/
 
 		keys_old = keys;
 	}

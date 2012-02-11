@@ -27,7 +27,7 @@ entity i2cmaster is
 		
 		extsel			: in	std_logic;
 		exti				: in  module_in_type;
-		--exto			: out module_out_type;
+		exto				: out module_out_type;
 		
 		-- I2C signals
 		--i2ci			: in  i2c_in_type;
@@ -37,6 +37,25 @@ end;
 
 architecture rtl of i2cmaster is
 
+	-- SCARTS Extension
+	subtype byte is std_logic_vector(7 downto 0);
+	type register_set is array (0 to 3) of byte;
+
+	constant STATUSREG_CUST : integer := 1;
+	constant CONFIGREG_CUST : integer := 3;
+
+	type reg_type is record
+	  ifacereg		:	register_set;
+	end record;
+
+	signal r_next : reg_type;
+	signal r : reg_type := 
+	  (
+	    ifacereg => (others => (others => '0'))
+	  );
+	signal rstint : std_ulogic;
+
+	-- I2C Master
 	type module_in_type is record
 		reset     : std_ulogic;
 		write_en  : std_ulogic;
@@ -98,7 +117,7 @@ architecture rtl of i2cmaster is
 		
 begin
 		
-process(clk, rst)
+	process(clk, rst)
 	begin
 				
 		if(rst = '0')
@@ -115,6 +134,8 @@ process(clk, rst)
 			i2c_state <= IDLE;
 			i2c_bytestate <= IDLE;
 			i2c_config_sel_old <= '0';
+      
+			r.ifacereg <= (others => (others => '0'));
 		else 
 			-- set new values
 			if(clk'event and clk = '1')
@@ -131,6 +152,11 @@ process(clk, rst)
 				i2c_config_sel_old <= i2c_config_sel_old_next;
 				i2c_bytestate <= i2c_bytestate_next;
 				
+      	if rstint = RST_ACT then
+        	r.ifacereg <= (others => (others => '0'));
+      	else
+      	  r <= r_next;
+      	end if;
 			end if;
 		end if;
 		
@@ -138,9 +164,7 @@ process(clk, rst)
 	
 	
 	process(extsel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, data_buffer, exti)
-	
-	variable apbwrite	: std_logic;
-	
+    variable v : reg_type;
 	begin
 		
 		-- used for buffering the 32bit word from APB
@@ -161,15 +185,6 @@ process(clk, rst)
 		i2c_config_sel_old_next <= extsel;
 		i2c_state_next <= i2c_state;
 		i2c_bytestate_next <= i2c_bytestate;
-	
-		--apbwrite :=  apbi.psel(2) and apbi.pwrite and apbi.penable;
-		--if( apbwrite = '1')
-		--then
-		--	if(apbi.paddr(5 downto 2) = "0000" )
-		--	then
-		--		data_buffer_next <= apbi.pwdata(23 downto 0);
-		--	end if;
-		--end if;
 	
 		if(i2c_state /= IDLE)
 		then		
@@ -381,19 +396,51 @@ process(clk, rst)
 					i2c_state_next <= IDLE;
 			
 		end case;
-		
-		-- if we get a proper flank and are idle, start statemachine
-		if(i2c_config_sel_old /= extsel and extsel = '1' and i2c_state = IDLE)
-		then
-			--i2c_state_next <= START_CLK;
-			i2c_state_next <= SEND_STARTBIT;
-			sdc_counter_next <= 1;
-			
-			
-			data_buffer_next <= exti.data(23 downto 0);			
-		end if;
+        
+    -- SCARTS Extension: write memory mapped addresses
+    if ((extsel = '1') and (exti.write_en = '1')) then
+      case exti.addr(4 downto 2) is
+        when "000" =>
+          if ((exti.byte_en(0) = '1') or (exti.byte_en(1) = '1')) then
+            v.ifacereg(STATUSREG)(STA_INT) := '1';
+            v.ifacereg(CONFIGREG)(CONF_INTA) :='0';
+          else
+            if ((exti.byte_en(2) = '1')) then
+              v.ifacereg(2) := exti.data(23 downto 16);
+            end if;
+            if ((exti.byte_en(3) = '1')) then
+              v.ifacereg(3) := exti.data(31 downto 24);
+            end if;
+          end if;
+				
+				when "001" =>
+					if i2c_state = IDLE then
+						--i2c_state_next <= START_CLK;
+						i2c_state_next <= SEND_STARTBIT;
+						sdc_counter_next <= 1;
+						data_buffer_next <= exti.data(23 downto 0);
+					end if;
+
+        when others =>
+          null;
+      end case;
+    end if;
+    
+    -- combine soft- and hard-reset
+    rstint <= not RST_ACT;
+    if exti.reset = RST_ACT or r.ifacereg(CONFIGREG)(CONF_SRES) = '1' then
+      rstint <= RST_ACT;
+    end if;
+    
+    -- reset interrupt
+    if r.ifacereg(STATUSREG)(STA_INT) = '1' and r.ifacereg(CONFIGREG)(CONF_INTA) ='0' then
+      v.ifacereg(STATUSREG)(STA_INT) := '0';
+    end if; 
+    exto.intreq <= r.ifacereg(STATUSREG)(STA_INT);
 	
 		sda_buf_next <= sda_sig;
+
+    r_next <= v;
 	
 	end process;
 	

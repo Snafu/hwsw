@@ -30,11 +30,10 @@ use work.hwswlib.all;
  
 entity dispctrl is
 
-  generic(
+  generic (
     hindex      : integer := 0;
-    hirq        : integer := 0;
-    ahbaccsz    : integer := 32
-    );
+    hirq        : integer := 0
+  );
   
   port (
 		ahbready_dbg	: out std_logic;
@@ -48,33 +47,38 @@ entity dispctrl is
 		blockrdy  		: in std_logic;
 	
 		init_ready		: in std_logic
-    );
+  );
 
 end ;
 
 architecture rtl of dispctrl is
   
-	constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0000000";
-	constant FIFOEND : std_logic_vector(31 downto 0) := x"E00BB800"; --dbg
+	-- normal
+	--constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0000000";
 	--constant FIFOEND : std_logic_vector(31 downto 0) := x"E0177000";
+	-- bottomright
+	constant FIFOSTART : std_logic_vector(31 downto 0) := x"E00BBE40";
+	constant FIFOEND : std_logic_vector(31 downto 0) := x"E0177000";
 	
-	constant NOFACE : std_logic_vector(9 downto 0) := "1111111111";
 	constant COLORA : std_logic_vector(31 downto 0) := x"00FF0000";
 	constant COLORB : std_logic_vector(31 downto 0) := x"0000FF00";
 	constant COLORC : std_logic_vector(31 downto 0) := x"000000FF";
 	constant COLORD : std_logic_vector(31 downto 0) := x"00FFFFFF";
+	--constant MAXCOL : integer := 800;
+	--constant MAXROW : integer := 480;
 	constant MAXCOL : integer := 400;
 	constant MAXROW : integer := 240;
+	constant NOFACE : integer := MAXROW;
 
   constant REVISION : amba_version_type := 0; 
   constant VENDOR_HWSW: amba_vendor_type := 16#08#;
   constant HWSW_DISPCTRL: amba_device_type := 16#13#;
     
 	type facebox_t is record
-		top					: std_logic_vector(9 downto 0);
-		left				: std_logic_vector(9 downto 0);
-		bottom			: std_logic_vector(9 downto 0);
-		right				: std_logic_vector(9 downto 0);
+		top					: integer range 0 to MAXROW;
+		left				: integer range 0 to MAXCOL;
+		bottom			: integer range 0 to MAXROW;
+		right				: integer range 0 to MAXCOL;
 	end record;
 
   type write_t is record
@@ -86,6 +90,8 @@ architecture rtl of dispctrl is
 
   signal dmai	: ahb_dma_in_type;
   signal dmao	: ahb_dma_out_type;
+
+	signal face, face_n : facebox_t;
 	
 	signal writeState, writeState_n : writestate_t := WAIT_INIT;
 	--signal writeState, writeState_n : writestate_t := NOINIT;
@@ -95,12 +101,19 @@ architecture rtl of dispctrl is
 	signal blockCount, blockCount_n : integer range 0 to 1023;
 	signal output, output_n : write_t;
 	signal pixeladdr, pixeladdr_n : std_logic_vector(8 downto 0) := "000000000";
+	signal col, col_n : integer range 0 to MAXCOL;
+	signal row, row_n : integer range 0 to MAXROW;
 begin
 
   ahb_master : ahbmst generic map (hindex, hirq, VENDOR_HWSW, HWSW_DISPCTRL, 0, 3, 0)
   port map (rst, clk, dmai, dmao, ahbi, ahbo);
+
+	extension_proc: process(face)
+	begin
+		face_n <= face;
+	end process;
   
-  control_proc : process(rst,ahbi,dmai,dmao,fval,fval_old,blockrdy,writeState,pixeladdr,rddata,blockCount,output,blockrdy_old,init_ready,init_old)
+  ahb_proc : process(rst,ahbi,dmai,dmao,fval,fval_old,blockrdy,writeState,pixeladdr,rddata,blockCount,output,blockrdy_old,init_ready,init_old,col,row,face)
 		variable wout : write_t;
 		variable ahbready : std_logic;
 		variable start : std_logic;
@@ -116,10 +129,12 @@ begin
 		start := '0';
 		ahbready := dmao.ready;
 		init_old_n <= init_ready;
+		col_n <= col;
+		row_n <= row;
 
 		ahbready_dbg <= ahbready;
 
-		if rst = '1' and blockrdy_old /= blockrdy and blockrdy = '1' then
+		if writeState /= WAIT_INIT and writeState /= NOINIT and blockrdy_old /= blockrdy and blockrdy = '1' then
 			blocks := blocks + 1;
 		end if;
 
@@ -160,6 +175,7 @@ begin
 				wout.data := rddata;
 				wout.address := output.address + 4;
 				pixeladdr_n <= pixeladdr + '1';
+				col_n <= col + 1;
 
 				-- end of block
 				if wout.address(5 downto 2) = "0000" then
@@ -172,12 +188,19 @@ begin
 		when others =>
 		end case;
 
-		if pixeladdr = conv_std_logic_vector(510,9) then
+		if col = MAXCOL-1 then
+			col_n <= 0;
 			pixeladdr_n <= "000000000";
-			--wout.address := wout.address + x"640";
+			wout.address := wout.address + x"640";
+			if row = MAXROW-1 then
+				row_n <= 0;
+				wout.address := FIFOSTART;
+			else
+				row_n <= row + 1;
+			end if;
 		end if;
 
-		-- stay within framebuffer
+		-- force to stay within framebuffer
 		if wout.address >= FIFOEND then
 			wout.address := FIFOSTART;
 			pixeladdr_n <= "000000000";
@@ -193,19 +216,19 @@ begin
 		dmai.size <= "010";
 		dmai.write <= '1';
 		dmai.busy <= '0';
-		dmai.wdata <= output.data;
 		dmai.address <= output.address;
-		dmai.start <= start;
 
-		--if ((output.rowcnt = output.face.top or output.rowcnt = output.face.bottom)
-		--		and (output.colcnt >= output.face.left and output.colcnt <= output.face.right))
-		--	 or
-		--	 ((output.colcnt = output.face.left or output.colcnt = output.face.right)
-		--	  and (output.rowcnt >= output.face.top and output.rowcnt <= output.face.bottom)) then
-		--	dmai.wdata <= x"0000ff00";
-		--else
-		--	dmai.wdata <= output.data;
-		--end if;
+		if ((row = face.top or row = face.bottom)
+				and (col >= face.left and col <= face.right))
+			 or
+			 ((col = face.left or col = face.right)
+			  and (row >= face.top and row <= face.bottom)) then
+			dmai.wdata <= x"0000ff00";
+		else
+			dmai.wdata <= output.data;
+		end if;
+
+		dmai.start <= start;
 			
   end process;
   
@@ -216,28 +239,41 @@ begin
   -----------------------------------------------------------------------------
   reg_proc : process(rst,clk)
   begin
-    if rising_edge(clk) then
-			if rst = '0' then
-				writeState <= WAIT_INIT;
-				fval_old <= '0';
-				blockrdy_old <= '0';
-				blockCount <= 0;
-				output.address <= FIFOSTART;
-				output.data <= x"00FFFFFF";
-				init_old <= '0';
-			else
+		if rst = '0' then
+			-- rising edge
+			writeState <= WAIT_INIT;
+			fval_old <= '0';
+			blockrdy_old <= '0';
+			blockCount <= 0;
+			output.address <= FIFOSTART;
+			output.data <= x"00FFFFFF";
+			init_old <= '0';
+			col <= 0;
+			row <= 0;
+
+			face.top <= NOFACE;
+			face.left <= NOFACE;
+			face.bottom <= NOFACE;
+			face.right <= NOFACE;
+
+			-- falling edge
+			pixeladdr <= "000000000";
+		else
+    	if rising_edge(clk) then
 				writeState <= writeState_n;
 				fval_old <= fval_old_n;
 				blockrdy_old <= blockrdy_old_n;
 				blockCount <= blockCount_n;
 				output <= output_n;
+				col <= col_n;
+				row <= row_n;
+
+				face <= face_n;
 				
 				init_old <= init_old_n;
 			end if;
-    elsif falling_edge(clk) then
-			if rst = '0' then
-				pixeladdr <= "000000000";
-			else
+
+    	if falling_edge(clk) then
 				pixeladdr <= pixeladdr_n;
 			end if;
 		end if;

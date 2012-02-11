@@ -49,13 +49,13 @@ begin
 	begin
 		clk <= '0';
 		rst <= '0';
-		wait for 1 ns;
+		wait for 10 ns;
 		rst <= '1';
 
 		loop 
-			wait for 1ns;
+			wait for 1 ns;
 			clk <= '1';       
-			wait for 1ns;
+			wait for 1 ns;
 			clk <= '0';
 		end loop;
 
@@ -64,9 +64,10 @@ begin
 	process
 	begin		
 		loop
-		  wait for 2ns;
+			cam_pixclk <= '0';
+		  wait for 2500 ps;
 		  cam_pixclk <= '1';
-		  wait for 2ns;
+		  wait for 2500 ps;
 		  cam_pixclk <= '0';
 		 end loop;
 	end process;
@@ -76,18 +77,23 @@ begin
 
       cam_fval <= '0';
       cam_lval <= '0';
+			cam_pixdata <= (others => '0');
+
+			wait for 50 ns;
 	    
 	    for frame in 0 to 100 loop
-	     wait for 5ns;
+	     wait for 5 ns;
 	     cam_fval <= '1';
-	     wait for 1 ns;
+	     wait for 5 ns;
 	     
-	     for line in 0 to 400 loop
+	     for line in 0 to 479 loop
 	      cam_lval <= '1';
+				cam_pixdata <= cam_pixdata + "10000";
 	      
-	       for row in 0 to 799 loop
-	         wait for 5ns;  
-	       end loop;
+	     	for row in 0 to 799 loop
+	       	wait for 5 ns;  
+					cam_pixdata <= cam_pixdata + "10000";
+	      end loop;
 
         cam_lval <= '0';
         wait for 60 ns;
