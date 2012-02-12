@@ -239,6 +239,9 @@ architecture behaviour of top is
    END component;
 
 begin
+
+	whichLine_sig <= '0';
+	burstCount_dbg_sig <= (others => '0');
 	
   altera_pll_inst : altera_pll PORT MAP (
     areset	 => '0',
@@ -577,32 +580,20 @@ begin
 	-----------------------------------------------------------------------------
 	
   cam0 : kamera
-    generic map
-    (
-	   	pindex => 2,
-			paddr => 16#004#,
-      pmask => 16#fff#,
-			hindex => 3
-    )
     port map
     (
 			rst				=> syncrst,
 			clk				=> clk,
-			pixclk		=> pixclk_sync,
-			fval			=> cam_fval_sync,
-			lval			=> cam_lval_sync,
-			pixdata		=> cam_pixdata_sync,
-			--pixdata		=> cam_pixdata,
-			--sram_ctrl	=> cam_sram_ctrl,
-			--sram_data	=> cam_sram_data,
+			pixclk		=> cam_pixclk, --_sync,
+			fval			=> cam_fval, --_sync,
+			lval			=> cam_lval, --_sync,
+			pixdata		=> cam_pixdata, --_sync,
 			
 			dp_data		=> data_sig,
 			dp_wren		=> wren_sig,
 			dp_wraddr	=> wraddress_sig,
-			pixelburstReady => pxReady_sig,
-			
-			whichLine_dbg => whichLine_sig,
-			burstCount_dbg => burstCount_dbg_sig
+
+			pixelburstReady => pxReady_sig
     ); 
 	
 	cam_trigger <= '0';		 		-- INVERT_TRIGGER must be set by i2cconfig(reg 0x0B) when this pin is LOW
@@ -656,7 +647,7 @@ begin
       RxD    => aux_uart_rx,
       TxD    => aux_uart_tx);
   
-  comb : process(scarts_o, debugo_if, D_RxD, dis7segexto, counter_exto, aux_uart_exto)  --extend!
+  comb : process(scarts_o, debugo_if, D_RxD, dis7segexto, counter_exto, aux_uart_exto, buttons_exto)  --extend!
     variable extdata : std_logic_vector(31 downto 0);
   begin   
     exti.reset    <= scarts_o.reset;

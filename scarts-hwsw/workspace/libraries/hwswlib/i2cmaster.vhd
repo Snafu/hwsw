@@ -100,9 +100,6 @@ architecture rtl of i2cmaster is
 	signal sda_sig			: std_logic	:=	BUS_IDLE;	
 	signal sdc_sig			: std_logic := BUS_IDLE;
 	
-	signal i2c_config_sel_old		 :	std_logic;
-	signal i2c_config_sel_old_next :	std_logic;
-	
 	signal sda_data		: std_logic_vector(7 downto 0);
 	signal sda_data_next	: std_logic_vector(7 downto 0);
 	
@@ -133,7 +130,6 @@ begin
 			i2co.scl <= BUS_IDLE;
 			i2c_state <= IDLE;
 			i2c_bytestate <= IDLE;
-			i2c_config_sel_old <= '0';
       
 			r.ifacereg <= (others => (others => '0'));
 		else 
@@ -149,7 +145,6 @@ begin
 				i2co.sda <= sda_sig;
 				i2co.scl <= sdc_sig;
 				i2c_state <= i2c_state_next;
-				i2c_config_sel_old <= i2c_config_sel_old_next;
 				i2c_bytestate <= i2c_bytestate_next;
 				
       	if rstint = RST_ACT then
@@ -163,9 +158,10 @@ begin
 	end process;
 	
 	
-	process(extsel, i2c_config_sel_old, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, data_buffer, exti)
+	process(extsel, r, i2c_bytestate, i2c_state, sdc_counter, sda_data, sda_buf, sda_sig, data_buffer, exti)
     variable v : reg_type;
 	begin
+		v := r;
 		
 		-- used for buffering the 32bit word from APB
 		-- which is only valid for a short time
@@ -182,7 +178,6 @@ begin
 		sdc_counter_next <= sdc_counter + 1;
 		sda_data_next <= sda_data;
 
-		i2c_config_sel_old_next <= extsel;
 		i2c_state_next <= i2c_state;
 		i2c_bytestate_next <= i2c_bytestate;
 	

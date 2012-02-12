@@ -93,7 +93,7 @@ architecture rtl of dispctrl is
 
 	signal face, face_n : facebox_t;
 	
-	signal writeState, writeState_n : writestate_t := WAIT_INIT;
+	signal writeState, writeState_n : writestate_t;
 	--signal writeState, writeState_n : writestate_t := NOINIT;
 	signal fval_old, fval_old_n : std_logic := '0';
 	signal init_old, init_old_n : std_logic := '0';
@@ -161,11 +161,7 @@ begin
 
 		when STARTBLOCK =>
 			wout.data := rddata;
-
-			writeState_n <= HANDLEBLOCK;
-
-		when RESTART =>
-			start := '1';
+			pixeladdr_n <= pixeladdr + '1';
 
 			writeState_n <= HANDLEBLOCK;
 
@@ -174,7 +170,6 @@ begin
 			if ahbready = '1' then
 				wout.data := rddata;
 				wout.address := output.address + 4;
-				pixeladdr_n <= pixeladdr + '1';
 				col_n <= col + 1;
 
 				-- end of block
@@ -182,6 +177,8 @@ begin
 					blocks := blocks - 1;
 
 					writeState_n <= IDLE;
+				else
+					pixeladdr_n <= pixeladdr + '1';
 				end if;
 			end if;
 
@@ -241,7 +238,7 @@ begin
   begin
 		if rst = '0' then
 			-- rising edge
-			writeState <= WAIT_INIT;
+			writeState <= NOINIT; --WAIT_INIT;
 			fval_old <= '0';
 			blockrdy_old <= '0';
 			blockCount <= 0;

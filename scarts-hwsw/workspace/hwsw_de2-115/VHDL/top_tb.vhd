@@ -10,6 +10,9 @@ use std.textio.all;
 use work.hwswlib.all;
 use work.kameralib.all;
 
+library grlib;
+use grlib.stdlib.all;
+
 entity top_tb is
 end top_tb;
 
@@ -48,14 +51,14 @@ architecture behaviour of top_tb is
   signal aux_uart_rx : std_logic;
   signal aux_uart_tx : std_logic;
 
-	signal	cam_pixclk		:  std_logic;
-	signal		cam_fval			:  std_logic;
-	signal		cam_lval			:  std_logic;
-	signal		cam_pixdata		:  std_logic_vector(11 downto 0);
+	signal cam_pixclk		:  std_logic;
+	signal cam_fval			:  std_logic;
+	signal cam_lval			:  std_logic;
+	signal cam_pixdata		:  std_logic_vector(11 downto 0);
 
-	signal	data_sig			:  STD_LOGIC_VECTOR (31 DOWNTO 0);
-	signal	rdclock_sig		:  STD_LOGIC ;
-	signal	wraddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
+	signal data_sig			:  STD_LOGIC_VECTOR (31 DOWNTO 0);
+	signal rdclock_sig		:  STD_LOGIC ;
+	signal wraddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
 
 	signal blockrdy : std_logic;
 	signal ahbready : std_logic;
@@ -128,7 +131,7 @@ architecture behaviour of top_tb is
 
 
 			-- TESTSIGNALE
-			blockrdy				: in std_logic;
+			--blockrdy				: in std_logic;
 			blockrdy_dbg		: out std_logic;
 			ahbready_dbg		: out std_logic;
 
@@ -225,6 +228,8 @@ begin
 			cam_lval		=> cam_lval,
 			cam_pixdata	=> cam_pixdata,
 
+			--blockrdy		=> blockrdy,
+
 			key3				=> '0',
 			key2				=> '0',
 			key1				=> '0',
@@ -245,9 +250,8 @@ begin
 			sw3					=> '0',
 			sw2					=> '0',
 			sw1					=> '0',
-			sw0					=> '0',
+			sw0					=> '0'
 
-			blockrdy		=> blockrdy
       );
 
 
@@ -291,6 +295,44 @@ begin
     clk <= '0'; 
     wait for cc/2;
   end process clkgen;
+
+	pixclkgen: process
+	begin		
+		cam_pixclk <= '1';
+	  wait for 25 ns;
+	  cam_pixclk <= '0';
+	  wait for 25 ns;
+	end process;
+	
+	camdata: process
+	begin
+		cam_fval <= '0';
+		cam_lval <= '0';
+		cam_pixdata <= (others => '0');
+
+		wait for 5 us;
+
+		for frame in 0 to 10 loop
+			wait for 50 ns;
+			cam_fval <= '1';
+			wait for 50 ns;
+
+			for line in 0 to 480 loop
+				cam_lval <= '1';
+
+				for row in 0 to 800 loop
+					cam_pixdata <= cam_pixdata + "10000";
+					wait for 50 ns;  
+				end loop;
+
+				cam_lval <= '0';
+				wait for 600 ns;
+
+			end loop;
+			cam_fval <= '0';
+		end loop;
+
+	end process;
   
   
   test: process
@@ -335,8 +377,8 @@ begin
     
   begin
 
-		blockrdy <= '0';
-		cam_fval <= '0';
+		--blockrdy <= '0';
+		--cam_fval <= '0';
     rst <= RST_ACT;
     D_Rxd <= '1';
     aux_uart_rx <= '1';
@@ -344,21 +386,21 @@ begin
     rst <= not RST_ACT;
 		
 		icwait(500);
-		cam_fval <= '1';
+		--cam_fval <= '1';
 		icwait(10);
-		cam_fval <= '0';
+		--cam_fval <= '0';
 		icwait(50);
 
-		for A in 0 to 480 loop
-			for I in 0 to 24 loop
-				blockrdy <= '1';
-				icwait(1);
-				blockrdy <= '0';
-				icwait(1);
-				wait for 1650 ns;
-			end loop;
-			wait for 2000 ns;
-		end loop;
+--		for A in 0 to 480 loop
+--			for I in 0 to 24 loop
+--				blockrdy <= '1';
+--				icwait(1);
+--				blockrdy <= '0';
+--				icwait(1);
+--				wait for 1650 ns;
+--			end loop;
+--			wait for 2000 ns;
+--		end loop;
 
 
     -- wait until bootloader is ready to receive program

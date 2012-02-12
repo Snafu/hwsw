@@ -69,7 +69,7 @@ signal rstint : std_ulogic;
 begin
 
 
-  comb : process(r, exti, extsel, key1, key2, key3, sw0, sw1, sw2, sw3, sw4, sw5, sw6, sw7, sw8, sw9, sw10)
+  comb : process(r, exti, extsel, key1, key2, key3, sw0, sw1, sw2, sw3, sw4, sw5, sw6, sw7, sw8, sw9, sw10, sw11, sw12, sw13, sw14, sw15, sw16, sw17)
     variable v : reg_type;
   begin
     v := r;

@@ -230,7 +230,7 @@ END SYN;
 -- Retrieval info: CONNECT: q 0 0 32 0 @q_b 0 0 32 0
 -- Retrieval info: GEN_FILE: TYPE_NORMAL dp_pixelram.vhd TRUE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL dp_pixelram.inc FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL dp_pixelram.cmp TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL dp_pixelram.cmp FALSE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL dp_pixelram.bsf FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL dp_pixelram_inst.vhd TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL dp_pixelram_inst.vhd FALSE
 -- Retrieval info: LIB_FILE: altera_mf

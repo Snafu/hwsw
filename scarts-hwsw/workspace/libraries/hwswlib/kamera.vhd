@@ -27,15 +27,6 @@ use work.kameralib.all;
 
 entity kamera is
 
-  generic(
-		pindex      : integer := 0;
-		paddr       : integer := 0;
-		pmask       : integer := 16#fff#;
-		hindex      : integer := 0;
-		hirq        : integer := 0;
-		ahbaccsz    : integer := 32
-	);
-  
 	port (
 		rst							: in std_logic;	-- Synchronous reset
 		clk							: in std_logic;
@@ -48,10 +39,7 @@ entity kamera is
 		dp_wren					: out std_logic;
 		dp_wraddr				: out std_logic_vector(8 downto 0);
 		
-		pixelburstReady	: out std_logic;
-		
-		whichLine_dbg		: out std_logic;
-		burstCount_dbg	: out std_logic_vector(4 downto 0)
+		pixelburstReady	: out std_logic
     );
 end ;
 
@@ -68,8 +56,8 @@ architecture rtl of kamera is
 	type colors_t is (R, G, B);
 	type pixel_t is array (colors_t'left to colors_t'right) of std_logic_vector(7 downto 0);
 
-	signal dot, dot_next, dot_nnext			: std_logic_vector(7 downto 0);
-	signal lastdot, lastdot_next				: std_logic_vector(7 downto 0);
+	signal dot, dot_next								: std_logic_vector(7 downto 0);
+	signal lastdot											: std_logic_vector(7 downto 0);
 	signal state, state_next						: state_t := NOINIT;
 	signal rdreq, rdreq_next						: std_logic := '0';
 	signal linecount, linecount_next		: std_logic_vector(8 downto 0);
@@ -77,7 +65,7 @@ architecture rtl of kamera is
 	signal pixelcount, pixelcount_next	: std_logic_vector(9 downto 0);
 	signal nfval												: std_logic;
 	signal pixel												: pixel_t;
-	signal dotmatrix, dotmatrix_next		: dotmatrix_t;
+	signal dotmatrix										: dotmatrix_t;
 	signal convert											: std_logic;
 	signal dpwren												: std_logic;
 	signal dpaddr, dpaddr_next					: std_logic_vector(8 downto 0);
@@ -90,7 +78,7 @@ begin
 		data	 	=> pixdata(11 downto 4),
 		rdreq	 	=> rdreq,
 		sclr	 	=> nfval,
-		q				=> lastdot_next,
+		q				=> lastdot,
 		wrreq		=> lval 
 	);
 
@@ -146,7 +134,7 @@ begin
 		end if;
 	end process;
 
-	fsm : process(rst, convert, pixelcount, linecount, colcount)
+	fsm : process(rst, convert, pixelcount, linecount, colcount, dotmatrix, dpaddr)
 	begin
 		-- defaults
 		colcount_next <= colcount;
@@ -175,10 +163,10 @@ begin
 			pixelcount_next <= pixelcount + 1;
 
 			-- interpolate pixels TODO: average g1 and g2
-			if colcount(1) = '0' then
-				pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
-			else
+			if colcount(0) = '1' then
 				pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
+			else
+				pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
 			end if;
 
 			dpwren <= '1';
@@ -208,11 +196,10 @@ begin
 	pixclk_reg : process(rst, pixclk)
 	begin
 		if rst = '0' then
-			dot <= (others => '0');
 			linecount <= (others => '0');
 			rdreq <= '0';
 			state <= NOINIT;
-			lastdot <= (others => '0');
+			dot <= (others => '0');
 			colcount <= (others => '0');
 			dotmatrix <= (others => (others => (others => '0')));
 			pixelcount <= (others => '0');
@@ -221,18 +208,15 @@ begin
 			dpaddr <= (others => '0');
 		else
 			if rising_edge(pixclk) then
-				dot_nnext <= pixdata(11 downto 4);
-				dot_next <= dot_nnext;
+				dot_next <= pixdata(11 downto 4);
+				dot <= dot_next;
 			end if;
 
 			if falling_edge(pixclk) then
 				linecount <= linecount_next;
-				dot <= dot_next;
-				lastdot <= lastdot_next;
 				colcount <= colcount_next;
 				state <= state_next;
 				rdreq <= rdreq_next;
-				dotmatrix <= dotmatrix_next;
 				pixelcount <= pixelcount_next;
 				convert <= rdreq;
 
@@ -241,10 +225,10 @@ begin
 				dp_wraddr <= dpaddr_next;
 				dp_data <= x"00" & pixel(R) & pixel(G) & pixel(B);
 
-				dotmatrix(0)(0) <= dotmatrix(0)(1);
-				dotmatrix(0)(1) <= lastdot_next;
-				dotmatrix(1)(0) <= dotmatrix(1)(1);
-				dotmatrix(1)(1) <= dot_next;
+				dotmatrix(0)(1) <= dotmatrix(0)(0);
+				dotmatrix(0)(0) <= lastdot;
+				dotmatrix(1)(1) <= dotmatrix(1)(0);
+				dotmatrix(1)(0) <= dot;
 			end if;
 		end if;
 	end process;

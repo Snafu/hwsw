@@ -58,15 +58,6 @@ package kameralib is
 	end record;
 	
 	component kamera
-		generic(
-			pindex      : integer := 0;
-			paddr       : integer := 0;
-			pmask       : integer := 16#fff#;
-			hindex      : integer := 0;
-			hirq        : integer := 0;
-			ahbaccsz    : integer := 32
-			);
-		
 		port (
 			rst			: in std_logic;           -- Synchronous reset
 			clk			: in std_logic;
@@ -78,10 +69,8 @@ package kameralib is
 			dp_data		: out std_logic_vector(31 downto 0);
 			dp_wren		: out std_logic;
 			dp_wraddr	: out std_logic_vector(8 downto 0);
-			pixelburstReady : out std_logic;
-			
-			whichLine_dbg	: out std_logic;
-			burstCount_dbg	: out std_logic_vector(4 downto 0)			
+
+			pixelburstReady : out std_logic
 			);
 	end component;
 
