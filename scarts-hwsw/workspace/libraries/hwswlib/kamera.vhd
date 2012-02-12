@@ -37,20 +37,20 @@ entity kamera is
 	);
   
 	port (
-		rst				: in std_logic;           -- Synchronous reset
-		clk				: in std_logic;
-		pixclk			: in std_logic;
-		fval				: in std_logic;
-		lval				: in std_logic;
-		pixdata			: in std_logic_vector(11 downto 0);
+		rst							: in std_logic;	-- Synchronous reset
+		clk							: in std_logic;
+		pixclk					: in std_logic;
+		fval						: in std_logic;
+		lval						: in std_logic;
+		pixdata					: in std_logic_vector(11 downto 0);
 		
-		dp_data			: out std_logic_vector(31 downto 0);
-		dp_wren			: out std_logic;
-		dp_wraddr		: out std_logic_vector(8 downto 0);
+		dp_data					: out std_logic_vector(31 downto 0);
+		dp_wren					: out std_logic;
+		dp_wraddr				: out std_logic_vector(8 downto 0);
 		
 		pixelburstReady	: out std_logic;
 		
-		whichLine_dbg	: out std_logic;
+		whichLine_dbg		: out std_logic;
 		burstCount_dbg	: out std_logic_vector(4 downto 0)
     );
 end ;
@@ -58,8 +58,11 @@ end ;
 architecture rtl of kamera is
   
   constant PIXELBURSTLEN		: integer := 15;
-	constant LASTBLINE				: integer := 478;
-	type state_t is (NOINIT, WAITFRAME, WAITFIRST, FIRST, WAITBLINE, BLINE, WAITLAST, LAST);
+	constant MAXLINE					: integer := 481;
+	constant MAXCOL						: integer := 801;
+	constant LASTBLINE				: integer := MAXLINE-2;
+
+	type state_t is (NOINIT, WAITFRAME, WAITFIRST, FIRST, WAITNORMAL, NORMAL);
 	type dotline_t is array (0 to 1) of std_logic_vector(7 downto 0);
 	type dotmatrix_t is array (0 to 1) of dotline_t;
 	type colors_t is (R, G, B);
@@ -67,9 +70,9 @@ architecture rtl of kamera is
 
 	signal dot, dot_next, dot_nnext			: std_logic_vector(7 downto 0);
 	signal lastdot, lastdot_next				: std_logic_vector(7 downto 0);
-	signal state, state_next						: state_t;
+	signal state, state_next						: state_t := NOINIT;
 	signal rdreq, rdreq_next						: std_logic := '0';
-	signal linecount, linecount_next		: integer range 0 to 480;
+	signal linecount, linecount_next		: std_logic_vector(8 downto 0);
 	signal colcount, colcount_next			: std_logic_vector(9 downto 0);
 	signal pixelcount, pixelcount_next	: std_logic_vector(9 downto 0);
 	signal nfval												: std_logic;
@@ -83,74 +86,57 @@ begin
 	nfval <= not fval;
 	
 	bayerbuf : bayerbuffer PORT MAP (
-		clock	 => pixclk,
-		data	 => pixdata(11 downto 4),
-		rdreq	 => rdreq,
-		sclr => nfval,
-		q	 => lastdot_next,
-		wrreq	 => lval 
+		clock	 	=> pixclk,
+		data	 	=> pixdata(11 downto 4),
+		rdreq	 	=> rdreq,
+		sclr	 	=> nfval,
+		q				=> lastdot_next,
+		wrreq		=> lval 
 	);
 
-	fsm_control: process(rst, state, linecount, colcount, fval, lval, rdreq)
+	fsm_control: process(rst, state, linecount, colcount, fval, lval)
 	begin
 
 		state_next <= state;
 		linecount_next <= linecount;
-		rdreq_next <= rdreq;
+		rdreq_next <= lval;
 		
 		case state is
 		when NOINIT =>
+			rdreq_next <= '0';
 			if fval = '0' then
 				state_next <= WAITFRAME;
 			end if;
 
 		when WAITFRAME =>
+			rdreq_next <= '0';
+			linecount_next <= (others => '0');
 			if fval = '1' then
-				linecount_next <= 0;
 				state_next <= WAITFIRST;
 			end if;
 
 		when WAITFIRST =>
+			rdreq_next <= '0';
 			if lval = '1' then
-				rdreq_next <= '0';
 				state_next <= FIRST;
 			end if;
 
 		when FIRST =>
+			rdreq_next <= '0';
 			if lval = '0' then
-				linecount_next <= linecount + 1;
-				rdreq_next <= '0';
-				state_next <= WAITBLINE;
+				linecount_next <= linecount + '1';
+				state_next <= WAITNORMAL;
 			end if;
 
-		when WAITBLINE =>
+		when WAITNORMAL =>
 			if lval = '1' then
-				rdreq_next <= '1';
-				state_next <= BLINE;
+				state_next <= NORMAL;
 			end if;
 
-		when BLINE =>
+		when NORMAL =>
 			if lval = '0' then
-				linecount_next <= linecount + 1;
-				rdreq_next <= '0';
-				if linecount = LASTBLINE then
-					state_next <= WAITLAST;
-				else
-					state_next <= WAITBLINE;
-				end if;
-			end if;
-
-		when WAITLAST =>
-			if lval = '1' then
-				rdreq_next <= '1';
-				state_next <= LAST;
-			end if;
-
-		when LAST =>
-			if lval = '0' then
-				linecount_next <= 0;
-				rdreq_next <= '0';
-				state_next <= WAITFIRST;
+				linecount_next <= linecount + '1';
+				state_next <= WAITNORMAL;
 			end if;
 
 		end case;
@@ -173,16 +159,20 @@ begin
 
 		if convert = '0' then
 			colcount_next <= (others => '0');
+			pixelcount_next <= (others => '0');
+			dpaddr_next <= (others => '0');
+			-- signal last block ready
+			if pixelcount = conv_std_logic_vector(MAXCOL-2,10) then
+				pixelburstReady <= '1';
+			end if;
 		else
 			colcount_next <= colcount + '1';
-			if colcount = conv_std_logic_vector(800,10) then
+			if colcount = conv_std_logic_vector(MAXCOL-1,10) then
 				colcount_next <= (others => '0');
 			end if;
 
+			-- last pixel (one less than last col)
 			pixelcount_next <= pixelcount + 1;
-			if pixelcount = conv_std_logic_vector(799,10) then
-				pixelcount_next <= (others => '0');
-			end if;
 
 			-- interpolate pixels TODO: average g1 and g2
 			if colcount(1) = '0' then
@@ -194,23 +184,22 @@ begin
 			dpwren <= '1';
 			dpaddr_next <= dpaddr + '1';
 
-			-- delay pixel counter until first pixel ready
+			-- delay until first pixel ready
 			if colcount < "0000000010" then
 				pixelcount_next <= (others => '0');
-			else
+				dpaddr_next <= (others => '0');
 			end if;
 
 			-- delay DP RAM write until first pixel ready
 			if colcount < "0000000001" then
 				pixel <= (others => (others => '0'));
 				dpwren <= '0';
-				dpaddr_next <= dpaddr;
 			end if;
-				-- signal block ready
-				if (pixelcount(3 downto 0) = "0000" and pixelcount /= "0000000000")
-					or pixelcount = conv_std_logic_vector(798, 10) then
-					pixelburstReady <= '1';
-				end if;
+
+			-- signal block ready
+			if pixelcount(3 downto 0) = "0000" and pixelcount /= "0000000000" then
+				pixelburstReady <= '1';
+			end if;
 
 		end if;
 	end process;
@@ -220,7 +209,7 @@ begin
 	begin
 		if rst = '0' then
 			dot <= (others => '0');
-			linecount <= 0;
+			linecount <= (others => '0');
 			rdreq <= '0';
 			state <= NOINIT;
 			lastdot <= (others => '0');
@@ -229,7 +218,7 @@ begin
 			pixelcount <= (others => '0');
 			convert <= '0';
 
-			dpaddr <= (others => '1');
+			dpaddr <= (others => '0');
 		else
 			if rising_edge(pixclk) then
 				dot_nnext <= pixdata(11 downto 4);
