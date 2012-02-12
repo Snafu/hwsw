@@ -72,7 +72,7 @@ package i2clib is
 		
 		extsel			: in	std_logic;
 		exti				: in  module_in_type;
-		exto				: out module_out_type;
+		--exto			: out module_out_type;
 		
 		-- I2C signals
 		--i2ci			: in  i2c_in_type;

@@ -214,7 +214,7 @@ architecture behaviour of top is
 	--signal i2ci_pin			:	i2c_in_type;
 	signal i2co_pin				:	i2c_out_type;
 	signal i2c_config_sel	:	std_logic	:= '0';
-  signal i2c_exto				: module_out_type;
+  --signal i2c_exto				: module_out_type;
 	
 	signal cam_clock				: std_logic;
 	signal cam_counter			: integer range 0 to 4;
@@ -481,7 +481,7 @@ begin
 			
 			extsel     => i2c_config_sel,			
 			exti       => exti,
-			exto       => i2c_exto,
+			--exto       => i2c_exto,
 			
 			--i2ci	=>	i2ci_pin,
 			i2co	=>	i2co_pin
