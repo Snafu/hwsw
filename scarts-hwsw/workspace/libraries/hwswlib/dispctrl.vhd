@@ -191,7 +191,7 @@ begin
 		if col = MAXCOL-1 then
 			col_n <= 0;
 			pixeladdr_n <= "000000000";
-			wout.address := wout.address + x"640";
+			--wout.address := wout.address + x"640"; --dbg
 			if row = MAXROW-1 then
 				row_n <= 0;
 				wout.address := FIFOSTART;

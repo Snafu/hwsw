@@ -56,10 +56,12 @@ void initCamera(void)
 	// //	i2c_write(0x0b,3);
 
 	// row size
-	i2c_write(ROW_SIZE_REG, 1439);					// should be OK
+	//i2c_write(ROW_SIZE_REG, 1439);					// should be OK
+	i2c_write(ROW_SIZE_REG, 1441);					// should be OK
 
 	// col size
-	i2c_write(COL_SIZE_REG, 2399);					// should be OK
+	//i2c_write(COL_SIZE_REG, 2399);					// should be OK
+	i2c_write(COL_SIZE_REG, 2401);					// should be OK
 
 	// row skipping
 	i2c_write(ROW_ADDRESS_MODE_REG, 2);					// OK!
