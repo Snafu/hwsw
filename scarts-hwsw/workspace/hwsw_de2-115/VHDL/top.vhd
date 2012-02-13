@@ -120,6 +120,8 @@ entity top is
 		sysclk				:	out std_logic;
 		pxl_clk_dbg			:	out std_logic;
 		cam_resetN_dbg	: out std_logic;
+
+		camstate				: out state_t;
 		
 		--sysclk_fourth		: out std_logic;
 		ahbready_dbg		: out std_logic;
@@ -570,6 +572,7 @@ begin
 		rdaddress	=> rdaddress_sig,
 		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
+		--wrclock		=> cam_pixclk,
 		wrclock		=> pixclk_sync,
 		wren			=> wren_sig,
 		q					=> q_sig
@@ -582,18 +585,25 @@ begin
   cam0 : kamera
     port map
     (
+			camstate	=> camstate, --dbg
 			rst				=> syncrst,
 			clk				=> clk,
-			pixclk		=> cam_pixclk, --_sync,
-			fval			=> cam_fval, --_sync,
-			lval			=> cam_lval, --_sync,
-			pixdata		=> cam_pixdata, --_sync,
+			--pixclk		=> cam_pixclk,
+			--fval			=> cam_fval,
+			--lval			=> cam_lval,
+			--pixdata		=> cam_pixdata,
+			pixclk		=> pixclk_sync,
+			fval			=> cam_fval_sync,
+			lval			=> cam_lval_sync,
+			pixdata		=> cam_pixdata_sync,
 			
 			dp_data		=> data_sig,
 			dp_wren		=> wren_sig,
 			dp_wraddr	=> wraddress_sig,
 
-			pixelburstReady => pxReady_sig
+			pixelburstReady => pxReady_sig,
+
+			init_ready => hw_initialized
     ); 
 	
 	cam_trigger <= '0';		 		-- INVERT_TRIGGER must be set by i2cconfig(reg 0x0B) when this pin is LOW
@@ -710,7 +720,7 @@ begin
   begin
   
 	cam_counter_next <= cam_counter + 1;
-	cam_pll_sig <= '0';
+	cam_pll_sig <= '1';
 				
 	if(cam_counter < 2)
 	then

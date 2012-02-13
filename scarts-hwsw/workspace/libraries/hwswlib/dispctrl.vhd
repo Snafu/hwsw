@@ -142,7 +142,7 @@ begin
 		
 		-- wait for i2c - initialization, signaled by extension module
 		when WAIT_INIT =>
-			if  init_old /= init_ready and init_ready = '1' then
+			if init_old /= init_ready and init_ready = '1' then
 				writeState_n <= NOINIT;
 			end if;
 			
@@ -173,13 +173,14 @@ begin
 				col_n <= col + 1;
 
 				-- end of block
-				if wout.address(5 downto 2) = "0000" then
+				if wout.address(6 downto 2) = "00000" then
 					blocks := blocks - 1;
 
 					writeState_n <= IDLE;
 				else
 					pixeladdr_n <= pixeladdr + '1';
 				end if;
+				--pixeladdr_n <= pixeladdr + '1';
 			end if;
 
 		when others =>
@@ -238,7 +239,7 @@ begin
   begin
 		if rst = '0' then
 			-- rising edge
-			writeState <= NOINIT; --WAIT_INIT;
+			writeState <= WAIT_INIT;
 			fval_old <= '0';
 			blockrdy_old <= '0';
 			blockCount <= 0;

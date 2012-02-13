@@ -370,6 +370,7 @@ process(clk, rst)
 				end if;
 			when STOP_CLK					=>
 					i2c_state_next <= IDLE;
+					sdc_sig <= '1';
 			
 		end case;
 		

@@ -135,10 +135,15 @@ int main(int argc, char **argv)
 	// CAM initialization
 	initCamera();
 
-	signal_init();		// cam - config completed. signal it to who it belongs(dispctrl so far)
-
 	uint32_t i;
 	uint32_t j;
+
+	for(i = 0; i < 10; i++) {
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	}
+	
+	signal_init();		// cam - config completed. signal it to who it belongs(dispctrl so far)
+
 
 	
 	// slew rate settings
@@ -162,7 +167,6 @@ int main(int argc, char **argv)
 		dis7seg_displayHexUInt32(&dispHandle, 0, value | (keys << 16));  
 
 		if(keys != keys_old) {
-			/*
 			if(keys & (1<<KEY3))
 				i2c_write(GAIN_RED_REG, value);
 			if(keys & (1<<KEY2)) {
@@ -171,9 +175,10 @@ int main(int argc, char **argv)
 			}
 			if(keys & (1<<KEY1))
 				i2c_write(GAIN_BLUE_REG, value);
-			*/
+			/*
 			if(keys & (1<<KEY3))
 				initSVGA();
+			*/
 		}
 
 		keys_old = keys;

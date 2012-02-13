@@ -56,11 +56,14 @@ package kameralib is
 		ub			: std_logic;
 		lb			: std_logic;
 	end record;
+
+	type state_t is (WAIT_INIT, NOINIT, WAITFRAME, WAITFIRST, FIRST, WAITNORMAL, NORMAL);
 	
 	component kamera
 		port (
-			rst			: in std_logic;           -- Synchronous reset
-			clk			: in std_logic;
+			camstate	: out state_t; --dbg
+			rst				: in std_logic;           -- Synchronous reset
+			clk				: in std_logic;
 			pixclk		: in std_logic;
 			fval			: in std_logic;
 			lval			: in std_logic;
@@ -70,7 +73,9 @@ package kameralib is
 			dp_wren		: out std_logic;
 			dp_wraddr	: out std_logic_vector(8 downto 0);
 
-			pixelburstReady : out std_logic
+			pixelburstReady : out std_logic;
+
+			init_ready			: in std_logic
 			);
 	end component;
 
