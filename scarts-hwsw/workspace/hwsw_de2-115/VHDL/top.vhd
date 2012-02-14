@@ -25,6 +25,7 @@ use work.scarts_amba_pkg.all;
 use work.pkg_dis7seg.all;
 use work.pkg_counter.all;
 use work.ext_miniUART_pkg.all;
+use work.sync_pkg.all;
 
 library grlib;
 use grlib.amba.all;
@@ -84,7 +85,8 @@ entity top is
 		cam_lval			: in std_logic;
 		cam_pixdata		: in std_logic_vector(11 downto 0);
 		cam_sram_ctrl	: out sram_ctrl_t;
-		cam_sram_data	: buffer std_logic_vector(15 downto 0);
+		--cam_sram_data	: buffer std_logic_vector(15 downto 0);
+		cam_sram_data	: inout std_logic_vector(15 downto 0);
 		cam_resetN		: out std_logic;
 		cam_pll			: out std_logic;
 		cam_trigger		: out std_logic;		-- hardware trigger for camera
@@ -123,7 +125,8 @@ entity top is
 
 		camstate				: out state_t;
 		
-		--sysclk_fourth		: out std_logic;
+		wren_sig_dbg	: out std_logic;
+		
 		ahbready_dbg		: out std_logic;
 		
 		cam_fval_dbg		: out std_logic;
@@ -138,10 +141,12 @@ architecture behaviour of top is
   
 	-- clock signals
 	signal cam_pll_sig			: std_logic;
-	--signal sysclk_fourth_sig		: std_logic;
+	--signal sysclk_fourth_sig	: std_logic;
+	signal clk_pixel				: std_logic;
   
 	-- kamera signals
 	signal pxReady_sig		: std_logic;
+	signal pxReady_sync		: std_logic;
 	signal whichLine_sig		: std_logic;
 	signal pixclk_sync		: std_logic;
 	signal cam_pixdata_sync	: std_logic_vector(11 downto 0);
@@ -229,6 +234,18 @@ architecture behaviour of top is
   -- extension module: signal when camera is configured by i2c
   signal hw_initialized		: std_logic;
   
+  component cam_pll_comp IS
+	PORT
+	(
+		areset		: IN STD_LOGIC  := '0';
+		inclk0		: IN STD_LOGIC  := '0';
+		c0		: OUT STD_LOGIC 
+	);
+	END component;
+  
+  
+  
+  
   component altera_pll IS
     PORT
       (
@@ -241,9 +258,6 @@ architecture behaviour of top is
    END component;
 
 begin
-
-	whichLine_sig <= '0';
-	burstCount_dbg_sig <= (others => '0');
 	
   altera_pll_inst : altera_pll PORT MAP (
     areset	 => '0',
@@ -252,7 +266,72 @@ begin
     c1	         => vga_clk_int,
     locked	 => open
     );
+	 
+	cam_pll_inst : cam_pll_comp PORT MAP (
+		areset   => '0',
+		inclk0   => cam_pixclk,
+		c0       => clk_pixel
+		);
+	
+	sync_fval : sync
+		generic map
+		(
+			SYNC_STAGES => 2,
+			RESET_VALUE => '0'
+		)
+		port map
+		(
+			sys_clk => clk_pixel,
+			sys_res_n => rst,
+			data_in => cam_fval,
+			data_out => cam_fval_sync
+		);
+	
+	sync_lval : sync
+		generic map
+		(
+			SYNC_STAGES => 2,
+			RESET_VALUE => '0'
+		)
+		port map
+		(
+			sys_clk => clk_pixel,
+			sys_res_n => rst,
+			data_in => cam_lval,
+			data_out => cam_lval_sync
+		);
+	
+	
+		sync_pixdat : for i in 11 downto 0 generate
+			
+			sync_pixbit: sync generic map
+			(
+				SYNC_STAGES => 2,
+				RESET_VALUE => '0'
+			)
+			port map
+			(
+				sys_clk => clk_pixel,
+				sys_res_n => rst,
+				data_in => cam_pixdata(i),
+				data_out => cam_pixdata_sync(i)
+			);
+		end generate;
 
+	sync_pxReady : sync
+		generic map
+		(
+			SYNC_STAGES => 2,
+			RESET_VALUE => '0'
+		)
+		port map
+		(
+			sys_clk => clk,
+			sys_res_n => rst,
+			data_in => pxReady_sig,
+			data_out => pxReady_sync
+		);
+		
   scarts_unit: scarts
     generic map (
     CONF => (
@@ -555,7 +634,7 @@ begin
 			fval => cam_fval_sync,
 			rdaddress => rdaddress_sig,
 			rddata => q_sig,
-			blockrdy => pxReady_sig,
+			blockrdy => pxReady_sync,
 			--blockrdy => blockrdy, --dbg
 			
 			init_ready    => hw_initialized		-- HARI: signal by sw-extension AFTER i2c init
@@ -572,10 +651,9 @@ begin
 		rdaddress	=> rdaddress_sig,
 		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
-		--wrclock		=> cam_pixclk,
-		wrclock		=> pixclk_sync,
+		wrclock		=> clk_pixel,
 		wren			=> wren_sig,
-		q					=> q_sig
+		q				=> q_sig
 	);
 	
 	------------------------------------------------------------------------------- 
@@ -587,12 +665,7 @@ begin
     (
 			camstate	=> camstate, --dbg
 			rst				=> syncrst,
-			clk				=> clk,
-			--pixclk		=> cam_pixclk,
-			--fval			=> cam_fval,
-			--lval			=> cam_lval,
-			--pixdata		=> cam_pixdata,
-			pixclk		=> pixclk_sync,
+			pixclk		=> clk_pixel,
 			fval			=> cam_fval_sync,
 			lval			=> cam_lval_sync,
 			pixdata		=> cam_pixdata_sync,
@@ -609,17 +682,19 @@ begin
 	cam_trigger <= '0';		 		-- INVERT_TRIGGER must be set by i2cconfig(reg 0x0B) when this pin is LOW
 	cam_resetN	<= syncrst;			-- disable reset for camera
 	
-	pxl_clk_dbg <= cam_pixclk;		-- pixelclock FROM camera
-	cam_pll <= cam_pll_sig;			-- pll - feed TO camera
-	cam_pixdata_dbg <= cam_pixdata;	
+	cam_pixdata_dbg <= cam_pixdata_sync;	
 	
 	-- debugging only
+	cam_fval_dbg  <= cam_fval_sync;
+	cam_lval_dbg  <= cam_lval_sync;
 	cam_resetN_dbg <= syncrst;		
 	blockrdy_dbg <= pxReady_sig;
 	--sysclk_fourth <= sysclk_fourth_sig;		-- 12.5 MHz inputclock for camera-pll
 	sysclk <= clk;
 	burstCount_dbg <= burstCount_dbg_sig;
 	whichLine_top_dbg <= whichLine_sig;
+	pxl_clk_dbg <= clk_pixel;		-- pixelclock FROM camera
+	wren_sig_dbg <= wren_sig;
 	
   -----------------------------------------------------------------------------
   -- Scarts extension modules
@@ -745,21 +820,9 @@ begin
       -- input flip-flops
       --
       syncrst <= rst;
-		
-		--
-		-- synronizer stage for connections cam-instance <--> cam-HW
-		--
-		cam_fval_dbg  <= cam_fval;
-		cam_fval_sync <= cam_fval;
-		
-		cam_lval_dbg  <= cam_lval;
-		cam_lval_sync <= cam_lval;
-		
-		pixclk_sync <= cam_pixclk;
-		--cam_pll <= cam_pll_sig;
-				
 		cam_counter <= cam_counter_next;
-		cam_pixdata_sync <= cam_pixdata;
+		cam_pll <= cam_pll_sig;				-- pll - feed TO camera
+		
     end if;
   end process;
 
