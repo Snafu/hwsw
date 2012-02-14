@@ -64,7 +64,6 @@ package kameralib is
 			camstate	: out state_t; --dbg
 			rst				: in std_logic;           -- Synchronous reset
 			clk				: in std_logic;
-			pixclk		: in std_logic;
 			fval			: in std_logic;
 			lval			: in std_logic;
 			pixdata		: in std_logic_vector(11 downto 0);

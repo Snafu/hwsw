@@ -398,6 +398,11 @@ set_location_assignment PIN_AA24 -to sw13
 set_location_assignment PIN_AB23 -to sw12
 set_location_assignment PIN_AB24 -to sw11
 
+set_global_assignment -name QIP_FILE ../../libraries/hwswlib/cam_pll.qip
+set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/cam_pll.vhd
+set_global_assignment -name VHDL_FILE ../../../VHDL/common/synchronizer/sync_beh.vhd
+set_global_assignment -name VHDL_FILE ../../../VHDL/common/synchronizer/sync.vhd
+set_global_assignment -name VHDL_FILE ../../../VHDL/common/synchronizer/sync_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/rgb2ycbcr.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/buttons.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/hwswlib.vhd

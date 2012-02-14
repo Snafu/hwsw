@@ -98,7 +98,7 @@ architecture rtl of dispctrl is
 	signal fval_old, fval_old_n : std_logic := '0';
 	signal init_old, init_old_n : std_logic := '0';
 	signal blockrdy_old, blockrdy_old_n : std_logic;
-	signal blockCount, blockCount_n : integer range 0 to 1023;
+	signal blockCount, blockCount_n : integer range 0 to 255;
 	signal output, output_n : write_t;
 	signal pixeladdr, pixeladdr_n : std_logic_vector(8 downto 0) := "000000000";
 	signal col, col_n : integer range 0 to MAXCOL;
@@ -201,7 +201,10 @@ begin
 		-- force to stay within framebuffer
 		if wout.address >= FIFOEND then
 			wout.address := FIFOSTART;
+			wout.data := x"00000000";
 			pixeladdr_n <= "000000000";
+			col_n <= 0;
+			row_n <= 0;
 		end if;
 		
 		output_n <= wout;

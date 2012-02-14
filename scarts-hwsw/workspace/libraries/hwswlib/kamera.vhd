@@ -16,6 +16,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library grlib;
 use grlib.stdlib.all;
@@ -31,7 +32,6 @@ entity kamera is
 		camstate				: out state_t; --dbg
 		rst							: in std_logic;	-- Synchronous reset
 		clk							: in std_logic;
-		pixclk					: in std_logic;
 		fval						: in std_logic;
 		lval						: in std_logic;
 		pixdata					: in std_logic_vector(11 downto 0);
@@ -78,7 +78,7 @@ architecture rtl of kamera is
 begin
 
 	bayerbuf : bayerbuffer PORT MAP (
-		clock	 	=> pixclk,
+		clock	 	=> clk,
 		data	 	=> pixdata(11 downto 4),
 		rdreq	 	=> rdreq,
 		sclr	 	=> clearfifo,
@@ -166,11 +166,14 @@ begin
 		if fval = '0' then
 			rdreq_next <= '0';
 			wrreq <= '0';
+			linecount_next <= (others => '0');
 			state_next <= WAITFRAME;
 		end if;
 	end process;
 
 	fsm : process(rst, state, convert, pixelcount, linecount, colcount, dotmatrix, dpaddr)
+		variable green	: std_logic_vector(8 downto 0);
+		variable g1, g2	: std_logic_vector(8 downto 0);
 	begin
 		-- defaults
 		colcount_next <= colcount;
@@ -200,9 +203,17 @@ begin
 				pixelcount_next <= pixelcount + 1;
 	
 				-- interpolate pixels TODO: average g1 and g2
-				if colcount(0) = '0' then
+				if colcount(0) = '1' then
+					g1 := "0" & dotmatrix(0)(1);
+					g2 := "0" & dotmatrix(1)(0);
+					green := std_logic_vector(unsigned(g1) + unsigned(g2));
+					--pixel <= (R => dotmatrix(0)(0), G => green(8 downto 1), B => dotmatrix(1)(1));
 					pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
 				else
+					g1 := "0" & dotmatrix(0)(0);
+					g2 := "0" & dotmatrix(1)(1);
+					green := std_logic_vector(unsigned(g1) + unsigned(g2));
+					--pixel <= (R => dotmatrix(0)(1), G => green(8 downto 1), B => dotmatrix(1)(0));
 					pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
 				end if;
 	
@@ -230,23 +241,40 @@ begin
 		end if;
 	end process;
 
-
 	clk_reg : process(rst, clk)
 	begin
-		if rst = '0' then
-			init_old <= '0';
-		else
+		if rising_edge(clk) then
+			dot_next <= pixdata(11 downto 4);
+			dot <= dot_next;
 			init_old <= init_old_n;
 		end if;
-	end process;
 
+		if falling_edge(clk) then
+			linecount <= linecount_next;
+			colcount <= colcount_next;
+			state <= state_next;
+			rdreq <= rdreq_next;
+			pixelcount <= pixelcount_next;
+			convert <= rdreq;
+			convert_old <= convert;
 
-	pixclk_reg : process(rst, pixclk)
-	begin
+			dpaddr <= dpaddr_next;
+			dp_wren <= dpwren;
+			dp_wraddr <= dpaddr_next;
+			dp_data <= x"00" & pixel(R) & pixel(G) & pixel(B);
+
+			dotmatrix(0)(1) <= dotmatrix(0)(0);
+			dotmatrix(0)(0) <= lastdot;
+			dotmatrix(1)(1) <= dotmatrix(1)(0);
+			dotmatrix(1)(0) <= dot;
+		end if;
+
 		if rst = '0' then
+			init_old <= '0';
+
 			linecount <= (others => '0');
 			rdreq <= '0';
-			state <= WAIT_INIT;
+			state <= NOINIT; --WAIT_INIT;
 			dot <= (others => '0');
 			colcount <= (others => '0');
 			dotmatrix <= (others => (others => (others => '0')));
@@ -255,31 +283,6 @@ begin
 			convert_old <= '0';
 
 			dpaddr <= (others => '0');
-		else
-			if rising_edge(pixclk) then
-				dot_next <= pixdata(11 downto 4);
-				dot <= dot_next;
-			end if;
-
-			if falling_edge(pixclk) then
-				linecount <= linecount_next;
-				colcount <= colcount_next;
-				state <= state_next;
-				rdreq <= rdreq_next;
-				pixelcount <= pixelcount_next;
-				convert <= rdreq;
-				convert_old <= convert;
-
-				dpaddr <= dpaddr_next;
-				dp_wren <= dpwren;
-				dp_wraddr <= dpaddr_next;
-				dp_data <= x"00" & pixel(R) & pixel(G) & pixel(B);
-
-				dotmatrix(0)(1) <= dotmatrix(0)(0);
-				dotmatrix(0)(0) <= lastdot;
-				dotmatrix(1)(1) <= dotmatrix(1)(0);
-				dotmatrix(1)(0) <= dot;
-			end if;
 		end if;
 	end process;
 end;

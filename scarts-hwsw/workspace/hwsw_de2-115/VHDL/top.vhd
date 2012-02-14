@@ -244,8 +244,6 @@ architecture behaviour of top is
 	END component;
   
   
-  
-  
   component altera_pll IS
     PORT
       (
@@ -665,7 +663,7 @@ begin
     (
 			camstate	=> camstate, --dbg
 			rst				=> syncrst,
-			pixclk		=> clk_pixel,
+			clk				=> clk_pixel,
 			fval			=> cam_fval_sync,
 			lval			=> cam_lval_sync,
 			pixdata		=> cam_pixdata_sync,

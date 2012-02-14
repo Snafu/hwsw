@@ -50,7 +50,7 @@ void initCamera(void)
 	// shutter width - lower byte
 	// default 0x797
 	i2c_write(SHUTTERW_LOWER_REG, 100);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
-	i2c_write(SHUTTER_DELAY_REG, 8000);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
+	i2c_write(SHUTTER_DELAY_REG, 7000);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
 		
 	// pause restart
 	// //	i2c_write(0x0b,3);
