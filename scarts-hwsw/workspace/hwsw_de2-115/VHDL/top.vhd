@@ -143,6 +143,7 @@ architecture behaviour of top is
 	signal cam_pll_sig			: std_logic;
 	--signal sysclk_fourth_sig	: std_logic;
 	signal clk_pixel				: std_logic;
+	signal clk_pixel_n			: std_logic;
   
 	-- kamera signals
 	signal pxReady_sig		: std_logic;
@@ -256,6 +257,8 @@ architecture behaviour of top is
    END component;
 
 begin
+
+	clk_pixel_n <= not clk_pixel;
 	
   altera_pll_inst : altera_pll PORT MAP (
     areset	 => '0',
@@ -649,7 +652,7 @@ begin
 		rdaddress	=> rdaddress_sig,
 		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
-		wrclock		=> clk_pixel,
+		wrclock		=> clk_pixel_n,
 		wren			=> wren_sig,
 		q				=> q_sig
 	);
@@ -663,7 +666,7 @@ begin
     (
 			camstate	=> camstate, --dbg
 			rst				=> syncrst,
-			clk				=> clk_pixel,
+			clk				=> clk_pixel_n,
 			fval			=> cam_fval_sync,
 			lval			=> cam_lval_sync,
 			pixdata		=> cam_pixdata_sync,
@@ -680,18 +683,22 @@ begin
 	cam_trigger <= '0';		 		-- INVERT_TRIGGER must be set by i2cconfig(reg 0x0B) when this pin is LOW
 	cam_resetN	<= syncrst;			-- disable reset for camera
 	
-	cam_pixdata_dbg <= cam_pixdata_sync;	
 	
 	-- debugging only
+	pxl_clk_dbg <= clk_pixel_n;		-- pixelclock FROM camera
 	cam_fval_dbg  <= cam_fval_sync;
 	cam_lval_dbg  <= cam_lval_sync;
+	cam_pixdata_dbg <= cam_pixdata_sync;	
+	--pxl_clk_dbg <= cam_pixclk;		-- pixelclock FROM camera
+	--cam_fval_dbg  <= cam_fval;
+	--cam_lval_dbg  <= cam_lval;
+	--cam_pixdata_dbg <= cam_pixdata;	
 	cam_resetN_dbg <= syncrst;		
 	blockrdy_dbg <= pxReady_sig;
 	--sysclk_fourth <= sysclk_fourth_sig;		-- 12.5 MHz inputclock for camera-pll
 	sysclk <= clk;
 	burstCount_dbg <= burstCount_dbg_sig;
 	whichLine_top_dbg <= whichLine_sig;
-	pxl_clk_dbg <= clk_pixel;		-- pixelclock FROM camera
 	wren_sig_dbg <= wren_sig;
 	
   -----------------------------------------------------------------------------

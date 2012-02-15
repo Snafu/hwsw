@@ -57,11 +57,11 @@ void initCamera(void)
 
 	// row size
 	//i2c_write(ROW_SIZE_REG, 1439);					// should be OK
-	i2c_write(ROW_SIZE_REG, 1441);					// should be OK
+	i2c_write(ROW_SIZE_REG, 1440);					// should be OK
 
 	// col size
 	//i2c_write(COL_SIZE_REG, 2399);					// should be OK
-	i2c_write(COL_SIZE_REG, 2401);					// should be OK
+	i2c_write(COL_SIZE_REG, 2400);					// should be OK
 
 	// row skipping
 	i2c_write(ROW_ADDRESS_MODE_REG, 2);					// OK!
@@ -81,16 +81,16 @@ void initCamera(void)
 	// unpause restart
 	//i2c_write(RESTART_REG, 1);
 
-	/*
+	//*
 	// black level calibration OFF
-	i2c_write(BLACK_LVL_CAL_REG,2);
+	i2c_write(BLACK_LVL_CAL_REG, 2);
 	
 	// Green
-	i2c_write(TEST_PATTERN_GREEN_REG,0xF00);
+	i2c_write(TEST_PATTERN_GREEN_REG, 0xFFF);
 	// Blue
-	i2c_write(TEST_PATTERN_BLUE_REG,0xAA0);
+	i2c_write(TEST_PATTERN_BLUE_REG, 0x000);
 	//	TESTPATTERN
-	i2c_write(TEST_PATTERN_BARW_REG,3);
-	i2c_write(TEST_PATTERN_CTRL_REG,(7<<3)|1);
-	*/	
+	i2c_write(TEST_PATTERN_BARW_REG, 2);
+	i2c_write(TEST_PATTERN_CTRL_REG, TEST_MONOCR_VERTICAL | TEST_ENABLE);
+	//*/	
 }
