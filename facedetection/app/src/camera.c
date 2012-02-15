@@ -25,7 +25,7 @@ void initCamera(void)
 	i2c_write(CLOCK_CONTROL_REG, 0x53);					// OK!
 
 	// invert pixel clock
-	i2c_write(PIXEL_CLOCK_CONTROL_REG, 0x8000);					// OK!
+	//i2c_write(PIXEL_CLOCK_CONTROL_REG, (1<<15));					// OK!
 
 	// OUTPUT_Slew_Rate | PIXCLK_Slew_Rate | Chip Enable
 	i2c_write(OUTPUT_CONTROL_REG, ((1<<10)|(7<<7)|(1<<1)));		// OK!
@@ -47,27 +47,39 @@ void initCamera(void)
 	// blue
 	i2c_write(GAIN_BLUE_REG, (16<<8) | (1<<6) | 32);
 
-	// shutter width - lower byte
-	// default 0x797
-	i2c_write(SHUTTERW_LOWER_REG, 100);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
-	i2c_write(SHUTTER_DELAY_REG, 7000);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
 		
 	// pause restart
 	// //	i2c_write(0x0b,3);
 
-	// row size
-	//i2c_write(ROW_SIZE_REG, 1439);					// should be OK
-	i2c_write(ROW_SIZE_REG, 1440);					// should be OK
-
-	// col size
-	//i2c_write(COL_SIZE_REG, 2399);					// should be OK
-	i2c_write(COL_SIZE_REG, 2400);					// should be OK
-
+	/*
+	 * Resolution 400x240
+	 */
+	/*
+	i2c_write(COL_SIZE_REG, 2399);
+	i2c_write(ROW_SIZE_REG, 1439);
 	// row skipping
-	i2c_write(ROW_ADDRESS_MODE_REG, 2);					// OK!
-
+	i2c_write(ROW_ADDRESS_MODE_REG, 2);
 	// col skipping
-	i2c_write(COL_ADDRESS_MODE_REG, 2);					// OK!
+	i2c_write(COL_ADDRESS_MODE_REG, 2);
+	// shutter width - lower byte
+	// default 0x797
+	i2c_write(SHUTTERW_LOWER_REG, 100);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
+	i2c_write(SHUTTER_DELAY_REG, 5000);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
+	*/
+
+	/*
+	 * Resolution 800x480
+	 */
+	i2c_write(COL_SIZE_REG, 1599);
+	i2c_write(ROW_SIZE_REG, 959);
+	// row skipping
+	i2c_write(ROW_ADDRESS_MODE_REG, 0);
+	// col skipping
+	i2c_write(COL_ADDRESS_MODE_REG, 0);
+	// shutter width - lower byte
+	// default 0x797
+	i2c_write(SHUTTERW_LOWER_REG, 100);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
+	i2c_write(SHUTTER_DELAY_REG, 0);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
 
 	// mirror rows
 	i2c_write(READ_MODE2_REG, (1<<15));				// OK!
@@ -77,11 +89,10 @@ void initCamera(void)
 
 	i2c_write(READ_MODE1_REG, (0x4006 | (1<<8) | (1<<9)));	// FUNKT --> INVERT TRIGGER SETZEN da HW-trigger-pin auf LOW?
 
-
+#ifdef TEST
 	// unpause restart
 	//i2c_write(RESTART_REG, 1);
 
-	//*
 	// black level calibration OFF
 	i2c_write(BLACK_LVL_CAL_REG, 2);
 	
@@ -90,7 +101,11 @@ void initCamera(void)
 	// Blue
 	i2c_write(TEST_PATTERN_BLUE_REG, 0x000);
 	//	TESTPATTERN
-	i2c_write(TEST_PATTERN_BARW_REG, 2);
+	i2c_write(TEST_PATTERN_BARW_REG, 49);
 	i2c_write(TEST_PATTERN_CTRL_REG, TEST_MONOCR_VERTICAL | TEST_ENABLE);
-	//*/	
+#else
+
+	// disable test mode
+	i2c_write(TEST_PATTERN_CTRL_REG, 0);
+#endif
 }

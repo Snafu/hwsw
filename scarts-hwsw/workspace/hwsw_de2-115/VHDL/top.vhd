@@ -303,21 +303,35 @@ begin
 		);
 	
 	
-		sync_pixdat : for i in 11 downto 0 generate
-			
-			sync_pixbit: sync generic map
-			(
-				SYNC_STAGES => 2,
-				RESET_VALUE => '0'
-			)
-			port map
-			(
-				sys_clk => clk_pixel,
-				sys_res_n => rst,
-				data_in => cam_pixdata(i),
-				data_out => cam_pixdata_sync(i)
-			);
-		end generate;
+--		sync_pixdat : for i in 11 downto 0 generate
+--			
+--			sync_pixbit: sync generic map
+--			(
+--				SYNC_STAGES => 2,
+--				RESET_VALUE => '0'
+--			)
+--			port map
+--			(
+--				sys_clk => clk_pixel,
+--				sys_res_n => rst,
+--				data_in => cam_pixdata(i),
+--				data_out => cam_pixdata_sync(i)
+--			);
+--		end generate;
+	sync_pixdata : vectorsync
+		generic map
+		(
+			SYNC_STAGES => 2,
+			RESET_VALUE => '0',
+			VECTOR_LENGTH => 12
+		)
+		port map
+		(
+			sys_clk => clk_pixel,
+			sys_res_n => rst,
+			data_in => cam_pixdata,
+			data_out => cam_pixdata_sync
+		);
 
 	sync_pxReady : sync
 		generic map
@@ -652,7 +666,7 @@ begin
 		rdaddress	=> rdaddress_sig,
 		rdclock		=> clk,
 		wraddress	=> wraddress_sig,
-		wrclock		=> clk_pixel_n,
+		wrclock		=> clk_pixel,
 		wren			=> wren_sig,
 		q				=> q_sig
 	);
@@ -666,7 +680,7 @@ begin
     (
 			camstate	=> camstate, --dbg
 			rst				=> syncrst,
-			clk				=> clk_pixel_n,
+			clk				=> clk_pixel,
 			fval			=> cam_fval_sync,
 			lval			=> cam_lval_sync,
 			pixdata		=> cam_pixdata_sync,
@@ -685,7 +699,7 @@ begin
 	
 	
 	-- debugging only
-	pxl_clk_dbg <= clk_pixel_n;		-- pixelclock FROM camera
+	pxl_clk_dbg <= clk_pixel;		-- pixelclock FROM camera
 	cam_fval_dbg  <= cam_fval_sync;
 	cam_lval_dbg  <= cam_lval_sync;
 	cam_pixdata_dbg <= cam_pixdata_sync;	

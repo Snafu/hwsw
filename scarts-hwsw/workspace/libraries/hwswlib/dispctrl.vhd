@@ -56,18 +56,20 @@ architecture rtl of dispctrl is
 	-- normal
 	constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0000000";
 	constant FIFOEND : std_logic_vector(31 downto 0) := x"E0177000";
+	constant MAXCOL : integer := 800;
+	constant MAXROW : integer := 480;
+	
+	
 	-- bottomright
-	--constant FIFOSTART : std_logic_vector(31 downto 0) := x"E00BBE40";
-	--constant FIFOEND : std_logic_vector(31 downto 0) := x"E0177000";
+	--constant FIFOSTART : std_logic_vector(31 downto 0) := x"E0000640";
+	--constant FIFOEND : std_logic_vector(31 downto 0) := x"E00BBE40";
+	--constant MAXCOL : integer := 400;
+	--constant MAXROW : integer := 240;
 	
 	constant COLORA : std_logic_vector(31 downto 0) := x"00FF0000";
 	constant COLORB : std_logic_vector(31 downto 0) := x"0000FF00";
 	constant COLORC : std_logic_vector(31 downto 0) := x"000000FF";
 	constant COLORD : std_logic_vector(31 downto 0) := x"00FFFFFF";
-	constant MAXCOL : integer := 800;
-	constant MAXROW : integer := 480;
-	--constant MAXCOL : integer := 400;
-	--constant MAXROW : integer := 240;
 	constant NOFACE : integer := MAXROW;
 
   constant REVISION : amba_version_type := 0; 
@@ -98,7 +100,7 @@ architecture rtl of dispctrl is
 	signal fval_old, fval_old_n : std_logic := '0';
 	signal init_old, init_old_n : std_logic := '0';
 	signal blockrdy_old, blockrdy_old_n : std_logic;
-	signal blockCount, blockCount_n : integer range 0 to 255;
+	signal blockCount, blockCount_n : integer range 0 to 511;
 	signal output, output_n : write_t;
 	signal pixeladdr, pixeladdr_n : std_logic_vector(8 downto 0) := "000000000";
 	signal col, col_n : integer range 0 to MAXCOL;
@@ -117,7 +119,7 @@ begin
 		variable wout : write_t;
 		variable ahbready : std_logic;
 		variable start : std_logic;
-		variable blocks : integer range 0 to 1023;
+		variable blocks : integer range 0 to 511;
   begin
 
 		writeState_n <= writeState;
@@ -173,6 +175,7 @@ begin
 				col_n <= col + 1;
 
 				-- end of block
+				--if wout.address(5 downto 2) = "0000" then
 				if wout.address(6 downto 2) = "00000" then
 					blocks := blocks - 1;
 
@@ -180,7 +183,6 @@ begin
 				else
 					pixeladdr_n <= pixeladdr + '1';
 				end if;
-				--pixeladdr_n <= pixeladdr + '1';
 			end if;
 
 		when others =>

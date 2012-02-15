@@ -35,6 +35,8 @@
 #define TEST_PATTERN_BLUE_REG				0xa3
 #define TEST_PATTERN_BARW_REG				0xa4
 
+#define TEST_GRADIENT_HORIZONTAL		(1 << 3)
+#define TEST_GRADIENT_VERTICAL			(2 << 3)
 #define TEST_CLASSIC								(4 << 3)
 #define TEST_MARCHING_ONES					(5 << 3)
 #define TEST_MONOCR_HORIZONTAL			(6 << 3)

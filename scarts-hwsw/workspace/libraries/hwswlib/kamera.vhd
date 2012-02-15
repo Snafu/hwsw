@@ -48,12 +48,10 @@ end ;
 
 architecture rtl of kamera is
   
-  constant PIXELBURSTLEN		: integer := 15;
-	constant MAXLINE					: integer := 481;
-	constant MAXCOL						: integer := 801;
-	constant LASTBLINE				: integer := MAXLINE-1;
-	constant LASTCOL					: std_logic_vector := "1100100001"; -- 801
-	constant LASTPIXEL				: std_logic_vector := "1100100000"; -- 800
+	constant MAXCOL						: integer := 1600;
+	constant LASTCOL					: integer := MAXCOL-1;
+	constant MAXLINE					: integer := 960;
+	constant LASTLINE					: integer := MAXLINE-1;
 
 	--type state_t is (WAIT_INIT, NOINIT, WAITFRAME, WAITFIRST, FIRST, WAITNORMAL, NORMAL);
 	type dotline_t is array (0 to 1) of std_logic_vector(7 downto 0);
@@ -66,18 +64,19 @@ architecture rtl of kamera is
 	signal dot													: std_logic_vector(7 downto 0);
 	signal lastdot											: std_logic_vector(7 downto 0);
 	signal state, state_next						: state_t;
-	signal linecount, linecount_next		: std_logic_vector(8 downto 0);
-	signal colcount, colcount_next			: std_logic_vector(9 downto 0);
-	signal pixelcount, pixelcount_next	: std_logic_vector(9 downto 0);
+	signal linecount, linecount_next		: std_logic_vector(9 downto 0);
+	signal colcount, colcount_next			: std_logic_vector(10 downto 0);
+	signal pixelcount, pixelcount_next	: std_logic_vector(10 downto 0);
 	signal clearfifo										: std_logic;
-	signal rdreq												: std_logic := '0';
-	signal wrreq												: std_logic := '0';
+	signal rdreq, rdreq_next						: std_logic := '0';
+	signal wrreq, wrreq_next						: std_logic := '0';
 	signal pixel												: pixel_t;
 	signal dotmatrix										: dotmatrix_t;
 	signal inline, inline_next					: std_logic;
 	signal dpwren												: std_logic;
 	signal dpaddr, dpaddr_next					: std_logic_vector(8 downto 0);
-	signal fval_old											: std_logic;
+
+	signal pixelburstReady_next					: std_logic;
 begin
 
 	bayerbuf : bayerbuffer PORT MAP (
@@ -100,10 +99,6 @@ begin
 		clearfifo <= not fval;
 		wrreq <= '0';
 		rdreq <= '0';
-
-		if rst = '0' then
-		end if;
-
 		
 		case state is
 		when WAIT_INIT =>
@@ -143,7 +138,6 @@ begin
 			end if;
 
 		when WAITNORMAL =>
-			wrreq <= lval;
 			rdreq <= lval;
 
 			if lval = '1' then
@@ -151,16 +145,16 @@ begin
 			end if;
 
 		when NORMAL =>
-			wrreq <= lval;
 			rdreq <= lval;
 
 			if lval = '0' then
-				if linecount = conv_std_logic_vector(LASTBLINE,9) then
+				if linecount = conv_std_logic_vector(LASTLINE,10) then
+					rdreq <= '0';
 					linecount_next <= (others => '0');
 					state_next <= WAITFRAME;
 				else
 					linecount_next <= linecount + '1';
-					state_next <= WAITNORMAL;
+					state_next <= WAITFIRST;
 				end if;
 			end if;
 
@@ -185,19 +179,16 @@ begin
 		dpwren <= '0';
 		dpaddr_next <= dpaddr;
 		pixel <= (others => (others => '0'));
-		pixelburstReady <= '0';
+		pixelburstReady_next <= '0';
 
-		if inline = '1' and state /= WAIT_INIT and state /= NOINIT then
+		if inline = '1' and (state = NORMAL or state = WAITFIRST or state = WAITFRAME) then
 			colcount_next <= colcount + '1';
-			if colcount = conv_std_logic_vector(MAXCOL-1,10) then
+			if colcount = conv_std_logic_vector(LASTCOL,11) then
 				colcount_next <= (others => '0');
 			end if;
 
-			-- last pixel (one less than last col)
-			pixelcount_next <= pixelcount + 1;
-
 			-- interpolate pixels TODO: average g1 and g2
-			if pixelcount < LASTPIXEL then
+			if pixelcount < conv_std_logic_vector(LASTCOL,11) then
 				-- Bayer pattern
 				-- +----+----+----+----+----+----
 				-- | G1 | R  | G1 | R  | G1 | ..
@@ -207,27 +198,39 @@ begin
 				-- | .. | .. | .. | .. | .. | ..
 				-- +----+----+----+----+----+----
 
+--				if colcount(0) = '0' then
+--					g1 := "0" & dotmatrix(0)(0);
+--					g2 := "0" & dotmatrix(1)(1);
+--					green := std_logic_vector(unsigned(g1) + unsigned(g2));
+--					--pixel <= (R => dotmatrix(0)(1), G => green(8 downto 1), B => dotmatrix(1)(0));
+--					pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
+--				else
+--					g1 := "0" & dotmatrix(0)(1);
+--					g2 := "0" & dotmatrix(1)(0);
+--					green := std_logic_vector(unsigned(g1) + unsigned(g2));
+--					--pixel <= (R => dotmatrix(0)(0), G => green(8 downto 1), B => dotmatrix(1)(1));
+--					pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
+--				end if;
 				if colcount(0) = '0' then
-					g1 := "0" & dotmatrix(0)(0);
-					g2 := "0" & dotmatrix(1)(1);
-					green := std_logic_vector(unsigned(g1) + unsigned(g2));
-					--pixel <= (R => dotmatrix(0)(1), G => green(8 downto 1), B => dotmatrix(1)(0));
-					pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
-				else
-					g1 := "0" & dotmatrix(0)(1);
-					g2 := "0" & dotmatrix(1)(0);
-					green := std_logic_vector(unsigned(g1) + unsigned(g2));
-					--pixel <= (R => dotmatrix(0)(0), G => green(8 downto 1), B => dotmatrix(1)(1));
-					pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
+					pixelcount_next <= pixelcount + 1;
+
+					--pixel <= (R => dotmatrix(0)(1), G => x"00", B => x"00");
+					pixel <= (R => x"00", G => dotmatrix(0)(0), B => x"00");
+					--pixel <= (R => x"00", G => x"00", B => dotmatrix(1)(0));
+
+					--pixel <= (R => x"00", G => dotmatrix(0)(0), B => dotmatrix(1)(0));
+					--pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => x"00");
+
+					--pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
+					dpwren <= '1';
+					dpaddr_next <= dpaddr + '1';
 				end if;
 
-				dpwren <= '1';
-				dpaddr_next <= dpaddr + '1';
 			end if;
 
 			-- signal block ready
-			if pixelcount(4 downto 0) = "00000" and pixelcount /= "0000000000" then
-				pixelburstReady <= '1';
+			if pixelcount(4 downto 0) = "00000" and pixelcount /= "00000000000" then
+				pixelburstReady_next <= '1';
 			end if;
 
 		end if;
@@ -250,15 +253,16 @@ begin
 			linecount <= linecount_next;
 			colcount <= colcount_next;
 			pixelcount <= pixelcount_next;
+			pixelburstReady <= pixelburstReady_next;
 
 			init_old <= init_old_n;
 			inline_next <= rdreq;
 			inline <= inline_next;
 
-			dotmatrix(0)(0) <= dotmatrix(0)(1);
-			dotmatrix(0)(1) <= lastdot;
-			dotmatrix(1)(0) <= dotmatrix(1)(1);
-			dotmatrix(1)(1) <= dot;
+			dotmatrix(1)(0) <= dotmatrix(0)(1);
+			dotmatrix(1)(1) <= lastdot;
+			dotmatrix(0)(0) <= dotmatrix(1)(1);
+			dotmatrix(0)(1) <= dot;
 
 			dpaddr <= dpaddr_next;
 			dp_wren <= dpwren;
@@ -269,8 +273,8 @@ begin
 		if rst = '0' then
 			init_old <= '0';
 
+
 			linecount <= (others => '0');
-			--rdreq <= '0';
 			state <= NOINIT; --WAIT_INIT;
 			dot <= (others => '0');
 			colcount <= (others => '0');
