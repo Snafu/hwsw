@@ -295,17 +295,12 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ltm_grest
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_location_assignment PIN_D27 -to aux_uart_tx
 set_location_assignment PIN_E27 -to aux_uart_rx
-set_location_assignment PIN_G28 -to i2c_scl
-set_location_assignment PIN_AB22 -to i2c_scl_dbg
-set_location_assignment PIN_F26 -to i2c_sda
-set_location_assignment PIN_AB21 -to i2c_sda_dbg
-set_location_assignment PIN_AD21 -to i2c_trigger
 set_global_assignment -name MISC_FILE "/homes/w0725226/hwsw/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.dpf"
-set_location_assignment PIN_AD19 -to blockrdy_dbg
+set_location_assignment PIN_AD15 -to blockrdy_dbg
 set_location_assignment PIN_K27 -to cam_fval
-set_location_assignment PIN_AE16 -to cam_fval_dbg
+set_location_assignment PIN_AC21 -to cam_fval_dbg
 set_location_assignment PIN_E26 -to cam_lval
-set_location_assignment PIN_AE15 -to cam_lval_dbg
+set_location_assignment PIN_AD21 -to cam_lval_dbg
 set_location_assignment PIN_J28 -to cam_pixclk
 set_location_assignment PIN_H26 -to cam_pixdata[0]
 set_location_assignment PIN_M28 -to cam_pixdata[1]
@@ -320,7 +315,6 @@ set_location_assignment PIN_H24 -to cam_pixdata[9]
 set_location_assignment PIN_M25 -to cam_pixdata[10]
 set_location_assignment PIN_M26 -to cam_pixdata[11]
 set_location_assignment PIN_G26 -to cam_resetN
-set_location_assignment PIN_AC15 -to cam_resetN_dbg
 set_location_assignment PIN_AB7 -to cam_sram_ctrl.addr[0]
 set_location_assignment PIN_AD7 -to cam_sram_ctrl.addr[1]
 set_location_assignment PIN_AE7 -to cam_sram_ctrl.addr[2]
@@ -362,16 +356,14 @@ set_location_assignment PIN_AE3 -to cam_sram_data[12]
 set_location_assignment PIN_AE4 -to cam_sram_data[13]
 set_location_assignment PIN_AF3 -to cam_sram_data[14]
 set_location_assignment PIN_AG3 -to cam_sram_data[15]
-set_location_assignment PIN_AC19 -to whichLine_top_dbg
 set_location_assignment PIN_G25 -to cam_trigger
-set_location_assignment PIN_AC21 -to sysclk
+set_location_assignment PIN_AB22 -to sysclk
 set_location_assignment PIN_AG22 -to camstate.WAITFIRST
 set_location_assignment PIN_AH22 -to camstate.FIRST
 set_location_assignment PIN_AE20 -to camstate.WAITNORMAL
 set_location_assignment PIN_AF20 -to camstate.NORMAL
 set_global_assignment -name MISC_FILE "/homes/w0727156/Desktop/HWSW_FRESH_WITH_PROPER_SCARTS_PROJECT/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.dpf"
 set_location_assignment PIN_G24 -to cam_pll
-set_location_assignment PIN_AD15 -to pxl_clk_dbg
 # set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
 # set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
 set_location_assignment PIN_AF16 -to ahbready_dbg
@@ -476,4 +468,5 @@ set_global_assignment -name QIP_FILE ../VHDL/altera_pll.qip
 set_global_assignment -name QIP_FILE ../../libraries/hwswlib/dp_pixelram.qip
 set_global_assignment -name QIP_FILE ../../libraries/hwswlib/bayerbuffer.qip
 set_global_assignment -name QIP_FILE ../../libraries/hwswlib/multiplier.qip
+set_location_assignment PIN_AB21 -to clk_pixel_dbg
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
