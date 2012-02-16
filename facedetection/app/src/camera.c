@@ -39,13 +39,13 @@ void initCamera(void)
 	i2c_write(0x2e, (10<<8) | (0<<6) | 29);
 	*/
 	// red
-	i2c_write(GAIN_RED_REG, (16<<8) | (1<<6) | 32);
+	i2c_write(GAIN_RED_REG, (0<<8) | (0<<6) | 63);
 	// green 1
-	i2c_write(GAIN_GREEN1_REG, (16<<8) | (1<<6) | 32);
+	i2c_write(GAIN_GREEN1_REG, (0<<8) | (0<<6) | 63);
 	// green 2
-	i2c_write(GAIN_GREEN2_REG, (16<<8) | (1<<6) | 32);
+	i2c_write(GAIN_GREEN2_REG, (0<<8) | (0<<6) | 63);
 	// blue
-	i2c_write(GAIN_BLUE_REG, (16<<8) | (1<<6) | 32);
+	i2c_write(GAIN_BLUE_REG, (0<<8) | (0<<6) | 63);
 
 		
 	// pause restart
@@ -101,7 +101,7 @@ void initCamera(void)
 	// Blue
 	i2c_write(TEST_PATTERN_BLUE_REG, 0x000);
 	//	TESTPATTERN
-	i2c_write(TEST_PATTERN_BARW_REG, 49);
+	i2c_write(TEST_PATTERN_BARW_REG, 15);
 	i2c_write(TEST_PATTERN_CTRL_REG, TEST_MONOCR_VERTICAL | TEST_ENABLE);
 #else
 

@@ -61,21 +61,27 @@ package kameralib is
 	
 	component kamera
 		port (
-			camstate	: out state_t; --dbg
-			rst				: in std_logic;           -- Synchronous reset
-			clk				: in std_logic;
-			fval			: in std_logic;
-			lval			: in std_logic;
-			pixdata		: in std_logic_vector(11 downto 0);
+			-- DEBUG
+			camstate				: out state_t;
+			bb_rdreq_dbg				: out std_logic;
+			bb_wrreq_dbg				: out std_logic;
+			bb_clearfifo_dbg		: out std_logic;
+	
+	
+			rst							: in std_logic;	-- Synchronous reset
+			clk							: in std_logic;
+			fval						: in std_logic;
+			lval						: in std_logic;
+			pixdata					: in std_logic_vector(11 downto 0);
 			
-			dp_data		: out std_logic_vector(31 downto 0);
-			dp_wren		: out std_logic;
-			dp_wraddr	: out std_logic_vector(8 downto 0);
-
-			pixelburstReady : out std_logic;
-
+			dp_data					: out std_logic_vector(31 downto 0);
+			dp_wren					: out std_logic;
+			dp_wraddr				: out std_logic_vector(8 downto 0);
+			
+			pixelburstReady	: out std_logic;
+	
 			init_ready			: in std_logic
-			);
+		);
 	end component;
 
 	component bayerbuffer

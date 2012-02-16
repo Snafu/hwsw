@@ -29,7 +29,13 @@ use work.kameralib.all;
 entity kamera is
 
 	port (
-		camstate				: out state_t; --dbg
+		-- DEBUG
+		camstate				: out state_t;
+		bb_rdreq_dbg				: out std_logic;
+		bb_wrreq_dbg				: out std_logic;
+		bb_clearfifo_dbg		: out std_logic;
+
+
 		rst							: in std_logic;	-- Synchronous reset
 		clk							: in std_logic;
 		fval						: in std_logic;
@@ -61,56 +67,60 @@ architecture rtl of kamera is
 
 	signal init_old, init_old_n : std_logic := '0';
 
-	signal dot													: std_logic_vector(7 downto 0);
-	signal lastdot											: std_logic_vector(7 downto 0);
-	signal state, state_next						: state_t;
-	signal linecount, linecount_next		: std_logic_vector(9 downto 0);
-	signal colcount, colcount_next			: std_logic_vector(10 downto 0);
-	signal pixelcount, pixelcount_next	: std_logic_vector(10 downto 0);
-	signal clearfifo										: std_logic;
-	signal rdreq, rdreq_next						: std_logic := '0';
-	signal wrreq, wrreq_next						: std_logic := '0';
-	signal pixel												: pixel_t;
-	signal dotmatrix										: dotmatrix_t;
-	signal inline, inline_next					: std_logic;
-	signal dpwren												: std_logic;
-	signal dpaddr, dpaddr_next					: std_logic_vector(8 downto 0);
+	signal state, state_next								: state_t;
+	signal linecount, linecount_next				: std_logic_vector(9 downto 0);
+	signal colcount, colcount_next					: std_logic_vector(10 downto 0);
+	signal pixelcount, pixelcount_next			: std_logic_vector(10 downto 0);
+	signal pixel														: pixel_t;
+	signal dotmatrix												: dotmatrix_t;
+	signal dpwren														: std_logic;
+	signal dpaddr, dpaddr_next							: std_logic_vector(8 downto 0);
 
-	signal pixelburstReady_next					: std_logic;
+	signal pixelburstReady_next							: std_logic;
+
+	signal bb_clearfifo, bb_clearfifo_next	: std_logic;
+	signal bb_wrreq, bb_wrreq_next					: std_logic := '0';
+	signal bb_in, bb_in_next								: std_logic_vector(7 downto 0);
+	signal bb_rdreq, bb_rdreq_next					: std_logic := '0';
+	signal bb_out, bb_out_next							: std_logic_vector(7 downto 0);
 begin
+
+	bb_rdreq_dbg <= bb_rdreq;
+	bb_wrreq_dbg <= bb_wrreq;
+	bb_clearfifo_dbg <= bb_clearfifo;
 
 	bayerbuf : bayerbuffer PORT MAP (
 		clock	 	=> clk,
-		data	 	=> pixdata(11 downto 4),
-		rdreq	 	=> rdreq,
-		sclr	 	=> clearfifo,
-		q				=> lastdot,
-		wrreq		=> wrreq 
+		data	 	=> bb_in,
+		rdreq	 	=> bb_rdreq,
+		sclr	 	=> bb_clearfifo,
+		q				=> bb_out_next,
+		wrreq		=> bb_wrreq 
 	);
 
 	camstate <= state;
 
-	fsm_control: process(rst, state, linecount, colcount, fval, lval, init_old, init_ready)
+	fsm_control: process(rst, state, linecount, bb_wrreq, bb_rdreq, bb_clearfifo, colcount, fval, lval, init_old, init_ready)
 	begin
 
 		state_next <= state;
 		linecount_next <= linecount;
 
-		clearfifo <= not fval;
-		wrreq <= '0';
-		rdreq <= '0';
+		bb_clearfifo_next <= bb_clearfifo;
+		bb_wrreq_next <= bb_wrreq;
+		bb_rdreq_next <= bb_rdreq;
 		
 		case state is
 		when WAIT_INIT =>
-			clearfifo <= '1';
-
+			bb_clearfifo_next <= '1';
+			bb_wrreq_next <= '0';
+			bb_rdreq_next <= '0';
+			
 			if init_old /= init_ready and init_ready = '1' then
 				state_next <= NOINIT;
 			end if;
 
 		when NOINIT =>
-			clearfifo <= '1';
-
 			if fval = '0' then
 				state_next <= WAITFRAME;
 			end if;
@@ -119,37 +129,42 @@ begin
 			linecount_next <= (others => '0');
 			
 			if fval = '1' then
+				bb_clearfifo_next <= '0';
+
 				state_next <= WAITFIRST;
 			end if;
 
 		when WAITFIRST =>
-			wrreq <= lval;
-			
 			if lval = '1' then
+				bb_wrreq_next <= '1';
+				bb_rdreq_next <= '0';
+
 				state_next <= FIRST;
 			end if;
 
 		when FIRST =>
-			wrreq <= lval;
-
 			if lval = '0' then
+				bb_wrreq_next <= '0';
+				bb_rdreq_next <= '0';
 				linecount_next <= linecount + '1';
+
 				state_next <= WAITNORMAL;
 			end if;
 
 		when WAITNORMAL =>
-			rdreq <= lval;
-
 			if lval = '1' then
+				bb_wrreq_next <= '0';
+				bb_rdreq_next <= '1';
+
 				state_next <= NORMAL;
 			end if;
 
 		when NORMAL =>
-			rdreq <= lval;
-
 			if lval = '0' then
+				bb_wrreq_next <= '0';
+				bb_rdreq_next <= '0';
+
 				if linecount = conv_std_logic_vector(LASTLINE,10) then
-					rdreq <= '0';
 					linecount_next <= (others => '0');
 					state_next <= FRAMEEND;
 				else
@@ -159,6 +174,7 @@ begin
 			end if;
 
 		when FRAMEEND =>
+			bb_clearfifo_next <= '1';
 			if fval = '0' then
 				state_next <= WAITFRAME;
 			end if;
@@ -166,15 +182,15 @@ begin
 		end case;
 
 		if fval = '0' then
-			clearfifo <= '1';
-			wrreq <= '0';
-			rdreq <= '0';
+			bb_clearfifo_next <= '1';
+			bb_wrreq_next <= '0';
+			bb_rdreq_next <= '0';
 			linecount_next <= (others => '0');
 			state_next <= WAITFRAME;
 		end if;
 	end process;
 
-	fsm : process(rst, state, inline, pixelcount, linecount, colcount, dotmatrix, dpaddr)
+	fsm : process(rst, state, pixelcount, linecount, colcount, dotmatrix, dpaddr)
 		variable green	: std_logic_vector(8 downto 0);
 		variable g1, g2	: std_logic_vector(8 downto 0);
 	begin
@@ -183,75 +199,66 @@ begin
 		pixelcount_next <= pixelcount;
 		dpwren <= '0';
 		dpaddr_next <= dpaddr;
-		pixel <= (others => (others => '0'));
 		pixelburstReady_next <= '0';
+		
+		pixel <= (others => (others => '0'));
 
-		--if inline = '1' and (state /= WAIT_INIT or state /= NOINIT) then
-		if inline = '1' and (state = NORMAL or state = WAITFIRST or state = FRAMEEND) then
+		case state is
+		when NORMAL =>
 			colcount_next <= colcount + '1';
-			if colcount = conv_std_logic_vector(LASTCOL,11) then
-				colcount_next <= (others => '0');
-			end if;
 
-			-- interpolate pixels TODO: average g1 and g2
-			if pixelcount < conv_std_logic_vector(LASTCOL,11) then
-				-- Bayer pattern
-				-- +----+----+----+----+----+----
-				-- | G1 | R  | G1 | R  | G1 | ..
-				-- +----+----+----+----+----+----
-				-- | B  | G2 | B  | G2 | B  | ..
-				-- +----+----+----+----+----+----
-				-- | .. | .. | .. | .. | .. | ..
-				-- +----+----+----+----+----+----
+		when others =>
+			dpaddr_next <= (others => '0');
 
---				if colcount(0) = '0' then
---					g1 := "0" & dotmatrix(0)(0);
---					g2 := "0" & dotmatrix(1)(1);
---					green := std_logic_vector(unsigned(g1) + unsigned(g2));
---					--pixel <= (R => dotmatrix(0)(1), G => green(8 downto 1), B => dotmatrix(1)(0));
---					pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
---				else
---					g1 := "0" & dotmatrix(0)(1);
---					g2 := "0" & dotmatrix(1)(0);
---					green := std_logic_vector(unsigned(g1) + unsigned(g2));
---					--pixel <= (R => dotmatrix(0)(0), G => green(8 downto 1), B => dotmatrix(1)(1));
---					pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
---				end if;
-				if colcount(0) = '0' then
-					pixelcount_next <= pixelcount + 1;
+			colcount_next <= (others => '0');
+			pixelcount_next <= (others => '0');
+		end case;
 
-					--pixel <= (R => dotmatrix(0)(1), G => x"00", B => x"00");
-					--pixel <= (R => x"00", G => dotmatrix(0)(0), B => x"00");
-					--pixel <= (R => x"00", G => x"00", B => dotmatrix(1)(0));
+		if colcount > "00000000000" and colcount(0) = '0' then
+			-- Bayer pattern
+			-- +----+----+----+----+----+----
+			-- | G1 | R  | G1 | R  | G1 | ..
+			-- +----+----+----+----+----+----
+			-- | B  | G2 | B  | G2 | B  | ..
+			-- +----+----+----+----+----+----
+			-- | .. | .. | .. | .. | .. | ..
+			-- +----+----+----+----+----+----
 
-					--pixel <= (R => x"00", G => dotmatrix(0)(0), B => dotmatrix(1)(0));
-					--pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => x"00");
+			pixelcount_next <= pixelcount + 1;
 
-					pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
-					dpwren <= '1';
-					dpaddr_next <= dpaddr + '1';
-				end if;
+			g1 := "0" & dotmatrix(0)(0);
+			g2 := "0" & dotmatrix(1)(1);
 
-			end if;
+			green := std_logic_vector(unsigned(g1) + unsigned(g2));
 
-			-- signal block ready
-			if pixelcount(4 downto 0) = "00000" and pixelcount /= "00000000000" then
+			--pixel <= (R => dotmatrix(0)(1), G => x"00", B => x"00");
+			--pixel <= (R => x"00", G => dotmatrix(0)(0), B => x"00");
+			--pixel <= (R => x"00", G => x"00", B => dotmatrix(1)(0));
+
+			--pixel <= (R => x"00", G => dotmatrix(0)(0), B => dotmatrix(1)(0));
+			--pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => x"00");
+
+			pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
+			--pixel <= (R => dotmatrix(0)(1), G => green(8 downto 1), B => dotmatrix(1)(0));
+			dpwren <= '1';
+			dpaddr_next <= dpaddr + '1';
+
+			if colcount(5 downto 1) = "00000" then
 				pixelburstReady_next <= '1';
 			end if;
 
-		end if;
-		
-		if inline = '0' then
-			colcount_next <= (others => '0');
-			pixelcount_next <= (others => '0');
-			dpaddr_next <= (others => '0');
+			if pixelcount = conv_std_logic_vector(799,11) then
+				colcount_next <= (others => '0');
+				pixelcount_next <= (others => '0');
+			end if;
+
 		end if;
 	end process;
 
 	clk_reg : process(rst, clk)
 	begin
 		if rising_edge(clk) then
-			dot <= pixdata(11 downto 4);
+			bb_in_next <= pixdata(11 downto 4);
 		end if;
 
 		if falling_edge(clk) then
@@ -262,31 +269,42 @@ begin
 			pixelburstReady <= pixelburstReady_next;
 
 			init_old <= init_old_n;
-			inline_next <= rdreq;
-			inline <= inline_next;
 
 			dotmatrix(1)(0) <= dotmatrix(1)(1);
-			dotmatrix(1)(1) <= lastdot;
+			dotmatrix(1)(1) <= bb_out_next;
 			dotmatrix(0)(0) <= dotmatrix(0)(1);
-			dotmatrix(0)(1) <= dot;
+			dotmatrix(0)(1) <= bb_in;
 
 			dpaddr <= dpaddr_next;
 			dp_wren <= dpwren;
 			dp_wraddr <= dpaddr;
 			dp_data <= x"00" & pixel(R) & pixel(G) & pixel(B);
+
+
+			bb_clearfifo <= bb_clearfifo_next;
+			bb_wrreq <= bb_wrreq_next;
+			bb_in <= bb_in_next;
+			bb_rdreq <= bb_rdreq_next;
+			bb_out <= bb_out_next;
+
 		end if;
 
 		if rst = '0' then
 			init_old <= '0';
 
 
+			bb_clearfifo <= '1';
+			bb_wrreq <= '0';
+			bb_in <= (others => '0');
+			bb_rdreq <= '0';
+			bb_out <= (others => '0');
+
+
 			linecount <= (others => '0');
 			state <= NOINIT; --WAIT_INIT;
-			dot <= (others => '0');
 			colcount <= (others => '0');
 			dotmatrix <= (others => (others => (others => '0')));
 			pixelcount <= (others => '0');
-			inline <= '0';
 
 			dpaddr <= (others => '0');
 		end if;

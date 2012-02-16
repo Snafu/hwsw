@@ -26,6 +26,7 @@
 #define READ_MODE2_REG							0x20
 
 #define RESTART_REG									0x0b
+#define TRIGGER											(1 << 2)
 
 #define BLACK_LVL_CAL_REG						0x62
 

@@ -160,40 +160,42 @@ int main(int argc, char **argv)
 		
 		keys = getKeys();
 		value = switchVal();
-		dis7seg_displayHexUInt32(&dispHandle, 0, (value & 0xFFFF) | (keys << 16));  
+		dis7seg_displayHexUInt32(&dispHandle, 0, (mode << 24) | (keys << 16) | (value & 0xFFFF));  
 
-		if(mode == 0) {
-			i2c_write(0x0b, 0x04);	// SET TRIGGER
-			for(i = 0; i < 200; i++)
-				for(j = 0; j < WAIT_TIME; j++)
-					asm volatile ("nop\n\tnop\n\tnop\n\tnop\n\t");
+		if(mode == 0 && mode_old == 1) {
+			i2c_write(RESTART_REG, TRIGGER);
+		}	else if(mode == 1 && mode_old == 0) {
+			i2c_write(RESTART_REG, 0);
 		}
+		
+		mode_old = mode;
 
 		if(keys != keys_old) {
 			if(value & (1<<17)) {
 				// COLOR CORRECTION
 
-				if(keys & (1<<KEY3))
+				if(keys & (1<<KEY3)) {
 					i2c_write(GAIN_RED_REG, value);
+				}
 				if(keys & (1<<KEY2)) {
 					i2c_write(GAIN_GREEN1_REG, value);
 					i2c_write(GAIN_GREEN2_REG, value);
 				}
-				if(keys & (1<<KEY1))
+				if(keys & (1<<KEY1)) {
 					i2c_write(GAIN_BLUE_REG, value);
+				}
 			} else {
-				// FRAME MODE SWITCH
+				// TRIGGER FRAME
+				if(mode == 1 && (keys & (1<<KEY3))) {
+					i2c_write(RESTART_REG, TRIGGER);
+					i2c_write(RESTART_REG, 0);
+				}
 
+				// SWITCH OUTPUT MODE
 				if(keys & (1<<KEY2))
 					mode = 1 - mode;
-
-				if(mode == 1 && (keys & (1<<KEY3))) {
-					i2c_write(0x0b, 0x04);	// SET TRIGGER
-					i2c_write(0x0b, 0x00);	// SET TRIGGER
-				}
 			}
 		}
-		mode_old = mode;
 		keys_old = keys;
 	}
 

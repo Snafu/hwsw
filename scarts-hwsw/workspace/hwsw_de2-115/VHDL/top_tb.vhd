@@ -100,10 +100,8 @@ architecture behaviour of top_tb is
 			cam_fval			: in std_logic;
 			cam_lval			: in std_logic;
 			cam_pixdata		: in std_logic_vector(11 downto 0);
-			cam_sram_ctrl	: out sram_ctrl_t;
-			cam_sram_data	: inout std_logic_vector(15 downto 0);
 			cam_resetN		:	out std_logic;
-			cam_pll			:	out std_logic;
+			cam_pll_input	:	out std_logic;
 			
 			-- BUTTONS
 			key3			: in std_logic;
@@ -131,12 +129,11 @@ architecture behaviour of top_tb is
 
 
 			-- TESTSIGNALE
-			--blockrdy				: in std_logic;
 			blockrdy_dbg		: out std_logic;
 			ahbready_dbg		: out std_logic;
 
 			sysclk					:	out std_logic;
-			pxl_clk_dbg			:	out std_logic;
+			clk_pixel_dbg		:	out std_logic;
 			cam_resetN_dbg	: out std_logic;
 
 			cam_fval_dbg		: out std_logic;
@@ -228,11 +225,10 @@ begin
 			cam_lval		=> cam_lval,
 			cam_pixdata	=> cam_pixdata,
 
-			--blockrdy		=> blockrdy,
-
 			key3				=> '0',
 			key2				=> '0',
 			key1				=> '0',
+
 			sw17				=> '0',
 			sw16				=> '0',
 			sw15				=> '0',
@@ -297,11 +293,23 @@ begin
   end process clkgen;
 
 	pixclkgen: process
-	begin		
+	begin
+		for i in 1 to 100 loop
+			cam_pixclk <= '0';
+	  	wait for 25 ns;
+	  	cam_pixclk <= '1';
+	  	wait for 25 ns;
+		end loop;
+
+		cam_pixclk <= '0';
+		wait for 10 ns;
 		cam_pixclk <= '1';
-	  wait for 25 ns;
-	  cam_pixclk <= '0';
-	  wait for 25 ns;
+		wait for 2 ns;
+		cam_pixclk <= '0';
+		wait for 13 ns;
+
+		cam_pixclk <= '1';
+		wait for 25 ns;
 	end process;
 	
 	camdata: process
@@ -312,15 +320,15 @@ begin
 
 		wait for 5 us;
 
-		for frame in 0 to 10 loop
-			wait for 50 ns;
+		for frame in 1 to 10 loop
+			wait for 54 ns;
 			cam_fval <= '1';
-			wait for 50 ns;
+			wait for 100 ns;
 
-			for line in 0 to 480 loop
+			for line in 1 to 960 loop
 				cam_lval <= '1';
 
-				for row in 0 to 800 loop
+				for row in 1 to 1600 loop
 					cam_pixdata <= cam_pixdata + "10000";
 					wait for 50 ns;  
 				end loop;

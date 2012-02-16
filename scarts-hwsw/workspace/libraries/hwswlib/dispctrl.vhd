@@ -97,7 +97,7 @@ architecture rtl of dispctrl is
 	
 	signal writeState, writeState_n : writestate_t;
 	--signal writeState, writeState_n : writestate_t := NOINIT;
-	signal fval_old, fval_old_n : std_logic := '0';
+	signal fval_old							: std_logic := '0';
 	signal init_old, init_old_n : std_logic := '0';
 	signal blockrdy_old, blockrdy_old_n : std_logic;
 	signal blockCount, blockCount_n : integer range 0 to 511;
@@ -105,6 +105,7 @@ architecture rtl of dispctrl is
 	signal pixeladdr, pixeladdr_n : std_logic_vector(8 downto 0) := "000000000";
 	signal col, col_n : integer range 0 to MAXCOL;
 	signal row, row_n : integer range 0 to MAXROW;
+	signal pixeldata	: std_logic_vector(31 downto 0);
 begin
 
   ahb_master : ahbmst generic map (hindex, hirq, VENDOR_HWSW, HWSW_DISPCTRL, 0, 3, 0)
@@ -123,7 +124,6 @@ begin
   begin
 
 		writeState_n <= writeState;
-		fval_old_n <= fval;
 		blockrdy_old_n <= blockrdy;
 		blocks := blockCount;
 		pixeladdr_n <= pixeladdr;
@@ -149,7 +149,7 @@ begin
 			end if;
 			
 		when NOINIT =>
-			if rst = '1' and fval_old /= fval and fval = '1' then
+			if rst = '1' and fval_old = '0' and fval = '1' then
 				writeState_n <= IDLE;
 				blockCount_n <= 0;
 				wout.address := FIFOSTART;
@@ -162,7 +162,7 @@ begin
 			end if;
 
 		when STARTBLOCK =>
-			wout.data := rddata;
+			wout.data := pixeldata;
 			pixeladdr_n <= pixeladdr + '1';
 
 			writeState_n <= HANDLEBLOCK;
@@ -170,7 +170,7 @@ begin
 		when HANDLEBLOCK =>
 			start := '1';
 			if ahbready = '1' then
-				wout.data := rddata;
+				wout.data := pixeldata;
 				wout.address := output.address + 4;
 				col_n <= col + 1;
 
@@ -244,8 +244,9 @@ begin
   begin
 		if rst = '0' then
 			-- rising edge
-			writeState <= WAIT_INIT;
-			fval_old <= '0';
+			writeState <= NOINIT; --dbg
+			--writeState <= WAIT_INIT;
+			fval_old <= '1';
 			blockrdy_old <= '0';
 			blockCount <= 0;
 			output.address <= FIFOSTART;
@@ -261,15 +262,16 @@ begin
 
 			-- falling edge
 			pixeladdr <= "000000000";
+			pixeldata <= (others => '0');
 		else
     	if rising_edge(clk) then
 				writeState <= writeState_n;
-				fval_old <= fval_old_n;
 				blockrdy_old <= blockrdy_old_n;
 				blockCount <= blockCount_n;
 				output <= output_n;
 				col <= col_n;
 				row <= row_n;
+				fval_old <= fval;
 
 				face <= face_n;
 				
@@ -278,6 +280,7 @@ begin
 
     	if falling_edge(clk) then
 				pixeladdr <= pixeladdr_n;
+				pixeldata <= rddata;
 			end if;
 		end if;
   end process;
