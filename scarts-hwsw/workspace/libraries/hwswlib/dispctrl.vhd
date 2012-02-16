@@ -93,11 +93,11 @@ architecture rtl of dispctrl is
   signal dmai	: ahb_dma_in_type;
   signal dmao	: ahb_dma_out_type;
 
-	signal face, face_n : facebox_t;
+	signal face, face_n : facebox_t := (top => NOFACE, left => NOFACE, bottom => NOFACE, right => NOFACE);
 	
 	signal writeState, writeState_n : writestate_t;
 	--signal writeState, writeState_n : writestate_t := NOINIT;
-	signal fval_old							: std_logic := '0';
+	signal fval_old							: std_logic := '1';
 	signal init_old, init_old_n : std_logic := '0';
 	signal blockrdy_old, blockrdy_old_n : std_logic;
 	signal blockCount, blockCount_n : integer range 0 to 511;
@@ -244,8 +244,8 @@ begin
   begin
 		if rst = '0' then
 			-- rising edge
-			writeState <= NOINIT; --dbg
-			--writeState <= WAIT_INIT;
+			--writeState <= NOINIT; --dbg
+			writeState <= WAIT_INIT;
 			fval_old <= '1';
 			blockrdy_old <= '0';
 			blockCount <= 0;

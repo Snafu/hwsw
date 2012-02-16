@@ -101,7 +101,7 @@ void initCamera(void)
 	// Blue
 	i2c_write(TEST_PATTERN_BLUE_REG, 0x000);
 	//	TESTPATTERN
-	i2c_write(TEST_PATTERN_BARW_REG, 15);
+	i2c_write(TEST_PATTERN_BARW_REG, 49);
 	i2c_write(TEST_PATTERN_CTRL_REG, TEST_MONOCR_VERTICAL | TEST_ENABLE);
 #else
 

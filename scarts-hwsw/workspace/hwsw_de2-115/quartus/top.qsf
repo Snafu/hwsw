@@ -358,10 +358,6 @@ set_location_assignment PIN_AF3 -to cam_sram_data[14]
 set_location_assignment PIN_AG3 -to cam_sram_data[15]
 set_location_assignment PIN_G25 -to cam_trigger
 set_location_assignment PIN_AB22 -to sysclk
-set_location_assignment PIN_AG22 -to camstate.WAITFIRST
-set_location_assignment PIN_AH22 -to camstate.FIRST
-set_location_assignment PIN_AE20 -to camstate.WAITNORMAL
-set_location_assignment PIN_AF20 -to camstate.NORMAL
 set_global_assignment -name MISC_FILE "/homes/w0727156/Desktop/HWSW_FRESH_WITH_PROPER_SCARTS_PROJECT/scarts-hwsw/workspace/hwsw_de2-115/quartus/top.dpf"
 # set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
 # set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
