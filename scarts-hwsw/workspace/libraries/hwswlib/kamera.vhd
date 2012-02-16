@@ -151,11 +151,16 @@ begin
 				if linecount = conv_std_logic_vector(LASTLINE,10) then
 					rdreq <= '0';
 					linecount_next <= (others => '0');
-					state_next <= WAITFRAME;
+					state_next <= FRAMEEND;
 				else
 					linecount_next <= linecount + '1';
 					state_next <= WAITFIRST;
 				end if;
+			end if;
+
+		when FRAMEEND =>
+			if fval = '0' then
+				state_next <= WAITFRAME;
 			end if;
 
 		end case;
@@ -181,7 +186,8 @@ begin
 		pixel <= (others => (others => '0'));
 		pixelburstReady_next <= '0';
 
-		if inline = '1' and (state = NORMAL or state = WAITFIRST or state = WAITFRAME) then
+		--if inline = '1' and (state /= WAIT_INIT or state /= NOINIT) then
+		if inline = '1' and (state = NORMAL or state = WAITFIRST or state = FRAMEEND) then
 			colcount_next <= colcount + '1';
 			if colcount = conv_std_logic_vector(LASTCOL,11) then
 				colcount_next <= (others => '0');
@@ -215,13 +221,13 @@ begin
 					pixelcount_next <= pixelcount + 1;
 
 					--pixel <= (R => dotmatrix(0)(1), G => x"00", B => x"00");
-					pixel <= (R => x"00", G => dotmatrix(0)(0), B => x"00");
+					--pixel <= (R => x"00", G => dotmatrix(0)(0), B => x"00");
 					--pixel <= (R => x"00", G => x"00", B => dotmatrix(1)(0));
 
 					--pixel <= (R => x"00", G => dotmatrix(0)(0), B => dotmatrix(1)(0));
 					--pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => x"00");
 
-					--pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
+					pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
 					dpwren <= '1';
 					dpaddr_next <= dpaddr + '1';
 				end if;
@@ -259,9 +265,9 @@ begin
 			inline_next <= rdreq;
 			inline <= inline_next;
 
-			dotmatrix(1)(0) <= dotmatrix(0)(1);
+			dotmatrix(1)(0) <= dotmatrix(1)(1);
 			dotmatrix(1)(1) <= lastdot;
-			dotmatrix(0)(0) <= dotmatrix(1)(1);
+			dotmatrix(0)(0) <= dotmatrix(0)(1);
 			dotmatrix(0)(1) <= dot;
 
 			dpaddr <= dpaddr_next;

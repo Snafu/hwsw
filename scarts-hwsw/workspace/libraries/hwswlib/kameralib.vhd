@@ -57,7 +57,7 @@ package kameralib is
 		lb			: std_logic;
 	end record;
 
-	type state_t is (WAIT_INIT, NOINIT, WAITFRAME, WAITFIRST, FIRST, WAITNORMAL, NORMAL);
+	type state_t is (WAIT_INIT, NOINIT, WAITFRAME, FRAMEEND, WAITFIRST, FIRST, WAITNORMAL, NORMAL);
 	
 	component kamera
 		port (
