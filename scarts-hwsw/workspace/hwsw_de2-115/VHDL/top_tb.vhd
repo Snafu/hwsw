@@ -297,30 +297,30 @@ begin
 		--------------------------------------------------------------------------
 		-- NORMAL
 		--------------------------------------------------------------------------
---		cam_pixclk <= '0';
---		wait for 25 ns;
---		cam_pixclk <= '1';
---		wait for 25 ns;
+		cam_pixclk <= '0';
+		wait for 25 ns;
+		cam_pixclk <= '1';
+		wait for 25 ns;
 
 		--------------------------------------------------------------------------
 		-- BUGGY
 		--------------------------------------------------------------------------
-		for i in 1 to 100 loop
-			cam_pixclk <= '0';
-	  	wait for 25 ns;
-	  	cam_pixclk <= '1';
-	  	wait for 25 ns;
-		end loop;
-
-		cam_pixclk <= '0';
-		wait for 10 ns;
-		cam_pixclk <= '1';
-		wait for 2 ns;
-		cam_pixclk <= '0';
-		wait for 13 ns;
-
-		cam_pixclk <= '1';
-		wait for 25 ns;
+--		for i in 1 to 100 loop
+--			cam_pixclk <= '0';
+--	  	wait for 25 ns;
+--	  	cam_pixclk <= '1';
+--	  	wait for 25 ns;
+--		end loop;
+--
+--		cam_pixclk <= '0';
+--		wait for 10 ns;
+--		cam_pixclk <= '1';
+--		wait for 2 ns;
+--		cam_pixclk <= '0';
+--		wait for 13 ns;
+--
+--		cam_pixclk <= '1';
+--		wait for 25 ns;
 
 	end process;
 	
