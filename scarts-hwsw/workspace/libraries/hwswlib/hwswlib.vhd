@@ -40,6 +40,9 @@ use work.scarts_pkg.all;
 
 package hwswlib is
 
+	constant TPRAM_ADDRLEN		: integer := 8;
+	constant TPRAM_DATALEN		: integer := 8;
+
 	component dispctrl
 	  generic (
 			hindex      : integer := 0;
@@ -103,6 +106,49 @@ package hwswlib is
 			sw1				: in std_logic;
 			sw0				: in std_logic
 			);
+	end component;
+
+	component tpram_sclk is
+		generic
+		(
+			ADDRLEN : integer range 2 to integer'high := TPRAM_ADDRLEN;
+			DATALEN	: integer range 2 to integer'high := TPRAM_DATALEN
+		);
+		port 
+		(	
+			clk			: in std_logic;
+			
+			addr_a	: in std_logic_vector(ADDRLEN-1 downto 0);
+			data_a	: in std_logic_vector(DATALEN-1 downto 0);
+			we_a		: in std_logic := '0';
+			q_a			: out std_logic_vector(DATALEN-1 downto 0);
+			
+			addr_b	: in std_logic_vector(ADDRLEN-1 downto 0);
+			data_b	: in std_logic_vector(DATALEN-1 downto 0);
+			we_b		: in std_logic := '0';
+			q_b			: out std_logic_vector(DATALEN-1 downto 0);
+
+			addr_c	: in std_logic_vector(ADDRLEN-1 downto 0);
+			q_c			: out std_logic_vector(DATALEN-1 downto 0)
+		);
+	end component;
+
+	component filter_erode is
+		generic
+		(
+			ADDRLEN : integer range 2 to integer'high := TPRAM_ADDRLEN;
+			DATALEN	: integer range 2 to integer'high := TPRAM_DATALEN
+		);
+		port 
+		(
+			rst			: in std_logic;
+			clk			: in std_logic;
+			
+			pixeladdr				: out std_logic_vector(ADDRLEN-1 downto 0);
+			pixeldata_post	: out std_logic_vector(DATALEN-1 downto 0);
+			pixel_we				: out std_logic;
+			pixeldata_pre		: in std_logic_vector(DATALEN-1 downto 0)
+		);
 	end component;
 	
 end;

@@ -27,6 +27,10 @@ use work.kameralib.all;
 
 
 entity kamera is
+	generic (
+		FILTERADDRLEN			: integer range 2 to integer'high;
+		FILTERDATALEN			: integer range 2 to integer'high
+	);
 
 	port (
 		-- DEBUG
@@ -47,6 +51,10 @@ entity kamera is
 		dp_wraddr				: out std_logic_vector(8 downto 0);
 		
 		pixelburstReady	: out std_logic;
+
+		filter_addr			: out std_logic_vector(FILTERADDRLEN-1 downto 0);
+		filter_data			: out std_logic_vector(FILTERDATALEN-1 downto 0);
+		filter_we				: out std_logic;
 
 		init_ready			: in std_logic
     );
@@ -124,6 +132,10 @@ architecture rtl of kamera is
 	signal crR_sig_n, crG_sig_n, crB_sig_n	: std_logic_vector(7 downto 0);
 	signal crResult								: std_logic_vector(16 downto 0);
 	
+
+	signal filter_addr_next									: std_logic_vector(FILTERADDRLEN-1 downto 0);
+	signal filter_data_next									: std_logic_vector(FILTERDATALEN-1 downto 0);
+	signal filter_we_next										: std_logic;
 begin
 
 	bb_rdreq_dbg <= bb_rdreq;
@@ -298,6 +310,11 @@ begin
 		crG_sig_n <= crG_sig;
 		crB_sig_n <= crB_sig;
 
+
+		filter_addr_next <= (others => '0');
+		filter_data_next <= (others => '0');
+		filter_we_next <= '0';
+
 		case state is
 		when NORMAL =>
 			colcount_next <= colcount + '1';
@@ -320,14 +337,6 @@ begin
 			-- +----+----+----+----+----+----
 
 			pixelcount_next <= pixelcount + 1;
-
-
-			--pixel <= (R => dotmatrix(0)(1), G => x"00", B => x"00");
-			--pixel <= (R => x"00", G => dotmatrix(0)(0), B => x"00");
-			--pixel <= (R => x"00", G => x"00", B => dotmatrix(1)(0));
-
-			--pixel <= (R => x"00", G => dotmatrix(0)(0), B => dotmatrix(1)(0));
-			--pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => x"00");
 
 			if linecount(0) = '1' then
 				if colcount(0) = '0' then
@@ -403,6 +412,10 @@ begin
 				pixelcount_next <= (others => '0');
 			end if;
 
+			filter_addr_next <= pixelcount(7 downto 0);
+			filter_data_next <= green(8 downto 1);
+			filter_we_next <= pixelcount(1);
+
 		end if;
 	end process;
 
@@ -458,6 +471,11 @@ begin
 			crB_sig	<= crB_sig_n;
 			crB		<= crB_sig_n;
 
+
+			filter_addr <= filter_addr_next;
+			filter_data <= filter_data_next;
+			filter_we <= filter_we_next;
+
 		end if;
 
 		if rst = '0' then
@@ -468,7 +486,6 @@ begin
 			bb_wrreq <= '0';
 			bb_in <= (others => '0');
 			bb_rdreq <= '0';
-			--bb_out <= (others => '0');
 
 
 			linecount <= (others => '0');
