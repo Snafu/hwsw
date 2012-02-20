@@ -337,10 +337,10 @@ begin
 			cam_fval <= '1';
 			wait for 100 ns;
 
-			for line in 1 to 960 loop
+			for line in 1 to 482 loop
 				cam_lval <= '1';
 
-				for row in 1 to 1600 loop
+				for row in 1 to 802 loop
 					cam_pixdata <= cam_pixdata + "10000";
 					wait for 50 ns;  
 				end loop;

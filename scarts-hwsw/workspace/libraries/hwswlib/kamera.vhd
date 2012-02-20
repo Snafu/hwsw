@@ -54,10 +54,10 @@ end ;
 
 architecture rtl of kamera is
   
-	constant MAXCOL						: integer := 1600;
-	constant LASTCOL					: integer := MAXCOL-1;
-	constant MAXLINE					: integer := 960;
-	constant LASTLINE					: integer := MAXLINE-1;
+	constant MAXCOL						: integer := 802;
+	constant LASTCOL					: integer := MAXCOL-2;
+	constant MAXLINE					: integer := 482;
+	constant LASTLINE					: integer := MAXLINE-2;
 
 	--type state_t is (WAIT_INIT, NOINIT, WAITFRAME, WAITFIRST, FIRST, WAITNORMAL, NORMAL);
 	type dotline_t is array (0 to 1) of std_logic_vector(7 downto 0);
@@ -153,7 +153,7 @@ begin
 
 		when WAITNORMAL =>
 			if lval = '1' then
-				bb_wrreq_next <= '0';
+				bb_wrreq_next <= '1';
 				bb_rdreq_next <= '1';
 
 				state_next <= NORMAL;
@@ -169,7 +169,7 @@ begin
 					state_next <= FRAMEEND;
 				else
 					linecount_next <= linecount + '1';
-					state_next <= WAITFIRST;
+					state_next <= WAITNORMAL;
 				end if;
 			end if;
 
@@ -214,7 +214,7 @@ begin
 			pixelcount_next <= (others => '0');
 		end case;
 
-		if colcount > "00000000000" and colcount(0) = '0' then
+		if linecount > "0000000000" and colcount > "00000000001" and pixelcount < conv_std_logic_vector(LASTCOL,11) then
 			-- Bayer pattern
 			-- +----+----+----+----+----+----
 			-- | G1 | R  | G1 | R  | G1 | ..
@@ -226,10 +226,6 @@ begin
 
 			pixelcount_next <= pixelcount + 1;
 
-			g1 := "0" & dotmatrix(0)(0);
-			g2 := "0" & dotmatrix(1)(1);
-
-			green := std_logic_vector(unsigned(g1) + unsigned(g2));
 
 			--pixel <= (R => dotmatrix(0)(1), G => x"00", B => x"00");
 			--pixel <= (R => x"00", G => dotmatrix(0)(0), B => x"00");
@@ -238,16 +234,40 @@ begin
 			--pixel <= (R => x"00", G => dotmatrix(0)(0), B => dotmatrix(1)(0));
 			--pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => x"00");
 
-			pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
+			if linecount(0) = '1' then
+				if colcount(0) = '0' then
+					g1 := "0" & dotmatrix(0)(0);
+					g2 := "0" & dotmatrix(1)(1);
+					pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
+				else
+					g1 := "0" & dotmatrix(0)(1);
+					g2 := "0" & dotmatrix(1)(0);
+					pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
+				end if;
+			else
+				if colcount(0) = '0' then
+					g1 := "0" & dotmatrix(1)(0);
+					g2 := "0" & dotmatrix(0)(1);
+					pixel <= (R => dotmatrix(1)(1), G => dotmatrix(1)(0), B => dotmatrix(0)(0));
+				else
+					g1 := "0" & dotmatrix(1)(1);
+					g2 := "0" & dotmatrix(0)(0);
+					pixel <= (R => dotmatrix(1)(0), G => dotmatrix(1)(1), B => dotmatrix(0)(1));
+				end if;
+			end if;
+			
+			green := std_logic_vector(unsigned(g1) + unsigned(g2));
+			pixel(G) <= green(8 downto 1);
+
 			--pixel <= (R => dotmatrix(0)(1), G => green(8 downto 1), B => dotmatrix(1)(0));
 			dpwren <= '1';
 			dpaddr_next <= dpaddr + '1';
 
-			if colcount(5 downto 1) = "00000" then
+			if pixelcount(4 downto 0) = "11111" then
 				pixelburstReady_next <= '1';
 			end if;
 
-			if pixelcount = conv_std_logic_vector(799,11) then
+			if pixelcount = conv_std_logic_vector(LASTCOL,11) then
 				colcount_next <= (others => '0');
 				pixelcount_next <= (others => '0');
 			end if;
