@@ -356,11 +356,14 @@ begin
 					--pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
 					
 					-- results from LAST cycle
-					if(( yResult > yMIN AND yResult < yMAX) AND (cbResult > cbMIN AND cbResult < cbMAX) AND (crResult > crMIN AND crResult < crMAX))
+					--if(( yResult > yMIN AND yResult < yMAX) AND (cbResult > cbMIN AND cbResult < cbMAX) AND (crResult > crMIN AND crResult < crMAX))
+					if 1 < 3
 					then
 						--	skin color		-> white pixel
+						null;
 					else
 						-- no skin color	-> black pixel
+						null;
 					end if;
 					
 				end if;
