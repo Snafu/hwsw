@@ -138,43 +138,65 @@ end top;
 architecture behaviour of top is
   
 	-- clock signals
-	signal cam_pll_input_sig			: std_logic;
-	signal clk_pixel				: std_logic;
+	signal cam_pll_input_sig	: std_logic;
+	signal clk_pixel					: std_logic;
   
 	-- kamera signals
-	signal pxReady_sig		: std_logic;
-	signal pxReady_sync		: std_logic;
-	signal whichLine_sig		: std_logic;
-	signal pixclk_sync		: std_logic;
-	signal cam_pixdata_sync	: std_logic_vector(11 downto 0);
-	
-	
-	-- kamera SYNCRONIZED signals
-	signal cam_fval_sync		: std_logic;
-	signal cam_lval_sync		: std_logic;
+	signal pxReady_sig				: std_logic;
+	signal pxReady_sync				: std_logic;
+	signal whichLine_sig			: std_logic;
+	signal cam_counter				: integer range 0 to 4;
+	signal cam_counter_next		: integer range 0 to 4;
+	signal cam_syncrst				: std_logic;
+	signal cam_pixdata_sync		: std_logic_vector(11 downto 0);
+	signal cam_fval_sync			: std_logic;
+	signal cam_lval_sync			: std_logic;
+	signal filter_addr				: std_logic_vector(TPRAM_ADDRLEN-1 downto 0);
+	signal filter_data				: std_logic_vector(TPRAM_DATALEN-1 downto 0);
+	signal filter_we					: std_logic;
+
+	-- erode filter signals
+	signal erode_addr					: std_logic_vector(TPRAM_ADDRLEN-1 downto 0);
+	signal erode_data_post		: std_logic_vector(TPRAM_DATALEN-1 downto 0);
+	signal erode_data_pre			: std_logic_vector(TPRAM_DATALEN-1 downto 0);
+	signal erode_we						: std_logic;
+  
+	-- signals for BUTTONS Extension Module
+  signal buttons_config_sel	: std_ulogic;
+  signal buttons_exto 			: module_out_type;
+
+  -- signals for DISPLAY Controller
+  signal disp_ahbmo					: ahb_mst_out_type;
+	signal disp_fval					:	std_logic;
+  
+  -- signals for i2cmst
+	--signal i2ci_pin			:	i2c_in_type;
+	signal i2co_pin				:	i2c_out_type;
+	signal i2c_config_sel	:	std_logic	:= '0';
+  --signal i2c_exto				: module_out_type;
   
   -- dpram
-	signal data_sig			:  STD_LOGIC_VECTOR (31 DOWNTO 0);
-	signal rdaddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
-	signal rdclock_sig		:  STD_LOGIC ;
-	signal wraddress_sig	:  STD_LOGIC_VECTOR (8 DOWNTO 0);
-	signal wrclock_sig		:  STD_LOGIC  := '1';
-	signal wren_sig			:  STD_LOGIC  := '0';
-	signal q_sig				:  STD_LOGIC_VECTOR (31 DOWNTO 0);
+	signal data_sig						:  STD_LOGIC_VECTOR (31 DOWNTO 0);
+	signal rdaddress_sig			:  STD_LOGIC_VECTOR (8 DOWNTO 0);
+	signal rdclock_sig				:  STD_LOGIC ;
+	signal wraddress_sig			:  STD_LOGIC_VECTOR (8 DOWNTO 0);
+	signal wrclock_sig				:  STD_LOGIC  := '1';
+	signal wren_sig						:  STD_LOGIC  := '0';
+	signal q_sig							:  STD_LOGIC_VECTOR (31 DOWNTO 0);
   
   
-  signal scarts_i    : scarts_in_type;
-  signal scarts_o    : scarts_out_type;
+  signal scarts_i						: scarts_in_type;
+  signal scarts_o						: scarts_out_type;
 
-  signal debugi_if : debug_if_in_type;
-  signal debugo_if : debug_if_out_type;
+  signal debugi_if					: debug_if_in_type;
+  signal debugo_if					: debug_if_out_type;
 
-  signal exti      : module_in_type;
+  signal exti								: module_in_type;
   
-  signal syncrst     : std_ulogic;
-  signal sysrst      : std_ulogic;
+  signal syncrst						: std_ulogic;
+  signal sysrst							: std_ulogic;
 
-  signal clk         : std_logic;
+  signal clk								: std_logic;
 
   -- 7-segment display
   signal dis7segsel  : std_ulogic;
@@ -205,23 +227,6 @@ architecture behaviour of top is
   signal vga_clk_int    : std_logic;
   signal vga_clk_sel    : std_logic_vector(1 downto 0);
   signal svga_ahbmo     : ahb_mst_out_type;
-  
-	-- signals for BUTTONS Extension Module
-  signal buttons_config_sel	: std_ulogic;
-  signal buttons_exto 			: module_out_type;
-
-  -- signals for DISPLAY Controller
-  signal disp_ahbmo		: ahb_mst_out_type;
-  
-  -- signals for i2cmst
-	--signal i2ci_pin			:	i2c_in_type;
-	signal i2co_pin				:	i2c_out_type;
-	signal i2c_config_sel	:	std_logic	:= '0';
-  --signal i2c_exto				: module_out_type;
-	
-	signal cam_clock				: std_logic;
-	signal cam_counter			: integer range 0 to 4;
-	signal cam_counter_next	: integer range 0 to 4;
 
   -- signals for AUX UART
   signal aux_uart_sel      : std_ulogic;
@@ -253,9 +258,11 @@ architecture behaviour of top is
 
 begin
 
-  -----------------------------------------------------------------------------
+	sysclk <= clk;
+
+	-----------------------------------------------------------------------------
 	-- PLLs
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
 
   altera_pll_inst : altera_pll
 		PORT MAP
@@ -276,11 +283,39 @@ begin
 		);
 
 
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
 	-- Synchronizers
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
 
-	sync_fval : sync
+	sync_disp_fval : sync
+		generic map
+		(
+			SYNC_STAGES => 2,
+			RESET_VALUE => '0'
+		)
+		port map
+		(
+			sys_clk => clk_pixel,
+			sys_res_n => rst,
+			data_in => cam_fval,
+			data_out => disp_fval
+		);
+
+	sync_cam_rst : sync
+		generic map
+		(
+			SYNC_STAGES => 2,
+			RESET_VALUE => '0'
+		)
+		port map
+		(
+			sys_clk => clk_pixel,
+			sys_res_n => rst,
+			data_in => rst,
+			data_out => cam_syncrst
+		);
+
+	sync_fval : nsync
 		generic map
 		(
 			SYNC_STAGES => 2,
@@ -294,7 +329,7 @@ begin
 			data_out => cam_fval_sync
 		);
 	
-	sync_lval : sync
+	sync_lval : nsync
 		generic map
 		(
 			SYNC_STAGES => 2,
@@ -308,7 +343,7 @@ begin
 			data_out => cam_lval_sync
 		);
 	
-	sync_pixdata : vectorsync
+	sync_pixdata : nvectorsync
 		generic map
 		(
 			SYNC_STAGES => 2,
@@ -323,7 +358,7 @@ begin
 			data_out => cam_pixdata_sync
 		);
 
-	sync_pxReady : sync
+	sync_pxReady : nsync
 		generic map
 		(
 			SYNC_STAGES => 2,
@@ -338,9 +373,9 @@ begin
 		);
 
 
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
 	-- SCARTS
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
 		
   scarts_unit: scarts
     generic map (
@@ -368,11 +403,11 @@ begin
       debugi_if => debugi_if,
       debugo_if => debugo_if
       );
- 
 
-  -----------------------------------------------------------------------------
-  -- AMBA AHB arbiter/multiplexer
-  -----------------------------------------------------------------------------
+
+	-----------------------------------------------------------------------------
+	-- AMBA AHB arbiter/multiplexer
+	-----------------------------------------------------------------------------
 
   ahb0 : ahbctrl
     generic map(
@@ -422,9 +457,9 @@ begin
   end process;
 
 
-  -----------------------------------------------------------------------------
-  -- AMBA AHB/APB Bridge
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
+	-- AMBA AHB/APB Bridge
+	-----------------------------------------------------------------------------
 
   apb_bridge : apbctrl
     generic map(
@@ -442,9 +477,10 @@ begin
       apbo => apbo                -- from slaves to bridge
       );
 
-  -----------------------------------------------------------------------------
-  -- SDRAM controller
-  -----------------------------------------------------------------------------
+
+	-----------------------------------------------------------------------------
+	-- SDRAM controller
+	-----------------------------------------------------------------------------
   
   sdctrl_inst : sdctrl
   generic map
@@ -523,9 +559,10 @@ begin
     ahbso(1) <= sdram_ahbso;
   end process;
 
-  -----------------------------------------------------------------------------
-  -- SVGA controller (LCD)
-  -----------------------------------------------------------------------------
+
+	-----------------------------------------------------------------------------
+	-- SVGA controller (LCD)
+	-----------------------------------------------------------------------------
   
   svgactrl0 : svgactrl
     generic map
@@ -560,9 +597,9 @@ begin
     ltm_grest <= '1';
   
 
-  -----------------------------------------------------------------------------
-  -- I2C MASTER / Extension Module
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
+	-- I2C MASTER / Extension Module
+	-----------------------------------------------------------------------------
 
 	is2c0 : i2cmaster
 		port map
@@ -572,9 +609,7 @@ begin
 			
 			extsel     => i2c_config_sel,			
 			exti       => exti,
-			--exto       => i2c_exto,
 			
-			--i2ci	=>	i2ci_pin,
 			i2co	=>	i2co_pin
 		);
 
@@ -586,10 +621,11 @@ begin
 	i2c_sda_dbg <= i2co_pin.sda;
 	
 	i2c_trigger <= i2c_config_sel;
-	
-  -----------------------------------------------------------------------------
+
+
+	-----------------------------------------------------------------------------
 	-- BUTTONS / Extension Module
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
 
 	but0 : buttons
 		port map
@@ -625,9 +661,9 @@ begin
 		);
 
 	
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
 	-- DISPLAY controller
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
 	
   dispctrl0 : dispctrl
     generic map
@@ -641,18 +677,19 @@ begin
 			clk => clk,
 			ahbi => grlib_ahbmi,
 			ahbo => disp_ahbmo,
-			fval => cam_fval_sync,
+			fval => disp_fval,
 			rdaddress => rdaddress_sig,
 			rddata => q_sig,
 			blockrdy => pxReady_sync,
 			--blockrdy => blockrdy, --dbg
 			
 			init_ready    => hw_initialized		-- HARI: signal by sw-extension AFTER i2c init
-    );  
+    );
 	
-  -----------------------------------------------------------------------------
-	-- DP RAM for storing ONE LINE OF RGB DATA(400pixels each, 240 of them)
-  -----------------------------------------------------------------------------
+	
+	-----------------------------------------------------------------------------
+	-- DP RAM for storing ONE LINE OF RGB DATA
+	-----------------------------------------------------------------------------
 	
 	dp_pixelram_inst : dp_pixelram
 	PORT MAP
@@ -663,24 +700,81 @@ begin
 		wraddress	=> wraddress_sig,
 		wrclock		=> clk_pixel,
 		wren			=> wren_sig,
-		q				=> q_sig
+		q					=> q_sig
+	);
+
+
+	-----------------------------------------------------------------------------
+	-- TP RAM
+	-----------------------------------------------------------------------------
+
+	tp_filter_ram0: tpram_sclk
+		generic map
+		(
+			ADDRLEN	=> TPRAM_ADDRLEN,
+			DATALEN	=> TPRAM_DATALEN
+		)
+		port map
+		(	
+			clk			=>	clk,
+
+			addr_a	=>	filter_addr,
+			data_a	=>	filter_data,
+			we_a		=>	filter_we,
+			q_a			=>	open,
+
+			addr_b	=>	erode_addr,
+			data_b	=>	erode_data_post,
+			we_b		=>	erode_we,
+			q_b			=>	erode_data_pre,
+
+			addr_c	=>	"00000000",
+			q_c			=>	open
 	);
 	
-  -----------------------------------------------------------------------------
+	
+	-----------------------------------------------------------------------------
+	--- Erode filter
+	-----------------------------------------------------------------------------
+
+	filter_erode0: filter_erode
+		generic map
+		(
+			ADDRLEN => TPRAM_ADDRLEN,
+			DATALEN => TPRAM_DATALEN
+		)
+		port map
+		(
+			rst => syncrst,
+			clk => clk,
+
+			pixeladdr				=> erode_addr,
+			pixeldata_post	=> erode_data_post,
+			pixeldata_pre		=> erode_data_pre,
+			pixel_we				=> erode_we
+		);
+	
+	
+	-----------------------------------------------------------------------------
 	--- Kamera readout
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
 	
   cam0 : kamera
+		generic map
+		(
+			FILTERADDRLEN	=> TPRAM_ADDRLEN,
+			FILTERDATALEN	=> TPRAM_DATALEN
+		)
     port map
     (
 			-- DEBUG
-			camstate	=> camstate,
-			bb_rdreq_dbg => rdreq_dbg,
-			bb_wrreq_dbg => wrreq_dbg,
-			bb_clearfifo_dbg => clearfifo_dbg,
+			camstate					=> camstate,
+			bb_rdreq_dbg			=> rdreq_dbg,
+			bb_wrreq_dbg			=> wrreq_dbg,
+			bb_clearfifo_dbg	=> clearfifo_dbg,
 
 
-			rst				=> syncrst,
+			rst				=> cam_syncrst,
 			clk				=> clk_pixel,
 			fval			=> cam_fval_sync,
 			lval			=> cam_lval_sync,
@@ -692,6 +786,10 @@ begin
 
 			pixelburstReady => pxReady_sig,
 
+			filter_addr	=> filter_addr,
+			filter_data	=> filter_data,
+			filter_we		=> filter_we,
+
 			init_ready => hw_initialized
     ); 
 	
@@ -700,23 +798,18 @@ begin
 	
 	
 	-- debugging only
-	clk_pixel_dbg <= clk_pixel;		-- pixelclock FROM camera
+	clk_pixel_dbg <= clk_pixel;
 	cam_fval_dbg  <= cam_fval_sync;
 	cam_lval_dbg  <= cam_lval_sync;
 	cam_pixdata_dbg <= cam_pixdata_sync;	
-	--clk_pixel_dbg <= cam_pixclk;		-- pixelclock FROM camera
-	--cam_fval_dbg  <= cam_fval;
-	--cam_lval_dbg  <= cam_lval;
-	--cam_pixdata_dbg <= cam_pixdata;	
 	cam_resetN_dbg <= syncrst;		
 	blockrdy_dbg <= pxReady_sig;
-	sysclk <= clk;
 	whichLine_top_dbg <= whichLine_sig;
 	wren_sig_dbg <= wren_sig;
 	
-  -----------------------------------------------------------------------------
-  -- Scarts extension modules
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
+	-- Scarts extension modules
+	-----------------------------------------------------------------------------
     
   dis7seg_unit: ext_dis7seg
     generic map (
@@ -825,9 +918,9 @@ begin
 		end if;
 	end process;
 
-  -----------------------------------------------------------------------------
-  -- Clocked signals
-  -----------------------------------------------------------------------------
+	-----------------------------------------------------------------------------
+	-- Clocked signals
+	-----------------------------------------------------------------------------
   
   reg : process(clk)
   begin

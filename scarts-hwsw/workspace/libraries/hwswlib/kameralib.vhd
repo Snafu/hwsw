@@ -26,15 +26,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
---library grlib;
---use grlib.amba.all;
---use grlib.devices.all;
---use grlib.stdlib.all;
---use gaisler.misc.all;
---library techmap;
---use techmap.gencomp.all;
---library gaisler;
-
 package kameralib is
 
 	type sram_ctrl_t is record
@@ -60,9 +51,13 @@ package kameralib is
 	type state_t is (WAIT_INIT, NOINIT, WAITFRAME, FRAMEEND, WAITFIRST, FIRST, WAITNORMAL, NORMAL);
 	
 	component kamera
+		generic (
+			FILTERADDRLEN			: integer range 2 to integer'high;
+			FILTERDATALEN			: integer range 2 to integer'high
+		);
 		port (
 			-- DEBUG
-			camstate				: out state_t;
+			camstate						: out state_t;
 			bb_rdreq_dbg				: out std_logic;
 			bb_wrreq_dbg				: out std_logic;
 			bb_clearfifo_dbg		: out std_logic;
@@ -79,6 +74,10 @@ package kameralib is
 			dp_wraddr				: out std_logic_vector(8 downto 0);
 			
 			pixelburstReady	: out std_logic;
+
+			filter_addr			: out std_logic_vector(FILTERADDRLEN-1 downto 0);
+			filter_data			: out std_logic_vector(FILTERDATALEN-1 downto 0);
+			filter_we				: out std_logic;
 	
 			init_ready			: in std_logic
 		);
@@ -90,8 +89,8 @@ package kameralib is
 			clock		: IN STD_LOGIC ;
 			data		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 			rdreq		: IN STD_LOGIC ;
-			sclr	: IN STD_LOGIC ;
-			q		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
+			sclr		: IN STD_LOGIC ;
+			q				: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
 			wrreq		: IN STD_LOGIC
 		);
 	end component;

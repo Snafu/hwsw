@@ -116,7 +116,7 @@ begin
 		face_n <= face;
 	end process;
   
-  ahb_proc : process(rst,ahbi,dmai,dmao,fval,fval_old,blockrdy,writeState,pixeladdr,rddata,blockCount,output,blockrdy_old,init_ready,init_old,col,row,face)
+  ahb_proc : process(rst,ahbi,dmai,dmao,fval,fval_old,blockrdy,writeState,pixeladdr,rddata,blockCount,pixeldata,output,blockrdy_old,init_ready,init_old,col,row,face)
 		variable wout : write_t;
 		variable ahbready : std_logic;
 		variable start : std_logic;
@@ -201,7 +201,7 @@ begin
 		end if;
 
 		-- force to stay within framebuffer
-		if wout.address >= FIFOEND then
+		if wout.address >= FIFOEND or (fval_old = '0' and fval = '1') then
 			wout.address := FIFOSTART;
 			wout.data := x"00000000";
 			pixeladdr_n <= "000000000";
