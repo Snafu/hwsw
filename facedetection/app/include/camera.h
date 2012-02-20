@@ -26,6 +26,7 @@
 #define READ_MODE2_REG							0x20
 
 #define RESTART_REG									0x0b
+#define TRIGGER											(1 << 2)
 
 #define BLACK_LVL_CAL_REG						0x62
 
@@ -34,6 +35,14 @@
 #define TEST_PATTERN_REG_REG				0xa2
 #define TEST_PATTERN_BLUE_REG				0xa3
 #define TEST_PATTERN_BARW_REG				0xa4
+
+#define TEST_GRADIENT_HORIZONTAL		(1 << 3)
+#define TEST_GRADIENT_VERTICAL			(2 << 3)
+#define TEST_CLASSIC								(4 << 3)
+#define TEST_MARCHING_ONES					(5 << 3)
+#define TEST_MONOCR_HORIZONTAL			(6 << 3)
+#define TEST_MONOCR_VERTICAL				(7 << 3)
+#define TEST_ENABLE									1
 
 
 #endif /* CAMERA_H */
