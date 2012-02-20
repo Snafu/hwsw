@@ -21,7 +21,6 @@ use ieee.numeric_std.all;
 library grlib;
 use grlib.stdlib.all;
 
-
 library work;
 use work.kameralib.all;
 
@@ -100,21 +99,21 @@ architecture rtl of kamera is
 
 	signal init_old, init_old_n : std_logic := '0';
 
-	signal state, state_next								: state_t;
-	signal linecount, linecount_next				: std_logic_vector(9 downto 0);
-	signal colcount, colcount_next					: std_logic_vector(10 downto 0);
-	signal pixelcount, pixelcount_next			: std_logic_vector(10 downto 0);
-	signal pixel														: pixel_t;
-	signal dotmatrix												: dotmatrix_t;
-	signal dpwren														: std_logic;
-	signal dpaddr, dpaddr_next							: std_logic_vector(8 downto 0);
+	signal state, state_next					: state_t;
+	signal linecount, linecount_next			: std_logic_vector(9 downto 0);
+	signal colcount, colcount_next			: std_logic_vector(10 downto 0);
+	signal pixelcount, pixelcount_next		: std_logic_vector(10 downto 0);
+	signal pixel									: pixel_t;
+	signal dotmatrix								: dotmatrix_t;
+	signal dpwren									: std_logic;
+	signal dpaddr, dpaddr_next					: std_logic_vector(8 downto 0);
 
-	signal pixelburstReady_next							: std_logic;
+	signal pixelburstReady_next				: std_logic;
 
 	signal bb_clearfifo, bb_clearfifo_next	: std_logic;
-	signal bb_wrreq, bb_wrreq_next					: std_logic := '0';
-	signal bb_in, bb_in_next								: std_logic_vector(7 downto 0);
-	signal bb_rdreq, bb_rdreq_next					: std_logic := '0';
+	signal bb_wrreq, bb_wrreq_next			: std_logic := '0';
+	signal bb_in, bb_in_next					: std_logic_vector(7 downto 0);
+	signal bb_rdreq, bb_rdreq_next			: std_logic := '0';
 	signal bb_out_next							: std_logic_vector(7 downto 0);
 	
 	signal yR, yG, yB								: std_logic_vector(7 downto 0);
@@ -131,11 +130,17 @@ architecture rtl of kamera is
 	signal crR_sig, crG_sig, crB_sig			: std_logic_vector(7 downto 0);
 	signal crR_sig_n, crG_sig_n, crB_sig_n	: std_logic_vector(7 downto 0);
 	signal crResult								: std_logic_vector(16 downto 0);
-	
 
-	signal filter_addr_next									: std_logic_vector(FILTERADDRLEN-1 downto 0);
-	signal filter_data_next									: std_logic_vector(FILTERDATALEN-1 downto 0);
-	signal filter_we_next										: std_logic;
+	signal filter_addr_sig						: std_logic_vector(FILTERADDRLEN-1 downto 0);
+	signal filter_addr_sig_n					: std_logic_vector(FILTERADDRLEN-1 downto 0);
+	signal filter_data_sig						: std_logic_vector(FILTERDATALEN-1 downto 0);
+	signal filter_data_sig_n					: std_logic_vector(FILTERDATALEN-1 downto 0);
+	signal filter_we_sig							: std_logic;
+	signal filter_we_sig_n						: std_logic;
+	
+	signal byteCount								: std_logic_vector(2 downto 0);
+	signal byteCount_n							: std_logic_vector(2 downto 0);
+	
 begin
 
 	bb_rdreq_dbg <= bb_rdreq;
@@ -165,7 +170,6 @@ begin
 		result   => yResult
 	);
 
---
 	cbMUL : yCbCrMUL PORT MAP (
 		clock0   => clk,
 		dataa_0  => cbR,
@@ -177,7 +181,6 @@ begin
 		result   => cbResult
 	);
 
-	--
 	crMUL : yCbCrMUL PORT MAP (
 		clock0   => clk,
 		dataa_0  => crR,
@@ -354,16 +357,13 @@ begin
 					red := dotmatrix(0)(0);
 					blue := dotmatrix(1)(1);
 					--pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
-					
-					-- results from LAST cycle
-					--if(( yResult > yMIN AND yResult < yMAX) AND (cbResult > cbMIN AND cbResult < cbMAX) AND (crResult > crMIN AND crResult < crMAX))
-					if 1 < 3
+				
+					-- results from pixel(1/0)			
+					if( ( yResult > std_logic_vector(to_unsigned(yMIN,  9))  AND  yResult < std_logic_vector(to_unsigned(yMAX, 9))  ) AND                   (cbResult > std_logic_vector(to_unsigned(cbMIN, 9))  AND cbResult < std_logic_vector(to_unsigned(cbMAX, 9)) ) AND                   (crResult > std_logic_vector(to_unsigned(crMIN, 9))  AND crResult < std_logic_vector(to_unsigned(crMAX, 9))) )
 					then
 						--	skin color		-> white pixel
-						null;
 					else
 						-- no skin color	-> black pixel
-						null;
 					end if;
 					
 				end if;
