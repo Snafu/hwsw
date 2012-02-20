@@ -359,6 +359,8 @@ set_location_assignment PIN_AC15 -to clearfifo_dbg
 set_location_assignment PIN_Y17 -to wrreq_dbg
 set_location_assignment PIN_Y16 -to rdreq_dbg
 set_location_assignment PIN_G24 -to cam_pll_input
+set_global_assignment -name PHYSICAL_SYNTHESIS_MAP_LOGIC_TO_MEMORY_FOR_AREA ON
+set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/yCbCrMUL.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/filter_erode.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/tpram_sclk.vhd
 set_global_assignment -name QIP_FILE ../../libraries/hwswlib/cam_pll.qip
@@ -439,5 +441,4 @@ set_global_assignment -name QIP_FILE ../VHDL/altera_pll.qip
 set_global_assignment -name QIP_FILE ../../libraries/hwswlib/dp_pixelram.qip
 set_global_assignment -name QIP_FILE ../../libraries/hwswlib/bayerbuffer.qip
 set_global_assignment -name QIP_FILE ../../libraries/hwswlib/multiplier.qip
-set_global_assignment -name PHYSICAL_SYNTHESIS_MAP_LOGIC_TO_MEMORY_FOR_AREA ON
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
