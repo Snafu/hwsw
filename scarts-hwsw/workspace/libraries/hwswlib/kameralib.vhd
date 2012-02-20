@@ -107,6 +107,20 @@ package kameralib is
 			q						: OUT STD_LOGIC_VECTOR (31 DOWNTO 0)
 		);
 	end component;
+	
+	component yCbCrMUL
+	PORT
+	(
+		clock0          : IN STD_LOGIC  := '1';
+		dataa_0         : IN STD_LOGIC_VECTOR (7 DOWNTO 0) :=  (OTHERS => '0');
+		dataa_1         : IN STD_LOGIC_VECTOR (7 DOWNTO 0) :=  (OTHERS => '0');
+		dataa_2         : IN STD_LOGIC_VECTOR (7 DOWNTO 0) :=  (OTHERS => '0');
+		datab_0         : IN STD_LOGIC_VECTOR (8 DOWNTO 0) :=  (OTHERS => '0');
+		datab_1         : IN STD_LOGIC_VECTOR (8 DOWNTO 0) :=  (OTHERS => '0');
+		datab_2         : IN STD_LOGIC_VECTOR (8 DOWNTO 0) :=  (OTHERS => '0');
+		result          : OUT STD_LOGIC_VECTOR (16 DOWNTO 0)
+	);
+	END component;
 
 end;
 

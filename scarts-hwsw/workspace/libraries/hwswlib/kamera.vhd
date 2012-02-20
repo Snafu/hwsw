@@ -62,11 +62,36 @@ end ;
 
 architecture rtl of kamera is
   
-	constant MAXCOL						: integer := 802;
-	constant LASTCOL					: integer := MAXCOL-2;
-	constant MAXLINE					: integer := 482;
-	constant LASTLINE					: integer := MAXLINE-2;
+	constant MAXCOL			: integer := 802;
+	constant LASTCOL			: integer := MAXCOL-2;
+	constant MAXLINE			: integer := 482;
+	constant LASTLINE			: integer := MAXLINE-2;
+	
+	constant yRed				: integer := 66;
+	constant yGreen			: integer := 129;
+	constant yBlue				: integer := 25;
 
+	constant cbRed				: integer := -38;
+	constant cbGreen			: integer := -74;
+	constant cbBlue			: integer := 112;
+
+	constant crRed				: integer := 112;
+	constant crGreen			: integer := -94;
+	constant crBlue			: integer := -18;
+	
+	constant yOFFSET			: integer := 16;
+	constant cbOFFSET			: integer := 128;
+	constant crOFFSET			: integer := 128;
+	
+	-- constants for SKIN color
+	constant yMIN				: integer := 38;
+	constant yMAX				: integer := 253;
+	constant cbMIN				: integer := 94;
+	constant cbMAX				: integer := 139;	
+	constant crMIN				: integer := 139;
+	constant crMAX				: integer := 173;
+	
+	
 	--type state_t is (WAIT_INIT, NOINIT, WAITFRAME, WAITFIRST, FIRST, WAITNORMAL, NORMAL);
 	type dotline_t is array (0 to 1) of std_logic_vector(7 downto 0);
 	type dotmatrix_t is array (0 to 1) of dotline_t;
@@ -90,8 +115,23 @@ architecture rtl of kamera is
 	signal bb_wrreq, bb_wrreq_next					: std_logic := '0';
 	signal bb_in, bb_in_next								: std_logic_vector(7 downto 0);
 	signal bb_rdreq, bb_rdreq_next					: std_logic := '0';
-	signal bb_out_next											: std_logic_vector(7 downto 0);
-
+	signal bb_out_next							: std_logic_vector(7 downto 0);
+	
+	signal yR, yG, yB								: std_logic_vector(7 downto 0);
+	signal yR_sig, yG_sig, yB_sig				: std_logic_vector(7 downto 0);
+	signal yR_sig_n, yG_sig_n, yB_sig_n		: std_logic_vector(7 downto 0);
+	signal yResult									: std_logic_vector(16 downto 0);
+	
+	signal cbR, cbG, cbB							: std_logic_vector(7 downto 0);
+	signal cbR_sig, cbG_sig, cbB_sig			: std_logic_vector(7 downto 0);
+	signal cbR_sig_n, cbG_sig_n, cbB_sig_n	: std_logic_vector(7 downto 0);
+	signal cbResult								: std_logic_vector(16 downto 0);
+	
+	signal crR, crG, crB							: std_logic_vector(7 downto 0);
+	signal crR_sig, crG_sig, crB_sig			: std_logic_vector(7 downto 0);
+	signal crR_sig_n, crG_sig_n, crB_sig_n	: std_logic_vector(7 downto 0);
+	signal crResult								: std_logic_vector(16 downto 0);
+	
 
 	signal filter_addr_next									: std_logic_vector(FILTERADDRLEN-1 downto 0);
 	signal filter_data_next									: std_logic_vector(FILTERDATALEN-1 downto 0);
@@ -110,7 +150,47 @@ begin
 		q				=> bb_out_next,
 		wrreq		=> bb_wrreq 
 	);
+	
+--	
+--	MULTIPLIERES for conversion RGB --> yCbCr
+--
+	yMUL : yCbCrMUL PORT MAP (
+		clock0   => clk,
+		dataa_0  => yR,
+		dataa_1  => yG,
+		dataa_2  => yB,
+		datab_0  => conv_std_logic_vector(yRed,9),
+		datab_1  => conv_std_logic_vector(yGreen,9),
+		datab_2  => conv_std_logic_vector(yBlue,9),
+		result   => yResult
+	);
 
+--
+	cbMUL : yCbCrMUL PORT MAP (
+		clock0   => clk,
+		dataa_0  => cbR,
+		dataa_1  => cbG,
+		dataa_2  => cbB,
+		datab_0  => conv_std_logic_vector(cbRed,9),
+		datab_1  => conv_std_logic_vector(cbGreen,9),
+		datab_2  => conv_std_logic_vector(cbBlue,9),
+		result   => cbResult
+	);
+
+	--
+	crMUL : yCbCrMUL PORT MAP (
+		clock0   => clk,
+		dataa_0  => crR,
+		dataa_1  => crG,
+		dataa_2  => crB,
+		datab_0  => conv_std_logic_vector(crRed,9),
+		datab_1  => conv_std_logic_vector(crGreen,9),
+		datab_2  => conv_std_logic_vector(crBlue,9),
+		result   => crResult
+	);
+
+	
+	
 	camstate <= state;
 
 	fsm_control: process(rst, state, linecount, bb_wrreq, bb_rdreq, bb_clearfifo, colcount, fval, lval, init_old, init_ready)
@@ -203,8 +283,10 @@ begin
 		end if;
 	end process;
 
-	fsm : process(rst, state, pixelcount, linecount, colcount, dotmatrix, dpaddr)
+	fsm : process(rst, state, pixelcount, linecount, colcount, dotmatrix, dpaddr, yR_sig, yG_sig, yB_sig, cbR_sig, cbG_sig, cbB_sig, crR_sig, crG_sig, crB_sig)
 		variable green	: std_logic_vector(8 downto 0);
+		variable red	: std_logic_vector(7 downto 0);
+		variable blue	: std_logic_vector(7 downto 0);
 		variable g1, g2	: std_logic_vector(8 downto 0);
 	begin
 		-- defaults
@@ -215,6 +297,18 @@ begin
 		pixelburstReady_next <= '0';
 		
 		pixel <= (others => (others => '0'));
+		
+		yR_sig_n <= yR_sig;
+		yG_sig_n <= yG_sig;
+		yB_sig_n <= yB_sig;
+			
+		cbR_sig_n <= cbR_sig;
+		cbG_sig_n <= cbG_sig;
+		cbB_sig_n <= cbB_sig;
+			
+		crR_sig_n <= crR_sig;
+		crG_sig_n <= crG_sig;
+		crB_sig_n <= crB_sig;
 
 
 		filter_addr_next <= (others => '0');
@@ -248,26 +342,62 @@ begin
 				if colcount(0) = '0' then
 					g1 := "0" & dotmatrix(0)(0);
 					g2 := "0" & dotmatrix(1)(1);
-					pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
+					red := dotmatrix(0)(1);
+					blue := dotmatrix(1)(0);
+					
+					--pixel <= (R => dotmatrix(0)(1), G => dotmatrix(0)(0), B => dotmatrix(1)(0));
+										
 				else
 					g1 := "0" & dotmatrix(0)(1);
 					g2 := "0" & dotmatrix(1)(0);
-					pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
+					
+					red := dotmatrix(0)(0);
+					blue := dotmatrix(1)(1);
+					--pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
+					
+					-- results from LAST cycle
+					if(( yResult > yMIN AND yResult < yMAX) AND (cbResult > cbMIN AND cbResult < cbMAX) AND (crResult > crMIN AND crResult < crMAX))
+					then
+						--	skin color		-> white pixel
+					else
+						-- no skin color	-> black pixel
+					end if;
+					
 				end if;
 			else
 				if colcount(0) = '0' then
 					g1 := "0" & dotmatrix(1)(0);
 					g2 := "0" & dotmatrix(0)(1);
-					pixel <= (R => dotmatrix(1)(1), G => dotmatrix(1)(0), B => dotmatrix(0)(0));
+					
+					red := dotmatrix(1)(1);
+					blue := dotmatrix(0)(0);
+					--pixel <= (R => dotmatrix(1)(1), G => dotmatrix(1)(0), B => dotmatrix(0)(0));
 				else
 					g1 := "0" & dotmatrix(1)(1);
 					g2 := "0" & dotmatrix(0)(0);
-					pixel <= (R => dotmatrix(1)(0), G => dotmatrix(1)(1), B => dotmatrix(0)(1));
+					
+					red := dotmatrix(1)(0);
+					blue := dotmatrix(0)(1);
+					--pixel <= (R => dotmatrix(1)(0), G => dotmatrix(1)(1), B => dotmatrix(0)(1));
 				end if;
 			end if;
 			
 			green := std_logic_vector(unsigned(g1) + unsigned(g2));
+			pixel(R) <= red;
 			pixel(G) <= green(8 downto 1);
+			pixel(B) <= blue;
+					
+			yR_sig_n <= red;
+			yG_sig_n <= green(8 downto 1);
+			yB_sig_n <= blue;
+			
+			cbR_sig_n <= red;
+			cbG_sig_n <= green(8 downto 1);
+			cbB_sig_n <= blue;
+			
+			crR_sig_n <= red;
+			crG_sig_n <= green(8 downto 1);
+			crB_sig_n <= blue;			
 
 			--pixel <= (R => dotmatrix(0)(1), G => green(8 downto 1), B => dotmatrix(1)(0));
 			dpwren <= '1';
@@ -319,6 +449,27 @@ begin
 			bb_wrreq <= bb_wrreq_next;
 			bb_in <= bb_in_next;
 			bb_rdreq <= bb_rdreq_next;
+			
+			yR_sig	<= yR_sig_n;
+			yR			<= yR_sig_n;
+			yG_sig	<= yG_sig_n;
+			yG			<= yG_sig_n;
+			yB_sig	<= yB_sig_n;
+			yB			<= yB_sig_n;
+			
+			cbR_sig	<= cbR_sig_n;
+			cbR		<= cbR_sig_n;
+			cbG_sig	<= cbG_sig_n;
+			cbG		<= cbG_sig_n;
+			cbB_sig	<= cbB_sig_n;
+			cbB		<= cbB_sig_n;
+			
+			crR_sig	<= crR_sig_n;
+			crR		<= crR_sig_n;
+			crG_sig	<= crG_sig_n;
+			crG		<= crG_sig_n;
+			crB_sig	<= crB_sig_n;
+			crB		<= crB_sig_n;
 
 
 			filter_addr <= filter_addr_next;
