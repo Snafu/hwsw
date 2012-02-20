@@ -346,7 +346,7 @@ begin
 					blue := dotmatrix(1)(1);
 					--pixel <= (R => dotmatrix(0)(0), G => dotmatrix(0)(1), B => dotmatrix(1)(1));
 					
-					-- results from LAST cycle
+					-- results from pixel(1/0)
 					if(( yResult > yMIN AND yResult < yMAX) AND (cbResult > cbMIN AND cbResult < cbMAX) AND (crResult > crMIN AND crResult < crMAX))
 					then
 						--	skin color		-> white pixel
