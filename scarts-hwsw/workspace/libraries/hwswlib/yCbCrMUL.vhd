@@ -73,6 +73,12 @@ ARCHITECTURE SYN OF ycbcrmul IS
 		addnsub_multiplier_pipeline_register1		: STRING;
 		addnsub_multiplier_register1		: STRING;
 		dedicated_multiplier_circuitry		: STRING;
+		input_aclr_a0		: STRING;
+		input_aclr_a1		: STRING;
+		input_aclr_a2		: STRING;
+		input_aclr_b0		: STRING;
+		input_aclr_b1		: STRING;
+		input_aclr_b2		: STRING;
 		input_register_a0		: STRING;
 		input_register_a1		: STRING;
 		input_register_a2		: STRING;
@@ -130,12 +136,18 @@ BEGIN
 		addnsub_multiplier_pipeline_register1 => "UNREGISTERED",
 		addnsub_multiplier_register1 => "UNREGISTERED",
 		dedicated_multiplier_circuitry => "AUTO",
-		input_register_a0 => "UNREGISTERED",
-		input_register_a1 => "UNREGISTERED",
-		input_register_a2 => "UNREGISTERED",
-		input_register_b0 => "UNREGISTERED",
-		input_register_b1 => "UNREGISTERED",
-		input_register_b2 => "UNREGISTERED",
+		input_aclr_a0 => "UNUSED",
+		input_aclr_a1 => "UNUSED",
+		input_aclr_a2 => "UNUSED",
+		input_aclr_b0 => "UNUSED",
+		input_aclr_b1 => "UNUSED",
+		input_aclr_b2 => "UNUSED",
+		input_register_a0 => "CLOCK0",
+		input_register_a1 => "CLOCK0",
+		input_register_a2 => "CLOCK0",
+		input_register_b0 => "CLOCK0",
+		input_register_b1 => "CLOCK0",
+		input_register_b2 => "CLOCK0",
 		input_source_a0 => "DATAA",
 		input_source_a1 => "DATAA",
 		input_source_a2 => "DATAA",
@@ -201,8 +213,8 @@ END SYN;
 -- Retrieval info: PRIVATE: IMPL_STYLE_DEFAULT NUMERIC "1"
 -- Retrieval info: PRIVATE: IMPL_STYLE_LCELL NUMERIC "0"
 -- Retrieval info: PRIVATE: INTENDED_DEVICE_FAMILY STRING "Cyclone IV E"
--- Retrieval info: PRIVATE: MULT_REGA0 NUMERIC "0"
--- Retrieval info: PRIVATE: MULT_REGB0 NUMERIC "0"
+-- Retrieval info: PRIVATE: MULT_REGA0 NUMERIC "1"
+-- Retrieval info: PRIVATE: MULT_REGB0 NUMERIC "1"
 -- Retrieval info: PRIVATE: MULT_REGOUT0 NUMERIC "0"
 -- Retrieval info: PRIVATE: NUM_MULT STRING "3"
 -- Retrieval info: PRIVATE: OP1 STRING "Add"
@@ -245,12 +257,18 @@ END SYN;
 -- Retrieval info: CONSTANT: ADDNSUB_MULTIPLIER_PIPELINE_REGISTER1 STRING "UNREGISTERED"
 -- Retrieval info: CONSTANT: ADDNSUB_MULTIPLIER_REGISTER1 STRING "UNREGISTERED"
 -- Retrieval info: CONSTANT: DEDICATED_MULTIPLIER_CIRCUITRY STRING "AUTO"
--- Retrieval info: CONSTANT: INPUT_REGISTER_A0 STRING "UNREGISTERED"
--- Retrieval info: CONSTANT: INPUT_REGISTER_A1 STRING "UNREGISTERED"
--- Retrieval info: CONSTANT: INPUT_REGISTER_A2 STRING "UNREGISTERED"
--- Retrieval info: CONSTANT: INPUT_REGISTER_B0 STRING "UNREGISTERED"
--- Retrieval info: CONSTANT: INPUT_REGISTER_B1 STRING "UNREGISTERED"
--- Retrieval info: CONSTANT: INPUT_REGISTER_B2 STRING "UNREGISTERED"
+-- Retrieval info: CONSTANT: INPUT_ACLR_A0 STRING "UNUSED"
+-- Retrieval info: CONSTANT: INPUT_ACLR_A1 STRING "UNUSED"
+-- Retrieval info: CONSTANT: INPUT_ACLR_A2 STRING "UNUSED"
+-- Retrieval info: CONSTANT: INPUT_ACLR_B0 STRING "UNUSED"
+-- Retrieval info: CONSTANT: INPUT_ACLR_B1 STRING "UNUSED"
+-- Retrieval info: CONSTANT: INPUT_ACLR_B2 STRING "UNUSED"
+-- Retrieval info: CONSTANT: INPUT_REGISTER_A0 STRING "CLOCK0"
+-- Retrieval info: CONSTANT: INPUT_REGISTER_A1 STRING "CLOCK0"
+-- Retrieval info: CONSTANT: INPUT_REGISTER_A2 STRING "CLOCK0"
+-- Retrieval info: CONSTANT: INPUT_REGISTER_B0 STRING "CLOCK0"
+-- Retrieval info: CONSTANT: INPUT_REGISTER_B1 STRING "CLOCK0"
+-- Retrieval info: CONSTANT: INPUT_REGISTER_B2 STRING "CLOCK0"
 -- Retrieval info: CONSTANT: INPUT_SOURCE_A0 STRING "DATAA"
 -- Retrieval info: CONSTANT: INPUT_SOURCE_A1 STRING "DATAA"
 -- Retrieval info: CONSTANT: INPUT_SOURCE_A2 STRING "DATAA"

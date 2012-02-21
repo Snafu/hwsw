@@ -48,10 +48,10 @@ type register_set is array (0 to 7) of byte;
 constant STATUSREG_CUST : integer := 1;
 constant CONFIGREG_CUST : integer := 3;
 
-constant KEYS      			: integer := 4;
-constant SW_LOW 		    : integer := 5;
-constant SW_HIGH        : integer := 6;
-constant SW_EXTRA       : integer := 7;
+constant REG_KEYS      			: integer := 4;
+constant REG_SW_LOW 		    : integer := 5;
+constant REG_SW_HIGH        : integer := 6;
+constant REG_SW_EXTRA       : integer := 7;
 
 type reg_type is record
   ifacereg		:	register_set;
@@ -65,6 +65,12 @@ signal r : reg_type :=
   );
   
 signal rstint : std_ulogic;
+
+type switch_t is array (0 to 17) of std_logic;
+type key_t is array (1 to 3) of std_logic;
+
+signal switches : switch_t;
+signal keys			: key_t;
 
 begin
 
@@ -117,7 +123,7 @@ begin
           if (r.ifacereg(CONFIGREG)(CONF_ID) = '1') then
             exto.data <= MODULE_VER & MODULE_ID;
           else
-            exto.data <= r.ifacereg(SW_EXTRA) & r.ifacereg(SW_HIGH) & r.ifacereg(SW_LOW) & r.ifacereg(KEYS);
+            exto.data <= r.ifacereg(REG_SW_EXTRA) & r.ifacereg(REG_SW_HIGH) & r.ifacereg(REG_SW_LOW) & r.ifacereg(REG_KEYS);
           end if;
         when others =>
           null;
@@ -137,30 +143,17 @@ begin
     v.ifacereg(CONFIGREG)(CONF_OUTD) := '1';
     
     -- module specific part
-		v.ifacereg(KEYS)(1) := key1;
-		v.ifacereg(KEYS)(2) := key2;
-		v.ifacereg(KEYS)(3) := key3;
+		for i in 1 to 3 loop
+			v.ifacereg(REG_KEYS)(i) := keys(i);
+		end loop;
+		
+		for i in 0 to 7 loop
+			v.ifacereg(REG_SW_LOW)(i) := switches(i);
+			v.ifacereg(REG_SW_HIGH)(i) := switches(i+8);
+		end loop;
 
-		v.ifacereg(SW_LOW)(0) := sw0;
-		v.ifacereg(SW_LOW)(1) := sw1;
-		v.ifacereg(SW_LOW)(2) := sw2;
-		v.ifacereg(SW_LOW)(3) := sw3;
-		v.ifacereg(SW_LOW)(4) := sw4;
-		v.ifacereg(SW_LOW)(5) := sw5;
-		v.ifacereg(SW_LOW)(6) := sw6;
-		v.ifacereg(SW_LOW)(7) := sw7;
-
-		v.ifacereg(SW_HIGH)(0) := sw8;
-		v.ifacereg(SW_HIGH)(1) := sw9;
-		v.ifacereg(SW_HIGH)(2) := sw10;
-		v.ifacereg(SW_HIGH)(3) := sw11;
-		v.ifacereg(SW_HIGH)(4) := sw12;
-		v.ifacereg(SW_HIGH)(5) := sw13;
-		v.ifacereg(SW_HIGH)(6) := sw14;
-		v.ifacereg(SW_HIGH)(7) := sw15;
-
-		v.ifacereg(SW_EXTRA)(0) := sw16;
-		v.ifacereg(SW_EXTRA)(1) := sw17;
+		v.ifacereg(REG_SW_EXTRA)(0) := switches(16);
+		v.ifacereg(REG_SW_EXTRA)(1) := switches(17);
     
     -- combine soft- and hard-reset
     rstint <= not RST_ACT;
@@ -181,10 +174,37 @@ begin
   reg : process(clk)
   begin
     if rising_edge(clk) then 
-      if rstint = RST_ACT then
+      if rstint = RST_ACT or rst = '0' then
         r.ifacereg <= (others => (others => '0'));
+				
+				switches <= (others => '0');
+				keys <= (others => '1');
       else
         r <= r_next;
+
+				switches(0) <= sw0;
+				switches(1) <= sw1;
+				switches(2) <= sw2;
+				switches(3) <= sw3;
+				switches(4) <= sw4;
+				switches(5) <= sw5;
+				switches(6) <= sw6;
+				switches(7) <= sw7;
+				switches(8) <= sw8;
+				switches(9) <= sw9;
+				switches(10) <= sw10;
+				switches(11) <= sw11;
+				switches(12) <= sw12;
+				switches(13) <= sw13;
+				switches(14) <= sw14;
+				switches(15) <= sw15;
+				switches(16) <= sw16;
+				switches(17) <= sw17;
+
+				keys(1) <= key1;
+				keys(2) <= key2;
+				keys(3) <= key3;
+				
       end if;
     end if;
   end process;

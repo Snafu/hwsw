@@ -31,47 +31,46 @@ void erodeDilateFilter(image_t *inputImage, image_t *outputImage, uint8_t op)
     compare.b = FOREGROUND_COLOR_B;
   }
 
-  for (y = 0; y < inputImage->height; ++y) {
-    for (x = 0; x < inputImage->width; ++x) {  
-
-      foundMatch = 0;
-      for (dy = -WINDOW_OFFSET; dy <= WINDOW_OFFSET; ++dy) {
-	wy = y+dy;
-	if (wy >= 0 && wy < inputImage->height) {
-	  for (dx = -WINDOW_OFFSET; dx <= WINDOW_OFFSET; ++dx) {
-	    wx = x+dx;
-	    if (wx >= 0 && wx < inputImage->width) {
-	      pIndex = (wy*inputImage->width + wx)*3;
-	      c.b = inputImage->data[pIndex];
-	      c.g = inputImage->data[pIndex + 1];
-	      c.r = inputImage->data[pIndex + 2];
-	      if (c.r == compare.r && c.g == compare.g && c.b == compare.b) {
-		foundMatch = 1;
-		break;
-	      }
-	    }
-	  }
-	}
-	if (foundMatch) {
-	  break;
-	}
-      }
-
-      pIndex = (y*inputImage->width+x)*3;      
-      
-      // default: set background color
-      outputImage->data[pIndex] = 0x00;
-      outputImage->data[pIndex+1] = 0x00;
-      outputImage->data[pIndex+2] = 0x00;
-
-      if ((op == FILTER_ERODE && !foundMatch) ||
-	  (op == FILTER_DILATE && foundMatch)) {
-	// set output pixel white
-	outputImage->data[pIndex] = 0xFF;
-	outputImage->data[pIndex+1] = 0xFF;
-	outputImage->data[pIndex+2] = 0xFF;
-      }
-
-    }
-  }
+	for (y = 0; y < inputImage->height; ++y) { // 0..480
+		for (x = 0; x < inputImage->width; ++x) {  // 0..800
+			foundMatch = 0;
+      for (dy = -WINDOW_OFFSET; dy <= WINDOW_OFFSET; ++dy) { // -2..2
+				wy = y+dy;
+				
+				if (wy >= 0 && wy < inputImage->height) {
+					for (dx = -WINDOW_OFFSET; dx <= WINDOW_OFFSET; ++dx) { // -2..2
+						wx = x+dx;
+						
+						if (wx >= 0 && wx < inputImage->width) {
+							pIndex = (wy*inputImage->width + wx)*3;
+							c.b = inputImage->data[pIndex];
+							c.g = inputImage->data[pIndex + 1];
+							c.r = inputImage->data[pIndex + 2];
+							if (c.r == compare.r && c.g == compare.g && c.b == compare.b) {
+								foundMatch = 1;
+								break;
+							}
+						}
+					} // for dx
+				} // for wy
+				if (foundMatch) {
+					break;
+				}
+			} // for dy
+			
+			pIndex = (y*inputImage->width+x)*3;
+			// default: set background color
+			outputImage->data[pIndex] = 0x00;
+			outputImage->data[pIndex+1] = 0x00;
+			outputImage->data[pIndex+2] = 0x00;
+			
+			if ((op == FILTER_ERODE && !foundMatch) ||
+			(op == FILTER_DILATE && foundMatch)) {
+				// set output pixel white
+				outputImage->data[pIndex] = 0xFF;
+				outputImage->data[pIndex+1] = 0xFF;
+				outputImage->data[pIndex+2] = 0xFF;
+			}
+		} // for x
+	} // for y
 }

@@ -84,7 +84,9 @@ vcom  -work gaisler ../../libraries/grlib/lib/gaisler/memctrl/sdctrl.vhd
 
 vcom  -work work ../../libraries/hwswlib/cam_pll.vhd
 vcom  -work work ../../libraries/hwswlib/hwswlib.vhd
+vcom  -work work ../../libraries/hwswlib/tpram_sclk.vhd
 vcom  -work work ../../libraries/hwswlib/kameralib.vhd
+vcom  -work work ../../libraries/hwswlib/yCbCrMUL.vhd
 vcom  -work work ../../libraries/hwswlib/bayerbuffer.vhd
 vcom  -work work ../../libraries/hwswlib/kamera.vhd
 vcom  -work work ../../libraries/hwswlib/buttons.vhd
