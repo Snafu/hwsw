@@ -45,8 +45,8 @@ architecture behaviour of buttons is
 subtype byte is std_logic_vector(7 downto 0);
 type register_set is array (0 to 7) of byte;
 
-constant STATUSREG_CUST : integer := 1;
-constant CONFIGREG_CUST : integer := 3;
+constant STATUSREG_CUST			: integer := 1;
+constant CONFIGREG_CUST			: integer := 3;
 
 constant REG_KEYS      			: integer := 4;
 constant REG_SW_LOW 		    : integer := 5;

@@ -28,7 +28,7 @@ void initCamera(void)
 	//i2c_write(PIXEL_CLOCK_CONTROL_REG, (1<<15));					// OK!
 
 	// OUTPUT_Slew_Rate | PIXCLK_Slew_Rate | Chip Enable
-	i2c_write(OUTPUT_CONTROL_REG, ((1<<10)|(5<<7)|(1<<1)));		// OK!
+	i2c_write(OUTPUT_CONTROL_REG, ((1<<10)|(3<<7)|(1<<1)));		// OK!
 
 	// gain settings
 	// digital [0,120], analog mult [0,1], analog [8,63]
@@ -93,4 +93,75 @@ void initCamera(void)
 	// disable test mode
 	i2c_write(TEST_PATTERN_CTRL_REG, 0);
 #endif
+}
+
+void setYFactors(int16_t rfac, int16_t gfac, int16_t bfac)
+{
+	uint32_t reg;
+	uint16_t ur,ug,ub;
+	ur = (uint16_t) rfac;
+	ug = (uint16_t) gfac;
+	ub = (uint16_t) bfac;
+
+	CAMERA_YR_YG = (ug<<16) | ur;
+	reg = CAMERA_YB_CBR & 0xffff0000;
+	CAMERA_YB_CBR = reg | ub;
+}
+
+void setCbFactors(int16_t rfac, int16_t gfac, int16_t bfac)
+{
+	uint32_t reg;
+	uint16_t ur,ug,ub;
+	ur = (uint16_t) rfac;
+	ug = (uint16_t) gfac;
+	ub = (uint16_t) bfac;
+	
+	reg = CAMERA_YB_CBR & 0x0000ffff;
+	CAMERA_YB_CBR = (ur<<16) | reg;
+	CAMERA_CBG_CBB = (ub<<16) | ug;
+}
+
+void setCrFactors(int16_t rfac, int16_t gfac, int16_t bfac)
+{
+	uint32_t reg;
+	uint16_t ur,ug,ub;
+	ur = (uint16_t) rfac;
+	ug = (uint16_t) gfac;
+	ub = (uint16_t) bfac;
+
+	CAMERA_CRR_CRG = (ug<<16) | ur;
+	reg = CAMERA_CRB_YBOUNDS & 0xffff0000;
+	CAMERA_CRB_YBOUNDS = reg | ub;
+}
+
+void setYBounds(uint8_t min, uint8_t max)
+{
+	uint32_t reg;
+
+	reg = CAMERA_CRB_YBOUNDS & 0x0000ffff;
+	CAMERA_CRB_YBOUNDS = (max<<24) | (min<<16) | reg;
+}
+
+void setCbBounds(uint8_t min, uint8_t max)
+{
+	uint32_t reg;
+
+	reg = CAMERA_CBBOUNDS_CRBOUNDS & 0xffff0000;
+	CAMERA_CBBOUNDS_CRBOUNDS = reg | (max<<8) | min;
+}
+
+void setCrBounds(uint8_t min, uint8_t max)
+{
+	uint32_t reg;
+
+	reg = CAMERA_CBBOUNDS_CRBOUNDS & 0x0000ffff;
+	CAMERA_CBBOUNDS_CRBOUNDS = (max<<24) | (min<<16) | reg;
+}
+
+void setCamMode(uint8_t mode)
+{
+	if(mode == MODE_DSP)
+		CAMERA_MODE = MODE_DSP;
+	else
+		CAMERA_MODE = MODE_COLOR;
 }

@@ -155,6 +155,29 @@ architecture behaviour of top is
 	signal filter_data				: std_logic_vector(TPRAM_DATALEN-1 downto 0);
 	signal filter_we					: std_logic;
 
+	-- kamera control signals
+  signal cam_config_sel			: std_ulogic;
+  signal cam_exto 					: module_out_type;
+	signal yR_fac							: std_logic_vector(8 downto 0);
+	signal yG_fac							: std_logic_vector(8 downto 0);
+	signal yB_fac							: std_logic_vector(8 downto 0);
+	signal yMin								: integer range 0 to 255;
+	signal yMax								: integer range 0 to 255;
+	
+	signal cbR_fac						: std_logic_vector(8 downto 0);
+	signal cbG_fac						: std_logic_vector(8 downto 0);
+	signal cbB_fac						: std_logic_vector(8 downto 0);
+	signal cbMin							: integer range 0 to 255;
+	signal cbMax							: integer range 0 to 255;
+	
+	signal crR_fac						: std_logic_vector(8 downto 0);
+	signal crG_fac						: std_logic_vector(8 downto 0);
+	signal crB_fac						: std_logic_vector(8 downto 0);
+	signal crMin							: integer range 0 to 255;
+	signal crMax							: integer range 0 to 255;
+
+	signal output_mode				: std_logic;
+
 	-- erode filter signals
 	signal erode_addr					: std_logic_vector(TPRAM_ADDRLEN-1 downto 0);
 	signal erode_data_post		: std_logic_vector(TPRAM_DATALEN-1 downto 0);
@@ -756,6 +779,37 @@ begin
 	
 	
 	-----------------------------------------------------------------------------
+	--- Kamera control
+	-----------------------------------------------------------------------------
+	camctrl0: kameractrl
+		port map (
+			rst					=> syncrst,
+			clk					=> clk,
+			extsel			=> cam_config_sel,
+			exti				=> exti,
+			exto				=> cam_exto,
+
+			yR_fac			=> yR_fac,
+			yG_fac			=> yG_fac,
+			yB_fac			=> yB_fac,
+			yMin				=> yMin,
+			yMax				=> yMax,
+		
+			cbR_fac			=> cbR_fac,
+			cbG_fac			=> cbG_fac,
+			cbB_fac			=> cbB_fac,
+			cbMin				=> cbMin,
+			cbMax				=> cbMax,
+		
+			crR_fac			=> crR_fac,
+			crG_fac			=> crG_fac,
+			crB_fac			=> crB_fac,
+			crMin				=> crMin,
+			crMax				=> crMax,
+
+			output_mode	=> output_mode
+    );
+	-----------------------------------------------------------------------------
 	--- Kamera readout
 	-----------------------------------------------------------------------------
 	
@@ -789,6 +843,26 @@ begin
 			filter_addr	=> filter_addr,
 			filter_data	=> filter_data,
 			filter_we		=> filter_we,
+
+			yR_fac			=> yR_fac,
+			yG_fac			=> yG_fac,
+			yB_fac			=> yB_fac,
+			yMin				=> yMin,
+			yMax				=> yMax,
+		
+			cbR_fac			=> cbR_fac,
+			cbG_fac			=> cbG_fac,
+			cbB_fac			=> cbB_fac,
+			cbMin				=> cbMin,
+			cbMax				=> cbMax,
+		
+			crR_fac			=> crR_fac,
+			crG_fac			=> crG_fac,
+			crB_fac			=> crB_fac,
+			crMin				=> crMin,
+			crMax				=> crMax,
+
+			output_mode	=> output_mode,
 
 			init_ready => hw_initialized
     ); 
@@ -843,7 +917,7 @@ begin
       RxD    => aux_uart_rx,
       TxD    => aux_uart_tx);
   
-  comb : process(scarts_o, debugo_if, D_RxD, dis7segexto, counter_exto, aux_uart_exto, buttons_exto)  --extend!
+  comb : process(scarts_o, debugo_if, D_RxD, dis7segexto, counter_exto, aux_uart_exto, buttons_exto, cam_exto)  --extend!
     variable extdata : std_logic_vector(31 downto 0);
   begin   
     exti.reset    <= scarts_o.reset;
@@ -858,6 +932,7 @@ begin
 		i2c_config_sel <= '0';
 		hw_initialized <= '0'; 
 		buttons_config_sel <= '0';
+		cam_config_sel <= '0';
     
     if scarts_o.extsel = '1' then
       case scarts_o.addr(14 downto 5) is
@@ -879,6 +954,9 @@ begin
 				when "1111110010" => -- (-448)
 					-- BUTTONS config 
 					buttons_config_sel <= '1'; 
+				when "1111110001" => -- (-480)
+					-- BUTTONS config 
+					cam_config_sel <= '1'; 
         when others =>
           null;
       end case;
@@ -886,7 +964,7 @@ begin
     
     extdata := (others => '0');
     for i in extdata'left downto extdata'right loop
-      extdata(i) := dis7segexto.data(i) or counter_exto.data(i) or aux_uart_exto.data(i) or buttons_exto.data(i); 
+      extdata(i) := dis7segexto.data(i) or counter_exto.data(i) or aux_uart_exto.data(i) or buttons_exto.data(i) or cam_exto.data(i); 
     end loop;
 
     scarts_i.data <= (others => '0');

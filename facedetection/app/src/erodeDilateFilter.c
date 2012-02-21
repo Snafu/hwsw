@@ -10,67 +10,108 @@
 #define FOREGROUND_COLOR_G   0xff
 #define FOREGROUND_COLOR_B   0xff
 
+#define ERODE_COMPARE				0
+#define DILATE_COMPARE			0xff
 
-void erodeDilateFilter(image_t *inputImage, image_t *outputImage, uint8_t op)
+
+
+void erodeFilter(volatile char *framebuffer, image_t *outputImage)
 {
   int x, y, dx, dy, wx, wy;
   int pIndex;
   rgb_color_t c, compare;
   uint8_t foundMatch;
-
-  if (op == FILTER_ERODE) {
-    // erode: look for neighbor pixels in background color
-    compare.r = BACKGROUND_COLOR_R;
-    compare.g = BACKGROUND_COLOR_G;
-    compare.b = BACKGROUND_COLOR_B;
-  }
-  else {
-    // dilate: look for neighbor pixels in foreground color
-    compare.r = FOREGROUND_COLOR_R;
-    compare.g = FOREGROUND_COLOR_G;
-    compare.b = FOREGROUND_COLOR_B;
-  }
-
-	for (y = 0; y < inputImage->height; ++y) { // 0..480
-		for (x = 0; x < inputImage->width; ++x) {  // 0..800
+	
+	volatile char *lineptr = framebuffer;
+	volatile char *woffsetptr; // 1st row, 1st col
+	volatile char *winptr;
+	
+	unsigned char *outptr = outputImage->data + (800<<1) + 2; // 3rd row, 3rd col
+	
+	for (y = WINDOW_OFFSET; y < 480 - WINDOW_OFFSET; ++y) { // 2..478
+		woffsetptr = lineptr;
+		for (x = WINDOW_OFFSET; x < 800 - WINDOW_OFFSET; ++x) {  // 2..798
 			foundMatch = 0;
+			
+			winptr = woffsetptr;
       for (dy = -WINDOW_OFFSET; dy <= WINDOW_OFFSET; ++dy) { // -2..2
-				wy = y+dy;
+				for (dx = -WINDOW_OFFSET; dx <= WINDOW_OFFSET; ++dx) { // -2..2
+					if(*winptr == ERODE_COMPARE) {
+						foundMatch = 1;
+						break;
+					}
+					winptr += 1<<2;
+				} // for dx
 				
-				if (wy >= 0 && wy < inputImage->height) {
-					for (dx = -WINDOW_OFFSET; dx <= WINDOW_OFFSET; ++dx) { // -2..2
-						wx = x+dx;
-						
-						if (wx >= 0 && wx < inputImage->width) {
-							pIndex = (wy*inputImage->width + wx)*3;
-							c.b = inputImage->data[pIndex];
-							c.g = inputImage->data[pIndex + 1];
-							c.r = inputImage->data[pIndex + 2];
-							if (c.r == compare.r && c.g == compare.g && c.b == compare.b) {
-								foundMatch = 1;
-								break;
-							}
-						}
-					} // for dx
-				} // for wy
+				winptr += (800<<2) - 20;
 				if (foundMatch) {
 					break;
 				}
 			} // for dy
 			
-			pIndex = (y*inputImage->width+x)*3;
-			// default: set background color
-			outputImage->data[pIndex] = 0x00;
-			outputImage->data[pIndex+1] = 0x00;
-			outputImage->data[pIndex+2] = 0x00;
 			
-			if ((op == FILTER_ERODE && !foundMatch) ||
-			(op == FILTER_DILATE && foundMatch)) {
-				// set output pixel white
-				outputImage->data[pIndex] = 0xFF;
-				outputImage->data[pIndex+1] = 0xFF;
-				outputImage->data[pIndex+2] = 0xFF;
+			if (!foundMatch) {
+				*outptr = 0xFF;
+			} else {
+				*outptr = 0;
 			}
+			
+			outptr++;
+			woffsetptr += 1<<2;
 		} // for x
+		
+		outptr += 4; // from prev line to next line, 3rd pixel
+		lineptr += 800<<2; // next line, 1st pixel
+	} // for y
+}
+
+
+void dilateFilter(image_t *inputImage, image_t *outputImage)
+{
+  int x, y, dx, dy, wx, wy;
+  int pIndex;
+  rgb_color_t c, compare;
+  uint8_t foundMatch;
+	
+	unsigned char *lineptr = inputImage->data;
+	unsigned char *woffsetptr; // 1st row, 1st col
+	unsigned char *winptr;
+	
+	unsigned char *outptr = outputImage->data + (800<<1) + 2; // 3rd row, 3rd col
+	
+	for (y = WINDOW_OFFSET; y < 480 - WINDOW_OFFSET; ++y) { // 2..478
+		woffsetptr = lineptr;
+		for (x = WINDOW_OFFSET; x < 800 - WINDOW_OFFSET; ++x) {  // 2..798
+			foundMatch = 0;
+			
+			winptr = woffsetptr;
+      for (dy = -WINDOW_OFFSET; dy <= WINDOW_OFFSET; ++dy) { // -2..2
+				for (dx = -WINDOW_OFFSET; dx <= WINDOW_OFFSET; ++dx) { // -2..2
+					if(*winptr == DILATE_COMPARE) {
+						foundMatch = 1;
+						break;
+					}
+					winptr += 1;
+				} // for dx
+				
+				winptr += 800 - 20;
+				if (foundMatch) {
+					break;
+				}
+			} // for dy
+			
+			
+			if (foundMatch) {
+				*outptr = 0xFF;
+			} else {
+				*outptr = 0;
+			}
+			
+			outptr++;
+			woffsetptr += 1;
+		} // for x
+		
+		outptr += 4; // from prev line to next line, 3rd pixel
+		lineptr += 800; // next line, 1st pixel
 	} // for y
 }

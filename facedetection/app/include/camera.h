@@ -1,6 +1,21 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+// SCARTS EXTENSION
+#define CAMERA_BADDR								((uint32_t) -480)
+#define CAMERA_STATUS								(*(volatile int *const) (CAMERA_BADDR))
+#define CAMERA_YR_YG								(*(volatile int *const) (CAMERA_BADDR+4))
+#define CAMERA_YB_CBR								(*(volatile int *const) (CAMERA_BADDR+8))
+#define CAMERA_CBG_CBB							(*(volatile int *const) (CAMERA_BADDR+12))
+#define CAMERA_CRR_CRG							(*(volatile int *const) (CAMERA_BADDR+16))
+#define CAMERA_CRB_YBOUNDS					(*(volatile int *const) (CAMERA_BADDR+20))
+#define CAMERA_CBBOUNDS_CRBOUNDS		(*(volatile int *const) (CAMERA_BADDR+24))
+#define CAMERA_MODE									(*(volatile int *const) (CAMERA_BADDR+28))
+
+#define MODE_COLOR									0
+#define MODE_DSP										1
+
+// TRDB-D5M I2C
 #define CLOCK_CONTROL_REG						0x10
 #define PLL_CONFIG1_REG							0x11
 #define PLL_CONFIG2_REG							0x12
@@ -43,6 +58,16 @@
 #define TEST_MONOCR_HORIZONTAL			(6 << 3)
 #define TEST_MONOCR_VERTICAL				(7 << 3)
 #define TEST_ENABLE									1
+
+
+extern void initCamera(void);
+extern void setYFactors(int16_t rfac, int16_t gfac, int16_t bfac);
+extern void setCbFactors(int16_t rfac, int16_t gfac, int16_t bfac);
+extern void setCrFactors(int16_t rfac, int16_t gfac, int16_t bfac);
+extern void setYBounds(uint8_t min, uint8_t max);
+extern void setCbBounds(uint8_t min, uint8_t max);
+extern void setCrBounds(uint8_t min, uint8_t max);
+extern void setCamMode(uint8_t mode);
 
 
 #endif /* CAMERA_H */

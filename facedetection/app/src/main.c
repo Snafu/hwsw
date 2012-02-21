@@ -49,7 +49,10 @@ static mini_uart_handle_t aux_uart_handle;
 static volatile uint32_t *screenData;
 #endif
 
-void computeSingleImage(const char *sourcePath, const char *targetPath);
+image_t erodeFilterImage;
+image_t dilateFilterImage;
+
+void computeSingleImage(void);
 void transmitResult(rect_t *resultRect);
 void initializeImage(image_t *template, image_t *image);
 void freeImage(image_t *image);
@@ -60,14 +63,12 @@ void initializeImage(image_t *template, image_t *image)
 	image->width = template->width;
 	image->height = template->height;
 	image->dataLength = template->dataLength;
-#ifdef __SCARTS_32__
+
 	// allocate memory in external SDRAM
 	image->data = (unsigned char *)(SDRAM_BASE+sdramBytesAllocated);
+	memset((void *) image->data, 0, image->width * image->height);
 	sdramBytesAllocated += template->dataLength;
-#else
-	// allocate memory on heap
-	image->data = (unsigned char *)malloc(template->dataLength);    
-#endif
+
 }
 
 void freeImage(image_t *image) 
@@ -130,10 +131,26 @@ int main(int argc, char **argv)
 		SDRAM_CMD_LOAD_CMD_REG | 
 		389;
 	
+	
+	erodeFilterImage.width = 800;
+	erodeFilterImage.height = 480;
+	erodeFilterImage.dataLength = 800*480;
+	
+	// Initialize Image buffers
+	initializeImage(&erodeFilterImage, &erodeFilterImage);
+	initializeImage(&erodeFilterImage, &dilateFilterImage);
+	
 	initSVGA();
 
 	// CAM initialization
 	initCamera();
+	setYFactors(66, 129, 25);
+	setYBounds(38, 235);
+	setCbFactors(-38, -74, 112);
+	setCbBounds(94, 139);
+	setCrFactors(112, -94, -18);
+	setCrBounds(139, 173);
+	setCamMode(MODE_COLOR);
 
 	uint32_t i;
 	uint32_t j;
@@ -156,12 +173,21 @@ int main(int argc, char **argv)
 	int mode, mode_old;
 	mode = 0;
 	mode_old = 1;
+	int cam_mode, cam_mode_old;
+	cam_mode = 0;
+	cam_mode_old = 0;
+	
 	while(1) {
 		
 		keys = getKeys();
 		value = switchVal();
-		dis7seg_displayHexUInt32(&dispHandle, 0, (mode << 24) | (keys << 16) | (value & 0xFFFF));  
+		dis7seg_displayHexUInt32(&dispHandle, 0, (mode << 24) | (keys << 16) | (value & 0xFFFF));
 
+		cam_mode = (value & (1<<16)) ? 1 : 0;
+		if(cam_mode != cam_mode_old)
+			setCamMode(cam_mode);
+		cam_mode_old = cam_mode;
+		
 		if(mode == 0 && mode_old == 1) {
 			i2c_write(RESTART_REG, TRIGGER);
 		}	else if(mode == 1 && mode_old == 0) {
@@ -229,151 +255,29 @@ int main(int argc, char **argv)
 }
 
 
-void computeSingleImage(const char *sourcePath, const char *targetPath)
+void computeSingleImage(void)
 {
 	uint32_t imageLen;
-	image_t inputImage;
-	image_t skinFilterImage;
-	image_t erodeFilterImage;
-	image_t dilateFilterImage;
-	char tgaHeader[18];
 	int result;
 	rect_t resultRect;
 
-#ifndef __SCARTS_32__
-	FILE *f;
-#else
+
 	uint32_t cycles;
-	int x, y;
-#endif
 
-#ifndef __SCARTS_32__
-	f = fopen(sourcePath, "r");
-	if (!f) {
-		printf("Image file <%s> not found\n", sourcePath);
-		exit(1);
-	}
-	fseek(f, 0, SEEK_END);
-	imageLen = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	fread(tgaHeader, 1, sizeof(tgaHeader), f);
-#else
-	UART_read(0, (char *)&imageLen, sizeof(imageLen));
-
-	// read header
-	UART_read(0, (char *)tgaHeader, sizeof(tgaHeader));
-
-#endif
-
-	inputImage.width = (tgaHeader[13] << 8) | (tgaHeader[12] & 0xFF);
-	inputImage.height = (tgaHeader[15] << 8) | (tgaHeader[14] & 0xFF);
-	inputImage.dataLength = imageLen - sizeof(tgaHeader);
-
-
-#ifndef __SCARTS_32__
-	// allocate memory on heap
-	inputImage.data = (unsigned char *)malloc(inputImage.dataLength);    
-	fread(inputImage.data, 1, inputImage.dataLength, f);
-	fclose(f);
-#else
-
-	// allocate memory in external SDRAM
-	inputImage.data = (unsigned char *)(SDRAM_BASE+sdramBytesAllocated);
-	sdramBytesAllocated += inputImage.dataLength;
-
-	// read image data
-	UART_read(0, (char *)inputImage.data, inputImage.dataLength);
-
-	printf("Images received, starting computation.\n");
-#endif
-
-	initializeImage(&inputImage, &skinFilterImage);
-	initializeImage(&inputImage, &erodeFilterImage);
-	initializeImage(&inputImage, &dilateFilterImage);
-
-
-#ifdef __SCARTS_32__
 
 	counter_reset(&counterHandle);
 	counter_start(&counterHandle);
 
-#endif 
+	erodeFilter((volatile char *) SDRAM_BASE, &erodeFilterImage);
+	dilateFilter(&erodeFilterImage, &dilateFilterImage);
+	//result = detectFace(&dilateFilterImage, &inputImage, &resultRect);
 
-	// perform face detection
-	skinFilter(&inputImage, &skinFilterImage);
-	erodeDilateFilter(&skinFilterImage, &erodeFilterImage, FILTER_ERODE);
-	erodeDilateFilter(&erodeFilterImage, &dilateFilterImage, FILTER_DILATE);
-	result = detectFace(&dilateFilterImage, &inputImage, &resultRect);
-
-#ifdef __SCARTS_32__
-	// output image on touchscreen
-	for (y=0; y<SCREEN_HEIGHT; y++) {
-		for (x=0; x<SCREEN_WIDTH; x++) {
-			if (x < inputImage.width && y < inputImage.height) {
-				int pIndex;
-				rgb_color_t color;
-				pIndex = (y*inputImage.width+x)*3;
-				color.b = inputImage.data[pIndex];
-				color.g = inputImage.data[pIndex+1];
-				color.r = inputImage.data[pIndex+2];
-				screenData[y*SCREEN_WIDTH+x] = (color.r << 16) | (color.g << 8) | color.b;
-			}
-			else {
-				screenData[y*SCREEN_WIDTH+x] = 0;
-			}
-		}
-	}
-
-	// send result coordinates
-	if (result) {
-		transmitResult(&resultRect);
-	}
-	counter_stop(&counterHandle);
-#endif 
-
-	// send output
-	memset(tgaHeader,0,sizeof(tgaHeader));
-	tgaHeader[12] = (unsigned char) (inputImage.width & 0xFF);
-	tgaHeader[13] = (unsigned char) (inputImage.width >> 8);
-	tgaHeader[14] = (unsigned char) (inputImage.height & 0xFF);
-	tgaHeader[15] = (unsigned char) (inputImage.height >> 8);
-	tgaHeader[17] = 0x20;    // Top-down, non-interlaced
-	tgaHeader[2]  = 2;       // image type = uncompressed RGB
-	tgaHeader[16] = 24;
-
-	imageLen = sizeof(tgaHeader) + inputImage.dataLength;
-
-#ifndef __SCARTS_32__
-	f = fopen(targetPath, "w");
-	if (!f) {
-		printf("Image file <%s> couldn't be opened", targetPath);
-		exit(1);
-	}
-
-	fwrite(tgaHeader, 1, sizeof(tgaHeader), f);
-	fwrite(inputImage.data, 1, inputImage.dataLength, f);
-	fclose(f);
-#else
 	// send signal to PC client that output data will be sent
 	printf("\x04\n");
 
 	// send elapsed time for computation
 	cycles = counter_getValue(&counterHandle);
 	UART_write(1, (char *)&cycles, sizeof(cycles));
-	// send length of whole image file
-	UART_write(1, (char *)&imageLen, sizeof(imageLen));
-	// send image header
-	UART_write(1, tgaHeader, sizeof(tgaHeader));
-	// send image data
-	UART_write(1, (char *)inputImage.data, inputImage.dataLength);
-#endif
-
-	freeImage(&inputImage);
-	freeImage(&skinFilterImage);
-	freeImage(&erodeFilterImage);
-	freeImage(&dilateFilterImage);
-
 }
 
 void transmitResult(rect_t *resultRect)

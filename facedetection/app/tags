@@ -8,20 +8,30 @@ AUX_UART_BADDR	src/main.c	36;"	d	file:
 BACKGROUND_COLOR_B	src/erodeDilateFilter.c	8;"	d	file:
 BACKGROUND_COLOR_G	src/erodeDilateFilter.c	7;"	d	file:
 BACKGROUND_COLOR_R	src/erodeDilateFilter.c	6;"	d	file:
-BLACK_LVL_CAL_REG	include/camera.h	31;"	d
+BLACK_LVL_CAL_REG	include/camera.h	46;"	d
 BUTTONS_BADDR	include/buttons.h	4;"	d
 BUTTONS_DATA	include/buttons.h	6;"	d
 BUTTONS_H	include/buttons.h	2;"	d
 BUTTONS_STATUS	include/buttons.h	5;"	d
+CAMERA_BADDR	include/camera.h	5;"	d
+CAMERA_CBBOUNDS_CRBOUNDS	include/camera.h	12;"	d
+CAMERA_CBG_CBB	include/camera.h	9;"	d
+CAMERA_CRB_YBOUNDS	include/camera.h	11;"	d
+CAMERA_CRR_CRG	include/camera.h	10;"	d
 CAMERA_H	include/camera.h	2;"	d
+CAMERA_MODE	include/camera.h	13;"	d
+CAMERA_STATUS	include/camera.h	6;"	d
+CAMERA_YB_CBR	include/camera.h	8;"	d
+CAMERA_YR_YG	include/camera.h	7;"	d
 CB_HIGH	src/skinFilter.c	9;"	d	file:
 CB_LOW	src/skinFilter.c	5;"	d	file:
-CLOCK_CONTROL_REG	include/camera.h	4;"	d
-COL_ADDRESS_MODE_REG	include/camera.h	23;"	d
-COL_SIZE_REG	include/camera.h	21;"	d
+CLOCK_CONTROL_REG	include/camera.h	19;"	d
+COL_ADDRESS_MODE_REG	include/camera.h	38;"	d
+COL_SIZE_REG	include/camera.h	36;"	d
 COUNTER_BADDR	src/main.c	37;"	d	file:
 CR_HIGH	src/skinFilter.c	10;"	d	file:
 CR_LOW	src/skinFilter.c	6;"	d	file:
+DILATE_COMPARE	src/erodeDilateFilter.c	14;"	d	file:
 DISPCTRL_BASE	include/dispctrl.h	4;"	d
 DISPCTRL_BR	include/dispctrl.h	8;"	d
 DISPCTRL_COLOR	include/dispctrl.h	6;"	d
@@ -30,6 +40,7 @@ DISPCTRL_TL	include/dispctrl.h	7;"	d
 DISPCTRL_UPDATE	include/dispctrl.h	14;"	d
 DISP_BADDR	src/main.c	38;"	d	file:
 DRAW_RECT	include/dispctrl.h	10;"	d
+ERODE_COMPARE	src/erodeDilateFilter.c	13;"	d	file:
 FILTER_DILATE	include/filters.h	7;"	d
 FILTER_ERODE	include/filters.h	6;"	d
 FOREGROUND_COLOR_B	src/detectFace.c	9;"	d	file:
@@ -38,10 +49,10 @@ FOREGROUND_COLOR_G	src/detectFace.c	8;"	d	file:
 FOREGROUND_COLOR_G	src/erodeDilateFilter.c	10;"	d	file:
 FOREGROUND_COLOR_R	src/detectFace.c	7;"	d	file:
 FOREGROUND_COLOR_R	src/erodeDilateFilter.c	9;"	d	file:
-GAIN_BLUE_REG	include/camera.h	14;"	d
-GAIN_GREEN1_REG	include/camera.h	12;"	d
-GAIN_GREEN2_REG	include/camera.h	13;"	d
-GAIN_RED_REG	include/camera.h	11;"	d
+GAIN_BLUE_REG	include/camera.h	29;"	d
+GAIN_GREEN1_REG	include/camera.h	27;"	d
+GAIN_GREEN2_REG	include/camera.h	28;"	d
+GAIN_RED_REG	include/camera.h	26;"	d
 I2CCONFIG_BADDR	include/i2c.h	4;"	d
 I2CCONFIG_DATA	include/i2c.h	6;"	d
 I2CCONFIG_STATUS	include/i2c.h	5;"	d
@@ -52,15 +63,17 @@ KEY1	include/buttons.h	/^typedef enum {KEY1,KEY2,KEY3} keys_t;$/;"	e	enum:__anon
 KEY2	include/buttons.h	/^typedef enum {KEY1,KEY2,KEY3} keys_t;$/;"	e	enum:__anon1
 KEY3	include/buttons.h	/^typedef enum {KEY1,KEY2,KEY3} keys_t;$/;"	e	enum:__anon1
 LEDS	src/main.c	39;"	d	file:
-OUTPUT_CONTROL_REG	include/camera.h	8;"	d
-PIXEL_CLOCK_CONTROL_REG	include/camera.h	7;"	d
-PLL_CONFIG1_REG	include/camera.h	5;"	d
-PLL_CONFIG2_REG	include/camera.h	6;"	d
-READ_MODE1_REG	include/camera.h	25;"	d
-READ_MODE2_REG	include/camera.h	26;"	d
-RESTART_REG	include/camera.h	28;"	d
-ROW_ADDRESS_MODE_REG	include/camera.h	22;"	d
-ROW_SIZE_REG	include/camera.h	20;"	d
+MODE_COLOR	include/camera.h	15;"	d
+MODE_DSP	include/camera.h	16;"	d
+OUTPUT_CONTROL_REG	include/camera.h	23;"	d
+PIXEL_CLOCK_CONTROL_REG	include/camera.h	22;"	d
+PLL_CONFIG1_REG	include/camera.h	20;"	d
+PLL_CONFIG2_REG	include/camera.h	21;"	d
+READ_MODE1_REG	include/camera.h	40;"	d
+READ_MODE2_REG	include/camera.h	41;"	d
+RESTART_REG	include/camera.h	43;"	d
+ROW_ADDRESS_MODE_REG	include/camera.h	37;"	d
+ROW_SIZE_REG	include/camera.h	35;"	d
 SCREEN_HEIGHT	src/main.c	43;"	d	file:
 SCREEN_WIDTH	src/main.c	42;"	d	file:
 SDRAM_BANKSIZE_128MB	include/sdram.h	38;"	d
@@ -92,9 +105,9 @@ SDRAM_REFRESH_EN	include/sdram.h	28;"	d
 SDRAM_TCD	include/sdram.h	30;"	d
 SDRAM_TRFC	include/sdram.h	31;"	d
 SDRAM_TRP	include/sdram.h	29;"	d
-SHUTTERW_LOWER_REG	include/camera.h	17;"	d
-SHUTTERW_UPPER_REG	include/camera.h	16;"	d
-SHUTTER_DELAY_REG	include/camera.h	18;"	d
+SHUTTERW_LOWER_REG	include/camera.h	32;"	d
+SHUTTERW_UPPER_REG	include/camera.h	31;"	d
+SHUTTER_DELAY_REG	include/camera.h	33;"	d
 STEP_SIZE	src/detectFace.c	10;"	d	file:
 SVGA_BASE	include/svga.h	4;"	d
 SVGA_CLUT	include/svga.h	15;"	d
@@ -114,19 +127,19 @@ SVGA_VIDEO_LENGTH	include/svga.h	6;"	d
 SVGA_VLINELEN	include/svga.h	24;"	d
 SVGA_VPORCH	include/svga.h	21;"	d
 SVGA_VVIDEOLEN	include/svga.h	18;"	d
-TEST_CLASSIC	include/camera.h	41;"	d
-TEST_ENABLE	include/camera.h	45;"	d
-TEST_GRADIENT_HORIZONTAL	include/camera.h	39;"	d
-TEST_GRADIENT_VERTICAL	include/camera.h	40;"	d
-TEST_MARCHING_ONES	include/camera.h	42;"	d
-TEST_MONOCR_HORIZONTAL	include/camera.h	43;"	d
-TEST_MONOCR_VERTICAL	include/camera.h	44;"	d
-TEST_PATTERN_BARW_REG	include/camera.h	37;"	d
-TEST_PATTERN_BLUE_REG	include/camera.h	36;"	d
-TEST_PATTERN_CTRL_REG	include/camera.h	33;"	d
-TEST_PATTERN_GREEN_REG	include/camera.h	34;"	d
-TEST_PATTERN_REG_REG	include/camera.h	35;"	d
-TRIGGER	include/camera.h	29;"	d
+TEST_CLASSIC	include/camera.h	56;"	d
+TEST_ENABLE	include/camera.h	60;"	d
+TEST_GRADIENT_HORIZONTAL	include/camera.h	54;"	d
+TEST_GRADIENT_VERTICAL	include/camera.h	55;"	d
+TEST_MARCHING_ONES	include/camera.h	57;"	d
+TEST_MONOCR_HORIZONTAL	include/camera.h	58;"	d
+TEST_MONOCR_VERTICAL	include/camera.h	59;"	d
+TEST_PATTERN_BARW_REG	include/camera.h	52;"	d
+TEST_PATTERN_BLUE_REG	include/camera.h	51;"	d
+TEST_PATTERN_CTRL_REG	include/camera.h	48;"	d
+TEST_PATTERN_GREEN_REG	include/camera.h	49;"	d
+TEST_PATTERN_REG_REG	include/camera.h	50;"	d
+TRIGGER	include/camera.h	44;"	d
 UPDATE_GLCD	include/dispctrl.h	13;"	d
 WAIT_TIME	src/main.c	40;"	d	file:
 WINDOW_LENGTH	src/erodeDilateFilter.c	4;"	d	file:
@@ -144,14 +157,17 @@ b	include/image.h	/^	uint8_t b;$/;"	m	struct:__anon3
 bottomRightX	include/detectFace.h	/^  uint16_t bottomRightX;$/;"	m	struct:__anon2
 bottomRightY	include/detectFace.h	/^  uint16_t bottomRightY;$/;"	m	struct:__anon2
 cb	include/image.h	/^	uint8_t cb;$/;"	m	struct:__anon4
-computeSingleImage	src/main.c	/^void computeSingleImage(const char *sourcePath, const char *targetPath)$/;"	f
+computeSingleImage	src/main.c	/^void computeSingleImage(void)$/;"	f
 counterHandle	src/main.c	/^static module_handle_t counterHandle;$/;"	v	file:
 cr	include/image.h	/^	uint8_t cr;$/;"	m	struct:__anon4
 data	include/image.h	/^	unsigned char *data;$/;"	m	struct:__anon5
 dataLength	include/image.h	/^	uint32_t dataLength;$/;"	m	struct:__anon5
 detectFace	src/detectFace.c	/^int detectFace(image_t *faceMask, image_t *rawImage, rect_t *resultRect)$/;"	f
+dilateFilter	src/erodeDilateFilter.c	/^void dilateFilter(image_t *inputImage, image_t *outputImage)$/;"	f
+dilateFilterImage	src/main.c	/^image_t dilateFilterImage;$/;"	v
 dispHandle	src/main.c	/^static dis7seg_handle_t dispHandle;$/;"	v	file:
-erodeDilateFilter	src/erodeDilateFilter.c	/^void erodeDilateFilter(image_t *inputImage, image_t *outputImage, uint8_t op)$/;"	f
+erodeFilter	src/erodeDilateFilter.c	/^void erodeFilter(volatile char *framebuffer, image_t *outputImage)$/;"	f
+erodeFilterImage	src/main.c	/^image_t erodeFilterImage;$/;"	v
 freeImage	src/main.c	/^void freeImage(image_t *image) $/;"	f
 g	include/image.h	/^	uint8_t g;$/;"	m	struct:__anon3
 getIndexBelowThreshold	src/detectFace.c	/^int getIndexBelowThreshold(int *hist, int histLen, int start, int step, int threshold) {$/;"	f
@@ -172,6 +188,13 @@ rect_t	include/detectFace.h	/^} rect_t;$/;"	t	typeref:struct:__anon2
 rgb_color_t	include/image.h	/^} rgb_color_t;$/;"	t	typeref:struct:__anon3
 screenData	src/main.c	/^static volatile uint32_t *screenData;$/;"	v	file:
 sdramBytesAllocated	src/main.c	/^static uint32_t sdramBytesAllocated;$/;"	v	file:
+setCamMode	src/camera.c	/^void setCamMode(uint8_t mode)$/;"	f
+setCbBounds	src/camera.c	/^void setCbBounds(uint8_t min, uint8_t max)$/;"	f
+setCbFactors	src/camera.c	/^void setCbFactors(int16_t rfac, int16_t gfac, int16_t bfac)$/;"	f
+setCrBounds	src/camera.c	/^void setCrBounds(uint8_t min, uint8_t max)$/;"	f
+setCrFactors	src/camera.c	/^void setCrFactors(int16_t rfac, int16_t gfac, int16_t bfac)$/;"	f
+setYBounds	src/camera.c	/^void setYBounds(uint8_t min, uint8_t max)$/;"	f
+setYFactors	src/camera.c	/^void setYFactors(int16_t rfac, int16_t gfac, int16_t bfac)$/;"	f
 signal_init	src/main.c	25;"	d	file:
 skinFilter	src/skinFilter.c	/^void skinFilter(image_t *inputImage, image_t *outputImage)$/;"	f
 switchVal	src/buttons.c	/^uint32_t switchVal()$/;"	f

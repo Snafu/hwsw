@@ -26,6 +26,9 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+library work;
+use work.scarts_pkg.all;
+
 package kameralib is
 
 	type sram_ctrl_t is record
@@ -49,6 +52,35 @@ package kameralib is
 	end record;
 
 	type state_t is (WAIT_INIT, NOINIT, WAITFRAME, FRAMEEND, WAITFIRST, FIRST, WAITNORMAL, NORMAL);
+	component kameractrl is
+		port (
+			rst							: in	std_logic;
+			clk							: in	std_logic;
+			extsel					: in	std_logic;
+			exti						: in  module_in_type;
+			exto						: out module_out_type;
+
+			yR_fac					: out std_logic_vector(8 downto 0);
+			yG_fac					: out std_logic_vector(8 downto 0);
+			yB_fac					: out std_logic_vector(8 downto 0);
+			yMin						: out integer range 0 to 255;
+			yMax						: out integer range 0 to 255;
+
+			cbR_fac					: out std_logic_vector(8 downto 0);
+			cbG_fac					: out std_logic_vector(8 downto 0);
+			cbB_fac					: out std_logic_vector(8 downto 0);
+			cbMin						: out integer range 0 to 255;
+			cbMax						: out integer range 0 to 255;
+
+			crR_fac					: out std_logic_vector(8 downto 0);
+			crG_fac					: out std_logic_vector(8 downto 0);
+			crB_fac					: out std_logic_vector(8 downto 0);
+			crMin						: out integer range 0 to 255;
+			crMax						: out integer range 0 to 255;
+
+			output_mode			:	out	std_logic
+	    );
+	end component;
 	
 	component kamera
 		generic (
@@ -61,7 +93,6 @@ package kameralib is
 			bb_rdreq_dbg				: out std_logic;
 			bb_wrreq_dbg				: out std_logic;
 			bb_clearfifo_dbg		: out std_logic;
-	
 	
 			rst							: in std_logic;	-- Synchronous reset
 			clk							: in std_logic;
@@ -78,7 +109,27 @@ package kameralib is
 			filter_addr			: out std_logic_vector(FILTERADDRLEN-1 downto 0);
 			filter_data			: out std_logic_vector(FILTERDATALEN-1 downto 0);
 			filter_we				: out std_logic;
-	
+
+			yR_fac					: in std_logic_vector(8 downto 0);
+			yG_fac					: in std_logic_vector(8 downto 0);
+			yB_fac					: in std_logic_vector(8 downto 0);
+			yMin						: in integer range 0 to 255;
+			yMax						: in integer range 0 to 255;
+
+			cbR_fac					: in std_logic_vector(8 downto 0);
+			cbG_fac					: in std_logic_vector(8 downto 0);
+			cbB_fac					: in std_logic_vector(8 downto 0);
+			cbMin						: in integer range 0 to 255;
+			cbMax						: in integer range 0 to 255;
+
+			crR_fac					: in std_logic_vector(8 downto 0);
+			crG_fac					: in std_logic_vector(8 downto 0);
+			crB_fac					: in std_logic_vector(8 downto 0);
+			crMin						: in integer range 0 to 255;
+			crMax						: in integer range 0 to 255;
+
+			output_mode			:	in	std_logic;
+
 			init_ready			: in std_logic
 		);
 	end component;

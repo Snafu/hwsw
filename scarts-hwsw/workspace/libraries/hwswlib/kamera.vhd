@@ -54,6 +54,26 @@ entity kamera is
 		filter_addr			: out std_logic_vector(FILTERADDRLEN-1 downto 0);
 		filter_data			: out std_logic_vector(FILTERDATALEN-1 downto 0);
 		filter_we				: out std_logic;
+	
+		yR_fac					: in std_logic_vector(8 downto 0);
+		yG_fac					: in std_logic_vector(8 downto 0);
+		yB_fac					: in std_logic_vector(8 downto 0);
+		yMin						: in integer range 0 to 255;
+		yMax						: in integer range 0 to 255;
+
+		cbR_fac					: in std_logic_vector(8 downto 0);
+		cbG_fac					: in std_logic_vector(8 downto 0);
+		cbB_fac					: in std_logic_vector(8 downto 0);
+		cbMin						: in integer range 0 to 255;
+		cbMax						: in integer range 0 to 255;
+
+		crR_fac					: in std_logic_vector(8 downto 0);
+		crG_fac					: in std_logic_vector(8 downto 0);
+		crB_fac					: in std_logic_vector(8 downto 0);
+		crMin						: in integer range 0 to 255;
+		crMax						: in integer range 0 to 255;
+
+		output_mode			:	in std_logic;
 
 		init_ready			: in std_logic
     );
@@ -61,85 +81,62 @@ end ;
 
 architecture rtl of kamera is
   
-	constant MAXCOL			: integer := 802;
+	constant MAXCOL				: integer := 802;
 	constant LASTCOL			: integer := MAXCOL-2;
 	constant MAXLINE			: integer := 482;
 	constant LASTLINE			: integer := MAXLINE-2;
-	
-	constant yRed				: integer := 66;
-	constant yGreen			: integer := 129;
-	constant yBlue				: integer := 25;
 
-	constant cbRed				: integer := -38;
-	constant cbGreen			: integer := -74;
-	constant cbBlue			: integer := 112;
-
-	constant crRed				: integer := 112;
-	constant crGreen			: integer := -94;
-	constant crBlue			: integer := -18;
-	
+	-- DSP result offset
 	constant yOFFSET			: integer := 16;
 	constant cbOFFSET			: integer := 128;
 	constant crOFFSET			: integer := 128;
 	
-	-- constants for SKIN color
-	--constant yMIN				: integer := 16#1c#;
-	--constant yMAX				: integer := 16#20#;
-	constant yMIN				: integer := 38;
-	constant yMAX				: integer := 235;
-	constant cbMIN				: integer := 94;
-	constant cbMAX				: integer := 139;	
-	constant crMIN				: integer := 139;
-	constant crMAX				: integer := 173;
 	
-	
-	--type state_t is (WAIT_INIT, NOINIT, WAITFRAME, WAITFIRST, FIRST, WAITNORMAL, NORMAL);
 	type dotline_t is array (0 to 1) of std_logic_vector(7 downto 0);
 	type dotmatrix_t is array (0 to 1) of dotline_t;
 	type colors_t is (SKIN, R, G, B);
 	type pixel_t is array (colors_t'left to colors_t'right) of std_logic_vector(7 downto 0);
 
-	signal init_old, init_old_n : std_logic := '0';
+	signal init_old, init_old_n							: std_logic := '0';
 
-	signal state, state_next					: state_t;
-	signal linecount, linecount_next			: std_logic_vector(9 downto 0);
-	signal colcount, colcount_next			: std_logic_vector(10 downto 0);
-	signal pixelcount, pixelcount_next		: std_logic_vector(10 downto 0);
-	signal pixel									: pixel_t;
-	signal dotmatrix								: dotmatrix_t;
-	signal dpwren									: std_logic;
-	signal dpaddr, dpaddr_next					: std_logic_vector(8 downto 0);
+	signal state, state_next								: state_t;
+	signal linecount, linecount_next				: std_logic_vector(9 downto 0);
+	signal colcount, colcount_next					: std_logic_vector(10 downto 0);
+	signal pixelcount, pixelcount_next			: std_logic_vector(10 downto 0);
+	signal pixel														: pixel_t;
+	signal dotmatrix												: dotmatrix_t;
+	signal dpwren														: std_logic;
+	signal dpaddr, dpaddr_next							: std_logic_vector(8 downto 0);
 
-	signal pixelburstReady_next				: std_logic;
+	signal pixelburstReady_next							: std_logic;
 
 	signal bb_clearfifo, bb_clearfifo_next	: std_logic;
-	signal bb_wrreq, bb_wrreq_next			: std_logic := '0';
-	signal bb_in, bb_in_next					: std_logic_vector(7 downto 0);
-	signal bb_rdreq, bb_rdreq_next			: std_logic := '0';
-	signal bb_out_next							: std_logic_vector(7 downto 0);
+	signal bb_wrreq, bb_wrreq_next					: std_logic := '0';
+	signal bb_in, bb_in_next								: std_logic_vector(7 downto 0);
+	signal bb_rdreq, bb_rdreq_next					: std_logic := '0';
+	signal bb_out_next											: std_logic_vector(7 downto 0);
 	
-	signal yR, yG, yB								: std_logic_vector(7 downto 0);
-	signal yResult									: std_logic_vector(16 downto 0);
+	signal yR, yG, yB												: std_logic_vector(7 downto 0);
+	signal yResult													: std_logic_vector(16 downto 0);
 	
-	signal cbR, cbG, cbB							: std_logic_vector(7 downto 0);
-	signal cbResult								: std_logic_vector(16 downto 0);
+	signal cbR, cbG, cbB										: std_logic_vector(7 downto 0);
+	signal cbResult													: std_logic_vector(16 downto 0);
 	
-	signal crR, crG, crB							: std_logic_vector(7 downto 0);
-	signal crResult								: std_logic_vector(16 downto 0);
+	signal crR, crG, crB										: std_logic_vector(7 downto 0);
+	signal crResult													: std_logic_vector(16 downto 0);
 
-	signal filter_addr_sig						: std_logic_vector(FILTERADDRLEN-1 downto 0);
-	signal filter_addr_next					: std_logic_vector(FILTERADDRLEN-1 downto 0);
-	signal filter_data_sig						: std_logic_vector(FILTERDATALEN-1 downto 0);
-	signal filter_data_next					: std_logic_vector(FILTERDATALEN-1 downto 0);
-	signal filter_we_sig							: std_logic;
-	signal filter_we_next						: std_logic;
+	signal filter_addr_sig									: std_logic_vector(FILTERADDRLEN-1 downto 0);
+	signal filter_addr_next									: std_logic_vector(FILTERADDRLEN-1 downto 0);
+	signal filter_data_sig									: std_logic_vector(FILTERDATALEN-1 downto 0);
+	signal filter_data_next									: std_logic_vector(FILTERDATALEN-1 downto 0);
+	signal filter_we_sig										: std_logic;
+	signal filter_we_next										: std_logic;
 	
-	signal byteCount								: std_logic_vector(2 downto 0);
-	signal byteCount_n							: std_logic_vector(2 downto 0);
+	signal byteCount												: std_logic_vector(2 downto 0);
+	signal byteCount_n											: std_logic_vector(2 downto 0);
 
-
-	signal yDBG, cbDBG, crDBG			: integer;
-	signal yDBGV, cbDBGV, crDBGV			: std_logic_vector(8 downto 0);
+	signal yDBG, cbDBG, crDBG								: integer;
+	signal yDBGV, cbDBGV, crDBGV						: std_logic_vector(8 downto 0);
 	
 begin
 
@@ -156,17 +153,17 @@ begin
 		wrreq		=> bb_wrreq 
 	);
 	
---	
---	MULTIPLIERES for conversion RGB --> yCbCr
---
+	--	
+	--	MULTIPLIERES for conversion RGB --> yCbCr
+	--
 	yMUL : yCbCrMUL PORT MAP (
 		clock0   => clk,
 		dataa_0  => yR,
 		dataa_1  => yG,
 		dataa_2  => yB,
-		datab_0  => std_logic_vector(to_signed(yRed,9)),
-		datab_1  => std_logic_vector(to_signed(yGreen,9)),
-		datab_2  => std_logic_vector(to_signed(yBlue,9)),
+		datab_0  => yR_fac, --std_logic_vector(to_signed(yRed,9)),
+		datab_1  => yG_fac, --std_logic_vector(to_signed(yGreen,9)),
+		datab_2  => yB_fac, --std_logic_vector(to_signed(yBlue,9)),
 		result   => yResult
 	);
 
@@ -175,9 +172,9 @@ begin
 		dataa_0  => cbR,
 		dataa_1  => cbG,
 		dataa_2  => cbB,
-		datab_0  => std_logic_vector(to_signed(cbRed,9)),
-		datab_1  => std_logic_vector(to_signed(cbGreen,9)),
-		datab_2  => std_logic_vector(to_signed(cbBlue,9)),
+		datab_0  => cbR_fac, --std_logic_vector(to_signed(cbRed,9)),
+		datab_1  => cbG_fac, --std_logic_vector(to_signed(cbGreen,9)),
+		datab_2  => cbB_fac, --std_logic_vector(to_signed(cbBlue,9)),
 		result   => cbResult
 	);
 
@@ -186,15 +183,18 @@ begin
 		dataa_0  => crR,
 		dataa_1  => crG,
 		dataa_2  => crB,
-		datab_0  => std_logic_vector(to_signed(crRed,9)),
-		datab_1  => std_logic_vector(to_signed(crGreen,9)),
-		datab_2  => std_logic_vector(to_signed(crBlue,9)),
+		datab_0  => crR_fac, --std_logic_vector(to_signed(crRed,9)),
+		datab_1  => crG_fac, --std_logic_vector(to_signed(crGreen,9)),
+		datab_2  => crB_fac, --std_logic_vector(to_signed(crBlue,9)),
 		result   => crResult
 	);
 
-	
-	
 	camstate <= state;
+
+
+	----------------------------------------------------------------------------
+	-- Bayer converter FSM Control
+	----------------------------------------------------------------------------
 
 	fsm_control: process(rst, state, linecount, bb_wrreq, bb_rdreq, bb_clearfifo, colcount, fval, lval, init_old, init_ready)
 	begin
@@ -286,7 +286,12 @@ begin
 		end if;
 	end process;
 
-	fsm : process(rst, state, pixelcount, linecount, colcount, dotmatrix, dpaddr)
+
+	----------------------------------------------------------------------------
+	-- Bayer converter
+	----------------------------------------------------------------------------
+
+	fsm : process(rst, state, pixelcount, linecount, colcount, dotmatrix, dpaddr, yResult, cbResult, crResult, yMin, yMax, cbMin, cbMax, crMin, crMax)
 		variable green	: std_logic_vector(8 downto 0);
 		variable red	: std_logic_vector(7 downto 0);
 		variable blue	: std_logic_vector(7 downto 0);
@@ -305,6 +310,16 @@ begin
 		filter_addr_next <= (others => '0');
 		filter_data_next <= (others => '0');
 		filter_we_next <= '0';
+					
+		yR <= (others => '0');
+		cbR <= (others => '0');
+		crR <= (others => '0');
+		yG <= (others => '0');
+		cbG <= (others => '0');
+		crG <= (others => '0');
+		yB <= (others => '0');
+		cbB <= (others => '0');
+		crB <= (others => '0');
 
 		case state is
 		when NORMAL =>
@@ -398,9 +413,9 @@ begin
 			crDBGV <= crResult(16 downto 8);
 			crDBG <= crVal;
 
-			if (yVal > yMIN and yVal < yMAX)
-				and (cbVal > cbMIN and cbVal < cbMAX)
-				and (crVal > crMIN and crVal < crMAX)
+			if (yVal > yMin and yVal < yMax)
+				and (cbVal > cbMin and cbVal < cbMax)
+				and (crVal > crMin and crVal < crMax)
 			then
 					pixel(SKIN) <= x"ff";
 			end if;
@@ -425,6 +440,11 @@ begin
 		end if;
 	end process;
 
+
+	----------------------------------------------------------------------------
+	-- Set registers
+	----------------------------------------------------------------------------
+
 	clk_reg : process(rst, clk)
 	begin
 		if rising_edge(clk) then
@@ -448,8 +468,12 @@ begin
 			dpaddr <= dpaddr_next;
 			dp_wren <= dpwren;
 			dp_wraddr <= dpaddr;
-			--dp_data <= pixel(SKIN) & pixel(R) & pixel(G) & pixel(B);
-			dp_data <= pixel(SKIN) & pixel(SKIN) & pixel(SKIN) & pixel(SKIN);
+
+			if output_mode = '0' then
+				dp_data <= pixel(SKIN) & pixel(R) & pixel(G) & pixel(B);
+			else
+				dp_data <= pixel(SKIN) & pixel(SKIN) & pixel(SKIN) & pixel(SKIN);
+			end if;
 
 
 			bb_clearfifo <= bb_clearfifo_next;
