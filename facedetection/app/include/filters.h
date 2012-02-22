@@ -3,8 +3,8 @@
 
 #include "image.h"
 
-#define HISTX_LEN			(800-4)
-#define HISTY_LEN			(480-4)
+#define HISTX_LEN			(200-4)
+#define HISTY_LEN			(120-4)
 
 extern int histX[HISTX_LEN];
 extern int histY[HISTY_LEN];

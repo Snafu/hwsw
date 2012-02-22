@@ -18,11 +18,8 @@ int getIndexBelowThreshold(int *hist, int histLen, int start, int step, int thre
 
 int detectFace(rect_t *resultRect)
 {
-  int x, y;
-  int pIndex;
   int i, j;
   int width, height;
-  int faceX, faceY;
 
   int aboveThresholdXLen;
   int aboveThresholdYLen;
@@ -48,7 +45,7 @@ int detectFace(rect_t *resultRect)
   j = 0;
   for (i=0; i < HISTY_LEN; i+=STEP_SIZE) {
     if (histY[i] > maxHistY/2) {
-      aboveThresholdY[j] = i+2;
+      aboveThresholdY[j] = i;
       j++;
     }
   }
@@ -62,10 +59,10 @@ int detectFace(rect_t *resultRect)
       rect_t r;
       int area;      
 
-      r.topLeftX = getIndexBelowThreshold(histX, HISTX_LEN, aboveThresholdX[j], -1, maxHistX/6);
-      r.bottomRightX = getIndexBelowThreshold(histX, HISTY_LEN, aboveThresholdX[j], 1, maxHistX/6);
-      r.topLeftY = getIndexBelowThreshold(histY, HISTX_LEN, aboveThresholdY[i], -1, maxHistY/9);
-      r.bottomRightY = getIndexBelowThreshold(histY, HISTY_LEN, aboveThresholdY[i], 1, maxHistY/9);
+      r.topLeftX = getIndexBelowThreshold(histX, HISTX_LEN, aboveThresholdX[j], -1, maxHistX>>2);
+      r.bottomRightX = getIndexBelowThreshold(histX, HISTY_LEN, aboveThresholdX[j], 1, maxHistX>>3);
+      r.topLeftY = getIndexBelowThreshold(histY, HISTX_LEN, aboveThresholdY[i], -1, maxHistY>>2);
+      r.bottomRightY = getIndexBelowThreshold(histY, HISTY_LEN, aboveThresholdY[i], 1, maxHistY>>3);
 
       width = r.bottomRightX-r.topLeftX;
       height = r.bottomRightY-r.topLeftY;
@@ -103,7 +100,7 @@ int getIndexBelowThreshold(int *hist, int histLen, int start, int step, int thre
   int result = start;
   for (i=start; i>0 && i<histLen; i+=step) {
     if (hist[i] < threshold) {
-      result = i;
+      result = i<<2;
       break;
     }
   }

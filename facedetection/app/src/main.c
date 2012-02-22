@@ -132,9 +132,9 @@ int main(int argc, char **argv)
 	
 	initSVGA();
 	
-	erodeFilterImage.width = 800;
-	erodeFilterImage.height = 480;
-	erodeFilterImage.dataLength = 800*480;
+	erodeFilterImage.width = 200;
+	erodeFilterImage.height = 120;
+	erodeFilterImage.dataLength = erodeFilterImage.width*erodeFilterImage.height;
 	
 	// Initialize Image buffers
 	initializeImage(&erodeFilterImage, &erodeFilterImage);
@@ -182,6 +182,7 @@ int main(int argc, char **argv)
 	int cam_mode, cam_mode_old;
 	cam_mode = 0;
 	cam_mode_old = 0;
+			clear_rect();
 	
 	while(1) {
 		
@@ -194,15 +195,15 @@ int main(int argc, char **argv)
 			setCamMode(cam_mode);
 		cam_mode_old = cam_mode;
 		
-		/*
 		if(mode == 0 && mode_old == 1) {
 			i2c_write(RESTART_REG, TRIGGER);
 		}	else
-		*/
+		/*
 		if(mode == 0) {
 			i2c_write(RESTART_REG, TRIGGER);
 			i2c_write(RESTART_REG, 0);
 		}
+		*/
 		if(mode == 1 && mode_old == 0) {
 			i2c_write(RESTART_REG, 0);
 		}
