@@ -504,6 +504,10 @@ begin
 			pixelcount <= (others => '0');
 
 			dpaddr <= (others => '0');
+
+			filter_addr	<= (others => '0');
+			filter_data	<= (others => '0');
+			filter_we		<= '0';
 		end if;
 	end process;
 end;

@@ -1,4 +1,5 @@
 #include "filters.h"
+#include <string.h>
 #include "image.h"
 
 #define WINDOW_LENGTH 5
@@ -17,26 +18,30 @@
 
 void erodeFilter(volatile char *framebuffer, image_t *outputImage)
 {
-  int x, y, dx, dy, wx, wy;
-  int pIndex;
-  rgb_color_t c, compare;
+  int x, y, dx, dy;
   uint8_t foundMatch;
 	
-	volatile char *lineptr = framebuffer;
+	volatile char *lineptr = framebuffer + 3;
 	volatile char *woffsetptr; // 1st row, 1st col
 	volatile char *winptr;
 	
 	unsigned char *outptr = outputImage->data + (800<<1) + 2; // 3rd row, 3rd col
 	
-	for (y = WINDOW_OFFSET; y < 480 - WINDOW_OFFSET; ++y) { // 2..478
+	for (y = WINDOW_OFFSET; y < 480 - WINDOW_OFFSET; ++y)
+	{ // 2..478
 		woffsetptr = lineptr;
-		for (x = WINDOW_OFFSET; x < 800 - WINDOW_OFFSET; ++x) {  // 2..798
+		for (x = WINDOW_OFFSET; x < 800 - WINDOW_OFFSET; ++x)
+		{  // 2..798
 			foundMatch = 0;
 			
 			winptr = woffsetptr;
-      for (dy = -WINDOW_OFFSET; dy <= WINDOW_OFFSET; ++dy) { // -2..2
-				for (dx = -WINDOW_OFFSET; dx <= WINDOW_OFFSET; ++dx) { // -2..2
-					if(*winptr == ERODE_COMPARE) {
+			for (dy = -WINDOW_OFFSET; dy <= WINDOW_OFFSET; ++dy)
+			{ // -2..2
+				
+				for (dx = -WINDOW_OFFSET; dx <= WINDOW_OFFSET; ++dx)
+				{ // -2..2
+					if(*(winptr+3) == ERODE_COMPARE)
+					{
 						foundMatch = 1;
 						break;
 					}
@@ -50,11 +55,10 @@ void erodeFilter(volatile char *framebuffer, image_t *outputImage)
 			} // for dy
 			
 			
-			if (!foundMatch) {
+			if (!foundMatch)
 				*outptr = 0xFF;
-			} else {
+			else
 				*outptr = 0;
-			}
 			
 			outptr++;
 			woffsetptr += 1<<2;
@@ -68,26 +72,37 @@ void erodeFilter(volatile char *framebuffer, image_t *outputImage)
 
 void dilateFilter(image_t *inputImage, image_t *outputImage)
 {
-  int x, y, dx, dy, wx, wy;
-  int pIndex;
-  rgb_color_t c, compare;
-  uint8_t foundMatch;
+	int x, y, dx, dy;
+	uint8_t foundMatch;
 	
+	int hX, hY, histX[480], histY[800];
+
 	unsigned char *lineptr = inputImage->data;
 	unsigned char *woffsetptr; // 1st row, 1st col
 	unsigned char *winptr;
 	
 	unsigned char *outptr = outputImage->data + (800<<1) + 2; // 3rd row, 3rd col
 	
-	for (y = WINDOW_OFFSET; y < 480 - WINDOW_OFFSET; ++y) { // 2..478
+	memset(histX, 0, 480);
+	memset(histY, 0, 800);
+
+	hX = 2;
+	hY = 2;
+
+	for (y = WINDOW_OFFSET; y < 480 - WINDOW_OFFSET; ++y)
+	{ // 2..478
 		woffsetptr = lineptr;
-		for (x = WINDOW_OFFSET; x < 800 - WINDOW_OFFSET; ++x) {  // 2..798
+		for (x = WINDOW_OFFSET; x < 800 - WINDOW_OFFSET; ++x)
+		{  // 2..798
 			foundMatch = 0;
 			
 			winptr = woffsetptr;
-      for (dy = -WINDOW_OFFSET; dy <= WINDOW_OFFSET; ++dy) { // -2..2
-				for (dx = -WINDOW_OFFSET; dx <= WINDOW_OFFSET; ++dx) { // -2..2
-					if(*winptr == DILATE_COMPARE) {
+			for (dy = -WINDOW_OFFSET; dy <= WINDOW_OFFSET; ++dy)
+			{ // -2..2
+				for (dx = -WINDOW_OFFSET; dx <= WINDOW_OFFSET; ++dx)
+				{ // -2..2
+					if(*winptr == DILATE_COMPARE)
+					{
 						foundMatch = 1;
 						break;
 					}
@@ -95,22 +110,32 @@ void dilateFilter(image_t *inputImage, image_t *outputImage)
 				} // for dx
 				
 				winptr += 800 - 20;
-				if (foundMatch) {
+				if (foundMatch)
+				{
 					break;
 				}
 			} // for dy
 			
-			
-			if (foundMatch) {
+			if (foundMatch)
+			{
 				*outptr = 0xFF;
-			} else {
+				histY[hY]++;
+				histY[hX]++;
+				// draw histogramm
+				
+			}
+			else
+			{
 				*outptr = 0;
 			}
-			
+				
+			hX++;
 			outptr++;
 			woffsetptr += 1;
 		} // for x
-		
+	
+		hX = 2;
+		hY++;
 		outptr += 4; // from prev line to next line, 3rd pixel
 		lineptr += 800; // next line, 1st pixel
 	} // for y
