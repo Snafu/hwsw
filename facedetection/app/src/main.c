@@ -42,7 +42,7 @@
 #define SCREEN_WIDTH  800
 #define SCREEN_HEIGHT 480
 
-static uint32_t sdramBytesAllocated;
+static volatile uint32_t sdramBytesAllocated;
 static module_handle_t counterHandle;
 static dis7seg_handle_t dispHandle;
 static mini_uart_handle_t aux_uart_handle;
@@ -66,9 +66,8 @@ void initializeImage(image_t *template, image_t *image)
 
 	// allocate memory in external SDRAM
 	image->data = (unsigned char *)(SDRAM_BASE+sdramBytesAllocated);
-	memset((void *) image->data, 0, image->width * image->height);
+	memset((void *) image->data, 0, image->dataLength);
 	sdramBytesAllocated += template->dataLength;
-
 }
 
 void freeImage(image_t *image) 
@@ -131,6 +130,7 @@ int main(int argc, char **argv)
 		SDRAM_CMD_LOAD_CMD_REG | 
 		389;
 	
+	initSVGA();
 	
 	erodeFilterImage.width = 800;
 	erodeFilterImage.height = 480;
@@ -140,7 +140,6 @@ int main(int argc, char **argv)
 	initializeImage(&erodeFilterImage, &erodeFilterImage);
 	initializeImage(&erodeFilterImage, &dilateFilterImage);
 	
-	initSVGA();
 
 	// CAM initialization
 	initCamera();
@@ -195,9 +194,16 @@ int main(int argc, char **argv)
 			setCamMode(cam_mode);
 		cam_mode_old = cam_mode;
 		
+		/*
 		if(mode == 0 && mode_old == 1) {
 			i2c_write(RESTART_REG, TRIGGER);
-		}	else if(mode == 1 && mode_old == 0) {
+		}	else
+		*/
+		if(mode == 0) {
+			i2c_write(RESTART_REG, TRIGGER);
+			i2c_write(RESTART_REG, 0);
+		}
+		if(mode == 1 && mode_old == 0) {
 			i2c_write(RESTART_REG, 0);
 		}
 		
@@ -230,6 +236,21 @@ int main(int argc, char **argv)
 			}
 		}
 		keys_old = keys;
+		
+
+		int result;
+		rect_t resultRect;
+
+		erodeFilter((volatile char *) SDRAM_BASE, &erodeFilterImage);
+		dilateFilter(&erodeFilterImage, &dilateFilterImage);
+		result = detectFace(&resultRect);
+
+		if(result == 1) {
+			draw_rect(resultRect.topLeftX, resultRect.topLeftY, resultRect.bottomRightX, resultRect.bottomRightY);
+		} else {
+			clear_rect();
+		}
+		
 	}
 
 

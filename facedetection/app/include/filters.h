@@ -3,8 +3,12 @@
 
 #include "image.h"
 
-#define FILTER_ERODE   0
-#define FILTER_DILATE  1
+#define HISTX_LEN			(800-4)
+#define HISTY_LEN			(480-4)
+
+extern int histX[HISTX_LEN];
+extern int histY[HISTY_LEN];
+extern int maxHistX, maxHistY;
 
 void skinFilter(image_t *inputImage, image_t *outputImage);
 void erodeFilter(volatile char *inputImage, image_t *outputImage);
