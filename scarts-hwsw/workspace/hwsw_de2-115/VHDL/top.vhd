@@ -189,6 +189,8 @@ architecture behaviour of top is
   signal buttons_exto 			: module_out_type;
 
   -- signals for DISPLAY Controller
+  signal disp_config_sel		: std_ulogic;
+  signal disp_exto 					: module_out_type;
   signal disp_ahbmo					: ahb_mst_out_type;
 	signal disp_fval					:	std_logic;
   
@@ -698,6 +700,11 @@ begin
 			ahbready_dbg => ahbready_dbg,
 			rst => syncrst,
 			clk => clk,
+
+			extsel => disp_config_sel,
+			exti => exti,
+			exto => disp_exto,
+
 			ahbi => grlib_ahbmi,
 			ahbo => disp_ahbmo,
 			fval => disp_fval,
@@ -933,38 +940,50 @@ begin
 		hw_initialized <= '0'; 
 		buttons_config_sel <= '0';
 		cam_config_sel <= '0';
+		disp_config_sel <= '0';
     
-    if scarts_o.extsel = '1' then
-      case scarts_o.addr(14 downto 5) is
-        when "1111110111" => -- (-288)
-          --DIS7SEG Module
-          dis7segsel <= '1';
-        when "1111110110" => -- (-320)              
-          --Counter Module
-          counter_segsel <= '1';
-        when "1111110101" => -- (-352)
-          -- AUX UART
-          aux_uart_sel <= '1';
+		if scarts_o.extsel = '1' then
+			case scarts_o.addr(14 downto 5) is
+				when "1111110111" => -- (-288)
+					--DIS7SEG Module
+					dis7segsel <= '1';
+				
+				when "1111110110" => -- (-320)
+					--Counter Module
+					counter_segsel <= '1';
+				
+				when "1111110101" => -- (-352)
+					-- AUX UART
+					aux_uart_sel <= '1';
+				
 				when "1111110100" => -- (-384)
 					-- I2C config
 					i2c_config_sel <= '1';
+				
 				when "1111110011" => -- (-416)
-					-- HW INIT config 
-					hw_initialized <= '1'; 
+					-- HW INIT config
+					hw_initialized <= '1';
+				
 				when "1111110010" => -- (-448)
 					-- BUTTONS config 
-					buttons_config_sel <= '1'; 
+					buttons_config_sel <= '1';
+				
 				when "1111110001" => -- (-480)
-					-- BUTTONS config 
-					cam_config_sel <= '1'; 
-        when others =>
-          null;
-      end case;
-    end if;
+					-- CAMCTRL config 
+					cam_config_sel <= '1';
+				
+				when "1111110000" => -- (-512)
+					-- DISPCTRL config 
+					disp_config_sel <= '1';
+				
+				when others =>
+					null;
+			end case;
+		end if;
     
     extdata := (others => '0');
     for i in extdata'left downto extdata'right loop
-      extdata(i) := dis7segexto.data(i) or counter_exto.data(i) or aux_uart_exto.data(i) or buttons_exto.data(i) or cam_exto.data(i); 
+      extdata(i) := dis7segexto.data(i) or counter_exto.data(i) or aux_uart_exto.data(i) or buttons_exto.data(i) or cam_exto.data(i) or disp_exto.data(i); 
     end loop;
 
     scarts_i.data <= (others => '0');

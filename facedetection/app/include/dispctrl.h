@@ -1,16 +1,22 @@
 #ifndef __DISPCTRL_H__
 #define __DISPCTRL_H__
 
-#define DISPCTRL_BASE (0xF0000200)
-#define DISPCTRL_STATUS (*(volatile int *const) (DISPCTRL_BASE))
-#define DISPCTRL_COLOR (*(volatile int *const) (DISPCTRL_BASE+4))
-#define DISPCTRL_TL (*(volatile int *const) (DISPCTRL_BASE+8))
-#define DISPCTRL_BR (*(volatile int *const) (DISPCTRL_BASE+12))
+// SCARTS EXTENSION
+#define DISPCTRL_BADDR							((uint32_t) -512)
+#define DISPCTRL_STATUS							(*(volatile int *const) (DISPCTRL_BADDR))
+#define DISPCTRL_TOPLEFT						(*(volatile int *const) (DISPCTRL_BADDR+4))
+#define DISPCTRL_BOTTOMRIGHT				(*(volatile int *const) (DISPCTRL_BADDR+8))
 
-#define DRAW_RECT(xt,yt,xb,yb)	DISPCTRL_TL = (((uint16_t) yt)<<16) | ((uint16_t) xt); \
-	DISPCTRL_BR = (((uint16_t) yb)<<16) | ((uint16_t) xb);
+#define NOFACE											((uint16_t) 480)
 
-#define UPDATE_GLCD()	DISPCTRL_STATUS = 0; DISPCTRL_STATUS = DISPCTRL_UPDATE;
-#define DISPCTRL_UPDATE 0x01
+#define draw_rect(xt,yt,xb,yb)			{ \
+	DISPCTRL_TOPLEFT = (((uint16_t) yt)<<16) | ((uint16_t) xt); \
+	DISPCTRL_BOTTOMRIGHT = (((uint16_t) yb)<<16) | ((uint16_t) xb); \
+	}
+
+#define clear_rect()								{ \
+	DISPCTRL_TOPLEFT = (NOFACE<<16) | NOFACE; \
+	DISPCTRL_BOTTOMRIGHT = (NOFACE<<16) | NOFACE; \
+	}
 
 #endif // __DISPCTRL_H__

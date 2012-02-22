@@ -26,8 +26,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-
-
 library grlib;
 use grlib.amba.all;
 use grlib.devices.all;
@@ -36,6 +34,7 @@ use grlib.stdlib.all;
 library gaisler;
 use gaisler.misc.all;
 
+library work;
 use work.scarts_pkg.all;
 
 package hwswlib is
@@ -53,6 +52,11 @@ package hwswlib is
 			ahbready_dbg	: out std_logic;
 			rst						: in std_logic;           -- Synchronous reset
 			clk     	 	 	: in std_logic;
+
+			extsel				: in	std_logic;
+			exti					: in  module_in_type;
+			exto					: out module_out_type;
+
 			ahbi					: in  ahb_mst_in_type;
 			ahbo    		  : out ahb_mst_out_type;
 			fval					: in std_logic;

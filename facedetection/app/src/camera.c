@@ -28,7 +28,7 @@ void initCamera(void)
 	//i2c_write(PIXEL_CLOCK_CONTROL_REG, (1<<15));					// OK!
 
 	// OUTPUT_Slew_Rate | PIXCLK_Slew_Rate | Chip Enable
-	i2c_write(OUTPUT_CONTROL_REG, ((1<<10)|(3<<7)|(1<<1)));		// OK!
+	i2c_write(OUTPUT_CONTROL_REG, ((1<<10)|(4<<7)|(1<<1)));		// OK!
 
 	// gain settings
 	// digital [0,120], analog mult [0,1], analog [8,63]

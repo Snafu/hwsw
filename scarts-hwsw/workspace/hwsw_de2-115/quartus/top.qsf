@@ -370,7 +370,6 @@ set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/cam_pll.vhd
 set_global_assignment -name VHDL_FILE ../../../VHDL/common/synchronizer/sync_beh.vhd
 set_global_assignment -name VHDL_FILE ../../../VHDL/common/synchronizer/sync.vhd
 set_global_assignment -name VHDL_FILE ../../../VHDL/common/synchronizer/sync_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/rgb2ycbcr.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/buttons.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/hwswlib.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/dispctrl.vhd
@@ -442,5 +441,4 @@ set_global_assignment -name SDC_FILE top.sdc
 set_global_assignment -name QIP_FILE ../VHDL/altera_pll.qip
 set_global_assignment -name QIP_FILE ../../libraries/hwswlib/dp_pixelram.qip
 set_global_assignment -name QIP_FILE ../../libraries/hwswlib/bayerbuffer.qip
-set_global_assignment -name QIP_FILE ../../libraries/hwswlib/multiplier.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

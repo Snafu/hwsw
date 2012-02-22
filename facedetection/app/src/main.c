@@ -161,12 +161,8 @@ int main(int argc, char **argv)
 	
 	signal_init();		// cam - config completed. signal it to who it belongs(dispctrl so far)
 
-
-	
-	// slew rate settings
-	// 1024 | 868 | 2
-
-	dis7seg_displayHexUInt32(&dispHandle, 0, 0x2b00b1e5);  
+	dis7seg_displayHexUInt32(&dispHandle, 0, 0x2b00b1e5);
+	draw_rect(100, 20, 400, 400);
 
 	uint32_t keys, keys_old, value;
 	keys_old = 0;

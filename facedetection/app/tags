@@ -32,14 +32,11 @@ COUNTER_BADDR	src/main.c	37;"	d	file:
 CR_HIGH	src/skinFilter.c	10;"	d	file:
 CR_LOW	src/skinFilter.c	6;"	d	file:
 DILATE_COMPARE	src/erodeDilateFilter.c	14;"	d	file:
-DISPCTRL_BASE	include/dispctrl.h	4;"	d
-DISPCTRL_BR	include/dispctrl.h	8;"	d
-DISPCTRL_COLOR	include/dispctrl.h	6;"	d
-DISPCTRL_STATUS	include/dispctrl.h	5;"	d
-DISPCTRL_TL	include/dispctrl.h	7;"	d
-DISPCTRL_UPDATE	include/dispctrl.h	14;"	d
+DISPCTRL_BADDR	include/dispctrl.h	5;"	d
+DISPCTRL_BOTTOMRIGHT	include/dispctrl.h	8;"	d
+DISPCTRL_STATUS	include/dispctrl.h	6;"	d
+DISPCTRL_TOPLEFT	include/dispctrl.h	7;"	d
 DISP_BADDR	src/main.c	38;"	d	file:
-DRAW_RECT	include/dispctrl.h	10;"	d
 ERODE_COMPARE	src/erodeDilateFilter.c	13;"	d	file:
 FILTER_DILATE	include/filters.h	7;"	d
 FILTER_ERODE	include/filters.h	6;"	d
@@ -140,7 +137,6 @@ TEST_PATTERN_CTRL_REG	include/camera.h	48;"	d
 TEST_PATTERN_GREEN_REG	include/camera.h	49;"	d
 TEST_PATTERN_REG_REG	include/camera.h	50;"	d
 TRIGGER	include/camera.h	44;"	d
-UPDATE_GLCD	include/dispctrl.h	13;"	d
 WAIT_TIME	src/main.c	40;"	d	file:
 WINDOW_LENGTH	src/erodeDilateFilter.c	4;"	d	file:
 WINDOW_OFFSET	src/erodeDilateFilter.c	5;"	d	file:
@@ -166,6 +162,7 @@ detectFace	src/detectFace.c	/^int detectFace(image_t *faceMask, image_t *rawImag
 dilateFilter	src/erodeDilateFilter.c	/^void dilateFilter(image_t *inputImage, image_t *outputImage)$/;"	f
 dilateFilterImage	src/main.c	/^image_t dilateFilterImage;$/;"	v
 dispHandle	src/main.c	/^static dis7seg_handle_t dispHandle;$/;"	v	file:
+draw_rect	include/dispctrl.h	10;"	d
 erodeFilter	src/erodeDilateFilter.c	/^void erodeFilter(volatile char *framebuffer, image_t *outputImage)$/;"	f
 erodeFilterImage	src/main.c	/^image_t erodeFilterImage;$/;"	v
 freeImage	src/main.c	/^void freeImage(image_t *image) $/;"	f
