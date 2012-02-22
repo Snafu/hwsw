@@ -144,12 +144,23 @@ int main(int argc, char **argv)
 
 	// CAM initialization
 	initCamera();
+	/*
 	setYFactors(66, 129, 25);
-	setYBounds(38, 235);
 	setCbFactors(-38, -74, 112);
-	setCbBounds(94, 139);
 	setCrFactors(112, -94, -18);
+
+	setYBounds(38, 235);
+	setCbBounds(94, 139);
 	setCrBounds(139, 173);
+	*/
+	setYFactors(66, 129, 25);
+	setCbFactors(-38, -74, 112);
+	setCrFactors(112, -94, -18);
+
+	setYBounds(38, 235);
+	setCbBounds(74, 139);
+	setCrBounds(139, 173);
+
 	setCamMode(MODE_COLOR);
 
 	uint32_t i;
@@ -162,7 +173,7 @@ int main(int argc, char **argv)
 	signal_init();		// cam - config completed. signal it to who it belongs(dispctrl so far)
 
 	dis7seg_displayHexUInt32(&dispHandle, 0, 0x2b00b1e5);
-	draw_rect(100, 20, 400, 400);
+	draw_rect(5,5, 795,475);
 
 	uint32_t keys, keys_old, value;
 	keys_old = 0;
