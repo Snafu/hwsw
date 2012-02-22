@@ -8,7 +8,7 @@
 #define FOREGROUND_COLOR_R   0xff
 #define FOREGROUND_COLOR_G   0xff
 #define FOREGROUND_COLOR_B   0xff
-#define STEP_SIZE            10
+#define STEP_SIZE            1
 
 
 int aboveThresholdX[HISTX_LEN];
@@ -20,6 +20,7 @@ int detectFace(rect_t *resultRect)
 {
   int i, j;
   int width, height;
+	int scaledWidth;
 
   int aboveThresholdXLen;
   int aboveThresholdYLen;
@@ -35,7 +36,7 @@ int detectFace(rect_t *resultRect)
   // of max hist value
   j = 0;
   for (i=0; i < HISTX_LEN; i+=STEP_SIZE) {
-    if (histX[i] > maxHistX/2) {
+    if (histX[i] > maxHistX>>1) {
       aboveThresholdX[j] = i;
       j++;
     }
@@ -44,7 +45,7 @@ int detectFace(rect_t *resultRect)
 
   j = 0;
   for (i=0; i < HISTY_LEN; i+=STEP_SIZE) {
-    if (histY[i] > maxHistY/2) {
+    if (histY[i] > maxHistY>>1) {
       aboveThresholdY[j] = i;
       j++;
     }
@@ -60,12 +61,12 @@ int detectFace(rect_t *resultRect)
       int area;      
 
       r.topLeftX = getIndexBelowThreshold(histX, HISTX_LEN, aboveThresholdX[j], -1, maxHistX>>2);
-      r.bottomRightX = getIndexBelowThreshold(histX, HISTY_LEN, aboveThresholdX[j], 1, maxHistX>>3);
-      r.topLeftY = getIndexBelowThreshold(histY, HISTX_LEN, aboveThresholdY[i], -1, maxHistY>>2);
+      r.bottomRightX = getIndexBelowThreshold(histX, HISTX_LEN, aboveThresholdX[j], 1, maxHistX>>2);
+      r.topLeftY = getIndexBelowThreshold(histY, HISTY_LEN, aboveThresholdY[i], -1, maxHistY>>3);
       r.bottomRightY = getIndexBelowThreshold(histY, HISTY_LEN, aboveThresholdY[i], 1, maxHistY>>3);
 
-      width = r.bottomRightX-r.topLeftX;
-      height = r.bottomRightY-r.topLeftY;
+      width = r.bottomRightX - r.topLeftX;
+      height = r.bottomRightY - r.topLeftY;
       area = width*height;
 
       if (area > maxArea) {
@@ -75,18 +76,21 @@ int detectFace(rect_t *resultRect)
     }
   }
 
-  if (maxArea > 0) {
+  printf("selected rect: topLeft=(%d, %d), bottomRight=(%d, %d)\n", resultRect->topLeftX, resultRect->topLeftY, resultRect->bottomRightX, resultRect->bottomRightY);
+  
+	if (maxArea > 0) {
     // adjust face proportions, assume upright faces
     // typical face proportions: width:height = 2:3
     width = resultRect->bottomRightX-resultRect->topLeftX;
     height = resultRect->bottomRightY-resultRect->topLeftY;
+		
+		scaledWidth = width + (width>>1);
+
     if (width < height) {
-      if (height > width/2*3) {
-				resultRect->bottomRightY = resultRect->topLeftY + width/2*3;
+      if (height > scaledWidth) {
+				resultRect->bottomRightY = resultRect->topLeftY + scaledWidth;
       }
     }
-
-    printf("selected rect: topLeft=(%d, %d), bottomRight=(%d, %d)\n", resultRect->topLeftX, resultRect->topLeftY, resultRect->bottomRightX, resultRect->bottomRightY);
 
     return 1;
   }

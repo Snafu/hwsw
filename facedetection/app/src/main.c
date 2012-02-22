@@ -64,10 +64,13 @@ void initializeImage(image_t *template, image_t *image)
 	image->height = template->height;
 	image->dataLength = template->dataLength;
 
-	// allocate memory in external SDRAM
-	image->data = (unsigned char *)(SDRAM_BASE+sdramBytesAllocated);
+	// allocate memory in external RAM
+	
+	//image->data = (unsigned char *)(SDRAM_BASE+sdramBytesAllocated);
+	//sdramBytesAllocated += template->dataLength;
+	
+	image->data = (unsigned char*) malloc(image->dataLength);
 	memset((void *) image->data, 0, image->dataLength);
-	sdramBytesAllocated += template->dataLength;
 }
 
 void freeImage(image_t *image) 
@@ -195,15 +198,12 @@ int main(int argc, char **argv)
 			setCamMode(cam_mode);
 		cam_mode_old = cam_mode;
 		
+		// switched to free running mode
 		if(mode == 0 && mode_old == 1) {
 			i2c_write(RESTART_REG, TRIGGER);
-		}	else
-		/*
-		if(mode == 0) {
-			i2c_write(RESTART_REG, TRIGGER);
-			i2c_write(RESTART_REG, 0);
 		}
-		*/
+
+		// switched to snapshot mode
 		if(mode == 1 && mode_old == 0) {
 			i2c_write(RESTART_REG, 0);
 		}
@@ -213,7 +213,6 @@ int main(int argc, char **argv)
 		if(keys != keys_old) {
 			if(value & (1<<17)) {
 				// COLOR CORRECTION
-
 				if(keys & (1<<KEY3)) {
 					i2c_write(GAIN_RED_REG, value);
 				}
@@ -225,13 +224,13 @@ int main(int argc, char **argv)
 					i2c_write(GAIN_BLUE_REG, value);
 				}
 			} else {
-				// TRIGGER FRAME
+				// request frame
 				if(mode == 1 && (keys & (1<<KEY3))) {
 					i2c_write(RESTART_REG, TRIGGER);
 					i2c_write(RESTART_REG, 0);
 				}
 
-				// SWITCH OUTPUT MODE
+				// toggle between free running & snapshot mode
 				if(keys & (1<<KEY2))
 					mode = 1 - mode;
 			}
