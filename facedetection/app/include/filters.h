@@ -24,7 +24,7 @@ extern int maxHistX, maxHistY;
 #ifndef __SCARTS_32__
 void skinFilter(image_t *inputImage, image_t *outputImage);
 #endif
-void erodeFilter(volatile char *inputImage, image_t *outputImage);
+void erodeFilter(volatile uint32_t *inputImage, image_t *outputImage);
 void dilateFilter(image_t *inputImage, image_t *outputImage);
 
 

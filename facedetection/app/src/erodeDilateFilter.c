@@ -5,7 +5,7 @@
 #include "dispctrl.h"
 
 
-#define ERODE_COMPARE				0
+#define ERODE_COMPARE				0x01000000
 #define DILATE_COMPARE			0xff
 
 
@@ -13,24 +13,22 @@ int histX[HISTX_LEN], histY[HISTY_LEN];
 int maxHistX, maxHistY;
 int maxX, maxY;
 
-void erodeFilter(volatile char *framebuffer, image_t *outputImage)
+void erodeFilter(volatile uint32_t *framebuffer, image_t *outputImage)
 {
   int x, y, dx, dy;
   uint8_t foundMatch;
 	
-	volatile char *inlineptr = framebuffer + SKINBYTE_OFFSET;
-	volatile char *woffsetptr;
-	volatile char *winptr;
+	volatile uint32_t *inlineptr = framebuffer;
+	volatile uint32_t *woffsetptr;
+	volatile uint32_t *winptr;
 	
 	unsigned char *outlineptr = outputImage->data + (IMAGE_WIDTH+1)*WINDOW_OFFSET;
 	unsigned char *outptr;
 	
-	//for (y = 0; y < IMAGE_HEIGHT - WINDOW_LENGTH + 1; ++y)
 	for (y = 0; y < IMAGE_HEIGHT; ++y)
 	{
 		woffsetptr = inlineptr;
 		outptr = outlineptr;
-		//for (x = 0; x < IMAGE_WIDTH - WINDOW_LENGTH + 1; ++x)
 		for (x = 0; x < IMAGE_WIDTH; ++x)
 		{
 			foundMatch = 0;
@@ -41,17 +39,15 @@ void erodeFilter(volatile char *framebuffer, image_t *outputImage)
 				
 				for (dx = 0; dx < WINDOW_LENGTH; ++dx)
 				{
-					if(*winptr == ERODE_COMPARE)
+					if(*winptr < ERODE_COMPARE)
 					{
 						foundMatch = 1;
 						break;
 					}
-					//winptr += 4*FRAME_SKIP;
-					winptr += 4;
+					winptr ++;
 				} // for dx
 				
-				//winptr += (FRAME_WIDTH - WINDOW_LENGTH)*4*FRAME_SKIP;
-				winptr += (FRAME_WIDTH - WINDOW_LENGTH)*4;
+				winptr += (FRAME_WIDTH - WINDOW_LENGTH);
 				if (foundMatch) {
 					break;
 				}
@@ -64,12 +60,12 @@ void erodeFilter(volatile char *framebuffer, image_t *outputImage)
 				*outptr = 0;
 			
 			outptr++;
-			woffsetptr += 4*FRAME_SKIP;
+			woffsetptr += FRAME_SKIP;
 		} // for x
 		
 		// go to next line
 		outlineptr += IMAGE_WIDTH;
-		inlineptr += FRAME_WIDTH*4*FRAME_SKIP;
+		inlineptr += FRAME_WIDTH*FRAME_SKIP;
 	} // for y
 }
 
@@ -149,7 +145,6 @@ void dilateFilter(image_t *inputImage, image_t *outputImage)
 			
 			// save histY maximum
 			if((y == IMAGE_HEIGHT - WINDOW_LENGTH) && (histX[x] > maxHistX)){
-			//if(histX[x] > maxHistX) {
 				maxHistX = histX[x];
 				maxX = x;
 			}

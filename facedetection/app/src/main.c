@@ -253,7 +253,7 @@ int main(int argc, char **argv)
 		counter_reset(&counterHandle);
 		counter_start(&counterHandle);
 		
-		erodeFilter((volatile char *) SDRAM_BASE, &erodeFilterImage);
+		erodeFilter((volatile uint32_t *) SDRAM_BASE, &erodeFilterImage);
 		dilateFilter(&erodeFilterImage, &dilateFilterImage);
 		result = detectFace(&resultRect);
 
