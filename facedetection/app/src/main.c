@@ -199,6 +199,10 @@ int main(int argc, char **argv)
 	int result;
 	rect_t resultRect;
 	int cycles;
+
+	for(i = 0; i < 50; i++) {
+		for(j = 0; j < WAIT_TIME; j++) asm volatile("nop\n\t");
+	}
 	
 	
 	while(1) {

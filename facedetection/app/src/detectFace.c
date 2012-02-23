@@ -105,7 +105,7 @@ int getIndexBelowThreshold(int *hist, int histLen, int start, int step, int thre
   int result = start;
   for (i=start; i>0 && i<histLen; i+=step) {
     if (hist[i] < threshold) {
-      result = i<<3;
+      result = multiply(i, FRAME_SKIP);
       break;
     }
   }

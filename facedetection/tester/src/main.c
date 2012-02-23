@@ -154,6 +154,7 @@ int main(int argc, char **argv)
   tcsetattr(serialfd, TCSANOW, &options);
   
   UART_read(serialfd, (char *)&cycles, sizeof(cycles));
+	printf("Cycles = %d\n", cycles);
   seconds = cycles;
   seconds /= 1000000000;
   seconds *= CLKPERIOD * PRESCALER;
