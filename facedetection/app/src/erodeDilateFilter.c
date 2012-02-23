@@ -1,23 +1,13 @@
 #include <string.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include "filters.h"
 #include "image.h"
 #include "dispctrl.h"
 
-#define WINDOW_LENGTH				5
-#define WINDOW_OFFSET				((WINDOW_LENGTH-1)/2)
 
 #define ERODE_COMPARE				0
 #define DILATE_COMPARE			0xff
 
-#define FRAME_WIDTH					800
-#define FRAME_HEIGHT				480
-#define FRAME_SKIP					4
-
-#define IMAGE_WIDTH					200
-#define IMAGE_HEIGHT				120
-
-#define SKINBYTE_OFFSET			3
 
 int histX[HISTX_LEN], histY[HISTY_LEN];
 int maxHistX, maxHistY;
@@ -35,11 +25,13 @@ void erodeFilter(volatile char *framebuffer, image_t *outputImage)
 	unsigned char *outlineptr = outputImage->data + (IMAGE_WIDTH+1)*WINDOW_OFFSET;
 	unsigned char *outptr;
 	
-	for (y = 0; y < IMAGE_HEIGHT - WINDOW_LENGTH + 1; ++y)
+	//for (y = 0; y < IMAGE_HEIGHT - WINDOW_LENGTH + 1; ++y)
+	for (y = 0; y < IMAGE_HEIGHT; ++y)
 	{
 		woffsetptr = inlineptr;
 		outptr = outlineptr;
-		for (x = 0; x < IMAGE_WIDTH - WINDOW_LENGTH + 1; ++x)
+		//for (x = 0; x < IMAGE_WIDTH - WINDOW_LENGTH + 1; ++x)
+		for (x = 0; x < IMAGE_WIDTH; ++x)
 		{
 			foundMatch = 0;
 			
@@ -54,10 +46,12 @@ void erodeFilter(volatile char *framebuffer, image_t *outputImage)
 						foundMatch = 1;
 						break;
 					}
-					winptr += 4*FRAME_SKIP;
+					//winptr += 4*FRAME_SKIP;
+					winptr += 4;
 				} // for dx
 				
-				winptr += (FRAME_WIDTH - WINDOW_LENGTH)*4*FRAME_SKIP;
+				//winptr += (FRAME_WIDTH - WINDOW_LENGTH)*4*FRAME_SKIP;
+				winptr += (FRAME_WIDTH - WINDOW_LENGTH)*4;
 				if (foundMatch) {
 					break;
 				}
@@ -94,17 +88,17 @@ void dilateFilter(image_t *inputImage, image_t *outputImage)
 	unsigned char *outlineptr = outputImage->data + (IMAGE_WIDTH+1)*WINDOW_OFFSET;
 	unsigned char *outptr;
 
-for(x=0;x<HISTX_LEN;x++)
-{
-	histX[x] = 0;
-}
-for(y=0;y<HISTY_LEN;y++)
-{
-	histY[y] = 0;
-}
+	for(y=0;y<HISTY_LEN;y++)
+	{
+		histY[y] = 0;
+		histX[y] = 0;
+	}
 
-//	memset(histX, 0, HISTX_LEN);
-//	memset(histY, 0, HISTY_LEN);
+	for(x=HISTY_LEN;x<HISTX_LEN;x++)
+	{
+		histX[x] = 0;
+	}
+
 	maxHistX = 0;
 	maxHistY = 0;
 	maxX = 0;
@@ -113,12 +107,12 @@ for(y=0;y<HISTY_LEN;y++)
 	hX = 0;
 	hY = 0;
 
-	for (y = 0; y < IMAGE_HEIGHT - WINDOW_LENGTH + 1; ++y)
+	for (y = WINDOW_OFFSET; y < IMAGE_HEIGHT - WINDOW_OFFSET; ++y)
 	{
 		woffsetptr = inlineptr;
 		outptr = outlineptr;
 
-		for (x = 0; x < IMAGE_WIDTH - WINDOW_LENGTH + 1; ++x)
+		for (x = WINDOW_OFFSET; x < IMAGE_WIDTH - WINDOW_OFFSET; ++x)
 		{
 			foundMatch = 0;
 			
@@ -179,5 +173,5 @@ for(y=0;y<HISTY_LEN;y++)
 		inlineptr += IMAGE_WIDTH;
 	} // for y
 
-	printf("Max @ %d, %d\n", maxX<<2, maxY<<2);
+	//printf("Max @ %d, %d\n", maxX<<2, maxY<<2);
 }

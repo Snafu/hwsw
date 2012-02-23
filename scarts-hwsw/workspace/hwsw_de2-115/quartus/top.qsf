@@ -28,7 +28,7 @@ set_global_assignment -name DEVICE EP4CE115F29C7
 set_global_assignment -name TOP_LEVEL_ENTITY top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "7.2 SP3"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:52:19  APRIL 04, 2008"
-set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
+set_global_assignment -name LAST_QUARTUS_VERSION 11.1
 set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim (VHDL)"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
 set_global_assignment -name USE_GENERATED_PHYSICAL_CONSTRAINTS OFF -section_id eda_palace
@@ -360,6 +360,7 @@ set_location_assignment PIN_Y17 -to wrreq_dbg
 set_location_assignment PIN_Y16 -to rdreq_dbg
 set_location_assignment PIN_G24 -to cam_pll_input
 set_global_assignment -name PHYSICAL_SYNTHESIS_MAP_LOGIC_TO_MEMORY_FOR_AREA ON
+set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/multiplier.vhd
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/kameractrl.vhd
 set_global_assignment -name QIP_FILE ../../libraries/hwswlib/yCbCrMUL.qip
 set_global_assignment -name VHDL_FILE ../../libraries/hwswlib/yCbCrMUL.vhd

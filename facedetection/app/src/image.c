@@ -1,5 +1,7 @@
 #include "image.h"
 
+#ifndef __SCARTS_32__
+
 rgb_color_t getRGBColorValue(image_t *i, int x, int y)
 {
 	rgb_color_t result;
@@ -21,3 +23,5 @@ ycbcr_color_t getYCbCrColorValue(image_t *i, int x, int y)
 
 	return result;
 }
+
+#endif

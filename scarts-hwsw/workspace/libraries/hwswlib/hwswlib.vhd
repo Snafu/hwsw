@@ -42,10 +42,20 @@ package hwswlib is
 	constant TPRAM_ADDRLEN		: integer := 8;
 	constant TPRAM_DATALEN		: integer := 8;
 
+	component multiplier is
+		port (
+			rst						: in	std_logic;
+			clk						: in	std_logic;
+			extsel				: in	std_logic;
+			exti					: in  module_in_type;
+			exto					: out module_out_type
+	   );
+	end component;
+
 	component dispctrl
 	  generic (
-			hindex      : integer := 0;
-			hirq        : integer := 0
+			hindex				: integer := 0;
+			hirq					: integer := 0
 		);
 	  
 	  port (
@@ -70,11 +80,11 @@ package hwswlib is
 	component bayerbuffer
 		PORT
 		(
-			clock		: IN STD_LOGIC ;
-			data		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
-			rdreq		: IN STD_LOGIC ;
-			wrreq		: IN STD_LOGIC ;
-			q		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
+			clock			: IN STD_LOGIC ;
+			data			: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
+			rdreq			: IN STD_LOGIC ;
+			wrreq			: IN STD_LOGIC ;
+			q					: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
 		);
 	end component;
 

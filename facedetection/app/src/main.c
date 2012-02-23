@@ -4,6 +4,7 @@
 #include "image.h"
 #include "filters.h"
 #include "detectFace.h"
+#include "multiplier.h"
 
 #ifdef __SCARTS_32__
 #include "sdram.h"
@@ -47,12 +48,18 @@ static module_handle_t counterHandle;
 static dis7seg_handle_t dispHandle;
 static mini_uart_handle_t aux_uart_handle;
 static volatile uint32_t *screenData;
+
+inline int multiply(int a, int b)
+{
+	MULTIPLIER_OPA = a;
+	MULTIPLIER_OPB = b;
+	return MULTIPLIER_RESULT;
+}
 #endif
 
 image_t erodeFilterImage;
 image_t dilateFilterImage;
 
-void computeSingleImage(void);
 void transmitResult(rect_t *resultRect);
 void initializeImage(image_t *template, image_t *image);
 void freeImage(image_t *image);
@@ -159,7 +166,7 @@ int main(int argc, char **argv)
 	setCbFactors(-38, -74, 112);
 	setCrFactors(112, -94, -18);
 
-	setYBounds(38, 235);
+	setYBounds(120, 235);
 	setCbBounds(74, 139);
 	setCrBounds(139, 173);
 
@@ -175,7 +182,7 @@ int main(int argc, char **argv)
 	signal_init();		// cam - config completed. signal it to who it belongs(dispctrl so far)
 
 	dis7seg_displayHexUInt32(&dispHandle, 0, 0x2b00b1e5);
-	draw_rect(5,5, 795,475);
+
 
 	uint32_t keys, keys_old, value;
 	keys_old = 0;
@@ -185,7 +192,11 @@ int main(int argc, char **argv)
 	int cam_mode, cam_mode_old;
 	cam_mode = 0;
 	cam_mode_old = 0;
-			clear_rect();
+
+	int result;
+	rect_t resultRect;
+	int cycles;
+	
 	
 	while(1) {
 		
@@ -238,40 +249,31 @@ int main(int argc, char **argv)
 		keys_old = keys;
 		
 
-		int result;
-		rect_t resultRect;
 
+		counter_reset(&counterHandle);
+		counter_start(&counterHandle);
+		
 		erodeFilter((volatile char *) SDRAM_BASE, &erodeFilterImage);
 		dilateFilter(&erodeFilterImage, &dilateFilterImage);
 		result = detectFace(&resultRect);
+
+		// send elapsed time for computation
+		cycles = counter_getValue(&counterHandle);
 
 		if(result == 1) {
 			draw_rect(resultRect.topLeftX, resultRect.topLeftY, resultRect.bottomRightX, resultRect.bottomRightY);
 		} else {
 			clear_rect();
 		}
-		
+
+		// send cycle count
+		// printf("\x04\n");
+		printf("\x04\n");
+		UART_write(1, (char *)&cycles, sizeof(cycles));
 	}
 
 
 #endif
-
-#ifdef TEST
-	computeSingleImage(argv[1], argv[2]);
-#else
-	while (1) {
-		rect_t resultRect;
-
-		// TODO:
-		// get picture from camera
-		// perform face detection
-		// outout result image on screen
-
-		// transmit result to benchmark board
-		transmitResult(&resultRect);
-	}  
-#endif
-
 
 #ifdef __SCARTS_32__
 	counter_releaseHandle(&counterHandle);
@@ -280,32 +282,6 @@ int main(int argc, char **argv)
 #endif
 
 	return 0;
-}
-
-
-void computeSingleImage(void)
-{
-	uint32_t imageLen;
-	int result;
-	rect_t resultRect;
-
-
-	uint32_t cycles;
-
-
-	counter_reset(&counterHandle);
-	counter_start(&counterHandle);
-
-	erodeFilter((volatile char *) SDRAM_BASE, &erodeFilterImage);
-	dilateFilter(&erodeFilterImage, &dilateFilterImage);
-	//result = detectFace(&dilateFilterImage, &inputImage, &resultRect);
-
-	// send signal to PC client that output data will be sent
-	printf("\x04\n");
-
-	// send elapsed time for computation
-	cycles = counter_getValue(&counterHandle);
-	UART_write(1, (char *)&cycles, sizeof(cycles));
 }
 
 void transmitResult(rect_t *resultRect)

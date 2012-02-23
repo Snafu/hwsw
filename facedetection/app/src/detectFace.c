@@ -4,6 +4,7 @@
 #include "image.h"
 #include "detectFace.h"
 #include "filters.h"
+#include "multiplier.h"
 
 #define FOREGROUND_COLOR_R   0xff
 #define FOREGROUND_COLOR_G   0xff
@@ -67,7 +68,7 @@ int detectFace(rect_t *resultRect)
 
       width = r.bottomRightX - r.topLeftX;
       height = r.bottomRightY - r.topLeftY;
-      area = width*height;
+      area = multiply(width, height);
 
       if (area > maxArea) {
 				*resultRect = r;	
@@ -76,7 +77,7 @@ int detectFace(rect_t *resultRect)
     }
   }
 
-  printf("selected rect: topLeft=(%d, %d), bottomRight=(%d, %d)\n", resultRect->topLeftX, resultRect->topLeftY, resultRect->bottomRightX, resultRect->bottomRightY);
+  //printf("selected rect: topLeft=(%d, %d), bottomRight=(%d, %d)\n", resultRect->topLeftX, resultRect->topLeftY, resultRect->bottomRightX, resultRect->bottomRightY);
   
 	if (maxArea > 0) {
     // adjust face proportions, assume upright faces
@@ -104,7 +105,7 @@ int getIndexBelowThreshold(int *hist, int histLen, int start, int step, int thre
   int result = start;
   for (i=start; i>0 && i<histLen; i+=step) {
     if (hist[i] < threshold) {
-      result = i<<2;
+      result = i<<3;
       break;
     }
   }

@@ -140,6 +140,11 @@ architecture behaviour of top is
 	-- clock signals
 	signal cam_pll_input_sig	: std_logic;
 	signal clk_pixel					: std_logic;
+
+
+	-- multiplier signals
+  signal mult_config_sel		: std_ulogic;
+  signal mult_exto 					: module_out_type;
   
 	-- kamera signals
 	signal pxReady_sig				: std_logic;
@@ -685,7 +690,22 @@ begin
 			sw0			=> sw0
 		);
 
-	
+
+	-----------------------------------------------------------------------------
+	-- HARDWARE MULTIPLIER
+	-----------------------------------------------------------------------------
+
+	mult0: multiplier
+		port map
+		(
+			rst			=> syncrst,
+			clk			=> clk,
+			extsel	=> mult_config_sel,
+			exti		=> exti,
+			exto		=> mult_exto
+		);
+
+
 	-----------------------------------------------------------------------------
 	-- DISPLAY controller
 	-----------------------------------------------------------------------------
@@ -941,6 +961,7 @@ begin
 		buttons_config_sel <= '0';
 		cam_config_sel <= '0';
 		disp_config_sel <= '0';
+		mult_config_sel <= '0';
     
 		if scarts_o.extsel = '1' then
 			case scarts_o.addr(14 downto 5) is
@@ -976,6 +997,10 @@ begin
 					-- DISPCTRL config 
 					disp_config_sel <= '1';
 				
+				when "1111101111" => -- (-544)
+					-- MULTIPLIER config 
+					mult_config_sel <= '1';
+				
 				when others =>
 					null;
 			end case;
@@ -983,7 +1008,7 @@ begin
     
     extdata := (others => '0');
     for i in extdata'left downto extdata'right loop
-      extdata(i) := dis7segexto.data(i) or counter_exto.data(i) or aux_uart_exto.data(i) or buttons_exto.data(i) or cam_exto.data(i) or disp_exto.data(i); 
+      extdata(i) := dis7segexto.data(i) or counter_exto.data(i) or aux_uart_exto.data(i) or buttons_exto.data(i) or cam_exto.data(i) or disp_exto.data(i) or mult_exto.data(i); 
     end loop;
 
     scarts_i.data <= (others => '0');

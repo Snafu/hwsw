@@ -1,6 +1,9 @@
 #include "filters.h"
 #include "image.h"
 
+
+#ifndef __SCARTS_32__
+
 #define Y_LOW	38 	/* 0.10f */
 #define CB_LOW	94	/* -0.15f */
 #define CR_LOW	139	/* 0.05f */
@@ -36,4 +39,4 @@ void skinFilter(image_t *inputImage, image_t *outputImage)
   }
 }
 
-
+#endif

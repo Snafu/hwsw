@@ -39,13 +39,13 @@ void initCamera(void)
 	i2c_write(0x2e, (10<<8) | (0<<6) | 29);
 	*/
 	// red
-	i2c_write(GAIN_RED_REG, (2<<8) | (1<<6) | 32);
+	i2c_write(GAIN_RED_REG, (0<<8) | (0<<6) | 0x30);
 	// green 1
-	i2c_write(GAIN_GREEN1_REG, (1<<8) | (1<<6) | 32);
+	i2c_write(GAIN_GREEN1_REG, (0<<8) | (0<<6) | 0x30);
 	// green 2
-	i2c_write(GAIN_GREEN2_REG, (1<<8) | (1<<6) | 32);
+	i2c_write(GAIN_GREEN2_REG, (0<<8) | (0<<6) | 0x30);
 	// blue
-	i2c_write(GAIN_BLUE_REG, (3<<8) | (1<<6) | 32);
+	i2c_write(GAIN_BLUE_REG, (2<<8) | (1<<6) | 32);
 
 		
 	// pause restart
