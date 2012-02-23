@@ -6,17 +6,15 @@
 #define FRAME_WIDTH					800
 #define FRAME_HEIGHT				480
 #define FRAME_SKIP					10
-#define SKINBYTE_OFFSET			3
 
 #define IMAGE_WIDTH					(FRAME_WIDTH/FRAME_SKIP)
 #define IMAGE_HEIGHT				(FRAME_HEIGHT/FRAME_SKIP)
 
-#define WINDOW_LENGTH				7
+#define WINDOW_LENGTH				5
 #define WINDOW_OFFSET				((WINDOW_LENGTH-1)/2)
 
 #define HISTX_LEN						(IMAGE_WIDTH)
 #define HISTY_LEN						(IMAGE_HEIGHT)
-#define HIST_SHIFT					4
 
 extern int histX[HISTX_LEN];
 extern int histY[HISTY_LEN];

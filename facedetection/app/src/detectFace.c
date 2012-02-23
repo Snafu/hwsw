@@ -85,13 +85,19 @@ int detectFace(rect_t *resultRect)
     width = resultRect->bottomRightX-resultRect->topLeftX;
     height = resultRect->bottomRightY-resultRect->topLeftY;
 		
-		scaledWidth = width + (width>>1);
+		scaledWidth = multiply(width, 3)>>1;
 
     if (width < height) {
       if (height > scaledWidth) {
 				resultRect->bottomRightY = resultRect->topLeftY + scaledWidth;
       }
     }
+			
+		if(resultRect->bottomRightY >= FRAME_HEIGHT)
+			resultRect->bottomRightY = FRAME_HEIGHT-1;
+
+		if(resultRect->bottomRightX >= FRAME_WIDTH)
+			resultRect->bottomRightX = FRAME_WIDTH-1;
 
     return 1;
   }
@@ -102,7 +108,7 @@ int detectFace(rect_t *resultRect)
 
 int getIndexBelowThreshold(int *hist, int histLen, int start, int step, int threshold) {
   int i;
-  int result = start;
+  int result = multiply(start, FRAME_SKIP);
   for (i=start; i>0 && i<histLen; i+=step) {
     if (hist[i] < threshold) {
       result = multiply(i, FRAME_SKIP);

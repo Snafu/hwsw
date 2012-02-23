@@ -145,9 +145,9 @@ int main(int argc, char **argv)
 	
 	initSVGA();
 	
-	erodeFilterImage.width = 200;
-	erodeFilterImage.height = 120;
-	erodeFilterImage.dataLength = erodeFilterImage.width*erodeFilterImage.height;
+	erodeFilterImage.width = IMAGE_WIDTH;
+	erodeFilterImage.height = IMAGE_HEIGHT;
+	erodeFilterImage.dataLength = IMAGE_WIDTH*IMAGE_HEIGHT;
 	
 	// Initialize Image buffers
 	initializeImage(&erodeFilterImage, &erodeFilterImage);
@@ -273,8 +273,7 @@ int main(int argc, char **argv)
 			clear_rect();
 		}
 
-		// send cycle count
-		// printf("\x04\n");
+		// indicate cycle data and send cycle count
 		printf("\x04\n");
 		UART_write(1, (char *)&cycles, sizeof(cycles));
 	}

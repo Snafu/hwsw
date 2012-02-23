@@ -154,7 +154,6 @@ int main(int argc, char **argv)
   tcsetattr(serialfd, TCSANOW, &options);
   
   UART_read(serialfd, (char *)&cycles, sizeof(cycles));
-	printf("Cycles = %d\n", cycles);
   seconds = cycles;
   seconds /= 1000000000;
   seconds *= CLKPERIOD * PRESCALER;
@@ -162,6 +161,7 @@ int main(int argc, char **argv)
 
   printf("Computation completed, duration: %.3f sec, %.3f fps).\n", seconds, fps);
 
+	/*
   UART_read(serialfd, (char *)&filesize, sizeof(filesize));
 
   f = fopen(argv[3], "w");
@@ -178,6 +178,7 @@ int main(int argc, char **argv)
   }
   
   fclose(f);
+	*/
 
   close(serialfd);
 
