@@ -25,11 +25,11 @@ void erodeFilter(volatile uint32_t *framebuffer, image_t *outputImage)
 	unsigned char *outlineptr = outputImage->data + (IMAGE_WIDTH+1)*WINDOW_OFFSET;
 	unsigned char *outptr;
 	
-	for (y = 0; y < IMAGE_HEIGHT; ++y)
+	for (y = WINDOW_OFFSET; y < IMAGE_HEIGHT - WINDOW_OFFSET; ++y)
 	{
 		woffsetptr = inlineptr;
 		outptr = outlineptr;
-		for (x = 0; x < IMAGE_WIDTH; ++x)
+		for (x = WINDOW_OFFSET; x < IMAGE_WIDTH - WINDOW_OFFSET; ++x)
 		{
 			foundMatch = 0;
 			

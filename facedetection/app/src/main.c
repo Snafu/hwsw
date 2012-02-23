@@ -77,7 +77,10 @@ void initializeImage(image_t *template, image_t *image)
 	//sdramBytesAllocated += template->dataLength;
 	
 	image->data = (unsigned char*) malloc(image->dataLength);
-	memset((void *) image->data, 0, image->dataLength);
+
+	int i;
+	for(i = 0; i < image->dataLength; i++)
+		image->data[i] = 0;
 }
 
 void freeImage(image_t *image) 
