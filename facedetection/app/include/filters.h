@@ -7,14 +7,21 @@
 #define FRAME_HEIGHT				480
 #define FRAME_SKIP					10
 
-#define IMAGE_WIDTH					(FRAME_WIDTH/FRAME_SKIP)
-#define IMAGE_HEIGHT				(FRAME_HEIGHT/FRAME_SKIP)
+#define FRAME_WIDTH						800
+#define FRAME_HEIGHT					480
+#define FRAME_SKIP						10
 
-#define WINDOW_LENGTH				5
-#define WINDOW_OFFSET				((WINDOW_LENGTH-1)/2)
+#define IMAGE_WIDTH						(FRAME_WIDTH/FRAME_SKIP)
+#define IMAGE_HEIGHT					(FRAME_HEIGHT/FRAME_SKIP)
 
-#define HISTX_LEN						(IMAGE_WIDTH)
-#define HISTY_LEN						(IMAGE_HEIGHT)
+#define WINDOW_LENGTH					7
+#define WINDOW_OFFSET					((WINDOW_LENGTH-1)/2)
+
+#define DILATE_WINDOW_LENGTH	3
+#define DILATE_WINDOW_OFFSET	((DILATE_WINDOW_LENGTH-1)/2)
+
+#define HISTX_LEN							(IMAGE_WIDTH)
+#define HISTY_LEN							(IMAGE_HEIGHT)
 
 extern int histX[HISTX_LEN];
 extern int histY[HISTY_LEN];

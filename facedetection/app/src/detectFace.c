@@ -77,8 +77,7 @@ int detectFace(rect_t *resultRect)
     }
   }
 
-  //printf("selected rect: topLeft=(%d, %d), bottomRight=(%d, %d)\n", resultRect->topLeftX, resultRect->topLeftY, resultRect->bottomRightX, resultRect->bottomRightY);
-  
+
 	if (maxArea > 0) {
     // adjust face proportions, assume upright faces
     // typical face proportions: width:height = 2:3
@@ -92,12 +91,21 @@ int detectFace(rect_t *resultRect)
 				resultRect->bottomRightY = resultRect->topLeftY + scaledWidth;
       }
     }
+
+		resultRect->topLeftX = multiply(resultRect->topLeftX,  FRAME_SKIP) + (FRAME_SKIP/2);
+		resultRect->topLeftY = multiply(resultRect->topLeftY, FRAME_SKIP) + (FRAME_SKIP/2);
+		resultRect->bottomRightX = multiply(resultRect->bottomRightX, FRAME_SKIP) + (FRAME_SKIP/2);
+		resultRect->bottomRightY= multiply(resultRect->bottomRightY, FRAME_SKIP) + (FRAME_SKIP/2);
 			
 		if(resultRect->bottomRightY >= FRAME_HEIGHT)
 			resultRect->bottomRightY = FRAME_HEIGHT-1;
 
 		if(resultRect->bottomRightX >= FRAME_WIDTH)
 			resultRect->bottomRightX = FRAME_WIDTH-1;
+
+#ifdef DEBUG
+		printf("selected rect: topLeft=(%d, %d), bottomRight=(%d, %d)\n", resultRect->topLeftX, resultRect->topLeftY, resultRect->bottomRightX, resultRect->bottomRightY);
+#endif
 
     return 1;
   }
@@ -108,10 +116,13 @@ int detectFace(rect_t *resultRect)
 
 int getIndexBelowThreshold(int *hist, int histLen, int start, int step, int threshold) {
   int i;
-  int result = multiply(start, FRAME_SKIP);
+  int result = start;
+	if(threshold == 0)
+		threshold = 1;
+
   for (i=start; i>0 && i<histLen; i+=step) {
+      result = i;
     if (hist[i] < threshold) {
-      result = multiply(i, FRAME_SKIP);
       break;
     }
   }

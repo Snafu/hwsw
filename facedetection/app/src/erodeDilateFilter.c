@@ -14,54 +14,71 @@ int histX[HISTX_LEN], histY[HISTY_LEN];
 int maxHistX, maxHistY;
 int maxX, maxY;
 
+static int *pHistX;
+static int *pHistY;
+
+
 void erodeFilter(volatile uint32_t *framebuffer, image_t *outputImage)
 {
   int x, y, dx, dy;
   uint8_t foundMatch;
 	
-	volatile uint32_t *inptr = framebuffer;
-	volatile uint32_t *winptr;
+	volatile uin32_t *pLineIn = framebuffer->data + (FRAME_SKIP - WINDOW_LENGTH)/2;
+	volatile uin32_t *pWinStart;
+	volatile uin32_t *pWindow;
 
-	unsigned char *outptr = outputImage->data;
+	unsigned char *pOut = outputImage->data;
+
+	pHistX = histX;
+	pHistY = histY;
 	
 	for (y = 0; y < IMAGE_HEIGHT; ++y)
 	{
+		pWinStart = pLineIn;
 		for (x = 0; x < IMAGE_WIDTH; ++x)
 		{
+			pWindow = pWinStart;
 			foundMatch = 0;
 			
-			for (dy = -WINDOW_OFFSET; dy < WINDOW_OFFSET; ++dy)
+			for (dy = -WINDOW_OFFSET; dy <= WINDOW_OFFSET; ++dy)
 			{
-				for (dx = -WINDOW_OFFSET; dx < WINDOW_OFFSET; ++dx)
+				for (dx = -WINDOW_OFFSET; dx <= WINDOW_OFFSET; ++dx)
 				{
-					if( ((dy + y) >= 0) && ((dx + x) >= 0) && ((dy + y) < IMAGE_HEIGHT) && ((dx + x) < IMAGE_WIDTH))
-					{
-						winptr = inptr + multiply(dy, FRAME_WIDTH) + dx;
-						if(*winptr < ERODE_COMPARE)
+						if(*pWindow < ERODE_COMPARE)
 						{
 							foundMatch = 1;
 							break;
 						}
-					}
+						
+						pWindow++;
 				} // for dx
 				
 				if (foundMatch) {
 					break;
 				}
+
+				pWindow += FRAME_WIDTH - WINDOW_LENGTH;
+
 			} // for dy
 			
 			
-			if (!foundMatch)
-				*outptr = 0xFF;
-			else
-				*outptr = 0;
+			if (!foundMatch) {
+				*pOut = 0xFF;
+			}
+			else {
+				*pOut = 0;
+			}
 			
-			outptr++;
-			inptr += FRAME_SKIP;
+			pOut++;
+			pWinStart += FRAME_SKIP;
 		} // for x
 		
 		// go to next line
-		inptr += FRAME_WIDTH*(FRAME_SKIP-1);
+		pLineIn += FRAME_WIDTH*FRAME_SKIP;
+
+		// clear histogram
+		*pHistY++ = 0;
+		*pHistX++ = 0;
 	} // for y
 }
 
@@ -71,54 +88,38 @@ void dilateFilter(image_t *inputImage, image_t *outputImage)
 	int x, y, dx, dy;
 	uint8_t foundMatch;
 	
-	unsigned char *inptr = inputImage->data;
-	unsigned char *winptr = inptr;
+	unsigned char *pIn = inputImage->data;
+	unsigned char *pWindow = inputImage->data;
 	
-	unsigned char *outptr = outputImage->data;
+	unsigned char *pOut = outputImage->data;
 
-	/*
-	for(y=0;y<HISTY_LEN;y++)
-	{
-		histY[y] = 0;
-		histX[y] = 0;
-	}
 
-	for(x=HISTY_LEN;x<HISTX_LEN;x++)
-	{
-		histX[x] = 0;
-	}
-	*/
-	for(y=0;y<HISTY_LEN;y++)
-	{
-		histY[y] = 0;
-	}
 
-	for(x=0;x<HISTX_LEN;x++)
-	{
-		histX[x] = 0;
-	}
 
+	// clear remaining histogram
+	for(pHistX = &histX[HISTY_LEN]; pHistX < &histX[HISTX_LEN]; pHistX++)
+		*pHistX = 0;
 	maxHistX = 0;
 	maxHistY = 0;
 	maxX = 0;
 	maxY = 0;
 
+	pHistY = histY;
 	for (y = 0; y < IMAGE_HEIGHT; ++y)
 	{
-
+		pHistX = histX;
 		for (x = 0; x < IMAGE_WIDTH; ++x)
 		{
 			foundMatch = 0;
 
-			//winptr = inptr;
-			for (dy = -WINDOW_OFFSET; dy < WINDOW_OFFSET; ++dy)
+			for (dy = -DILATE_WINDOW_OFFSET; dy <= DILATE_WINDOW_OFFSET && (y+dy) < IMAGE_HEIGHT; ++dy)
 			{
-				for (dx = -WINDOW_OFFSET; dx < WINDOW_OFFSET; ++dx)
+				for (dx = -DILATE_WINDOW_OFFSET; dx <= DILATE_WINDOW_OFFSET && (x+dx) < IMAGE_WIDTH; ++dx)
 				{
-					if( ((dx + x) >= 0) && ((dy + y) >= 0) && ((dx+x) < IMAGE_WIDTH) && ((dy+y) < IMAGE_HEIGHT) )
+					if(((dx + x) >= 0) && ((dy + y) >= 0))
 					{
-						winptr = inptr + multiply(dy, IMAGE_WIDTH) + dx;
-						if(*winptr == DILATE_COMPARE)
+						pWindow = pIn + multiply(dy, IMAGE_WIDTH) + dx;
+						if(*pWindow == DILATE_COMPARE)
 						{
 							foundMatch = 1;
 							break;
@@ -134,13 +135,14 @@ void dilateFilter(image_t *inputImage, image_t *outputImage)
 			
 			if(foundMatch)
 			{
-				*outptr = 0xFF;
-				histY[y]++;
-				histX[x]++;
+				*pOut = 0xFF;
+
+				(*pHistY)++;
+				(*pHistX)++;
 			}
 			else
 			{
-				*outptr = 0;
+				*pOut = 0;
 			}
 			
 			// save histY maximum
@@ -149,19 +151,21 @@ void dilateFilter(image_t *inputImage, image_t *outputImage)
 				maxX = x;
 			}
 				
-			outptr++;
-			inptr++;
+			pOut++;
+			pIn++;
+			pHistX++;
 		} // for x
 
 		// save histX maximum
-		if(histY[y] >= maxHistY) {
-			maxHistY = histY[y];
+		if(*pHistY >= maxHistY) {
+			maxHistY = *pHistY;
 			maxY = y;
 		}
 
-		// go to next line
-		//inptr += IMAGE_WIDTH;
+		pHistY++;
 	} // for y
 
-	//printf("Max @ %d, %d\n", maxX*FRAME_SKIP, maxY*FRAME_SKIP);
+#ifdef DEBUG
+	printf("Max @ %d, %d\n", maxX*FRAME_SKIP, maxY*FRAME_SKIP);
+#endif
 }
