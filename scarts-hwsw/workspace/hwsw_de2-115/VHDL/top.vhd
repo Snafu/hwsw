@@ -156,9 +156,6 @@ architecture behaviour of top is
 	signal cam_pixdata_sync		: std_logic_vector(11 downto 0);
 	signal cam_fval_sync			: std_logic;
 	signal cam_lval_sync			: std_logic;
-	signal filter_addr				: std_logic_vector(TPRAM_ADDRLEN-1 downto 0);
-	signal filter_data				: std_logic_vector(TPRAM_DATALEN-1 downto 0);
-	signal filter_we					: std_logic;
 
 	-- kamera control signals
   signal cam_config_sel			: std_ulogic;
@@ -183,12 +180,6 @@ architecture behaviour of top is
 
 	signal output_mode				: std_logic;
 
-	-- erode filter signals
-	signal erode_addr					: std_logic_vector(TPRAM_ADDRLEN-1 downto 0);
-	signal erode_data_post		: std_logic_vector(TPRAM_DATALEN-1 downto 0);
-	signal erode_data_pre			: std_logic_vector(TPRAM_DATALEN-1 downto 0);
-	signal erode_we						: std_logic;
-  
 	-- signals for BUTTONS Extension Module
   signal buttons_config_sel	: std_ulogic;
   signal buttons_exto 			: module_out_type;
@@ -755,57 +746,6 @@ begin
 
 
 	-----------------------------------------------------------------------------
-	-- TP RAM
-	-----------------------------------------------------------------------------
-
-	tp_filter_ram0: tpram_sclk
-		generic map
-		(
-			ADDRLEN	=> TPRAM_ADDRLEN,
-			DATALEN	=> TPRAM_DATALEN
-		)
-		port map
-		(	
-			clk			=>	clk,
-
-			addr_a	=>	filter_addr,
-			data_a	=>	filter_data,
-			we_a		=>	filter_we,
-			q_a			=>	open,
-
-			addr_b	=>	erode_addr,
-			data_b	=>	erode_data_post,
-			we_b		=>	erode_we,
-			q_b			=>	erode_data_pre,
-
-			addr_c	=>	"00000000",
-			q_c			=>	open
-	);
-	
-	
-	-----------------------------------------------------------------------------
-	--- Erode filter
-	-----------------------------------------------------------------------------
-
-	filter_erode0: filter_erode
-		generic map
-		(
-			ADDRLEN => TPRAM_ADDRLEN,
-			DATALEN => TPRAM_DATALEN
-		)
-		port map
-		(
-			rst => syncrst,
-			clk => clk,
-
-			pixeladdr				=> erode_addr,
-			pixeldata_post	=> erode_data_post,
-			pixeldata_pre		=> erode_data_pre,
-			pixel_we				=> erode_we
-		);
-	
-	
-	-----------------------------------------------------------------------------
 	--- Kamera control
 	-----------------------------------------------------------------------------
 	camctrl0: kameractrl
@@ -866,10 +806,6 @@ begin
 			dp_wraddr	=> wraddress_sig,
 
 			pixelburstReady => pxReady_sig,
-
-			filter_addr	=> filter_addr,
-			filter_data	=> filter_data,
-			filter_we		=> filter_we,
 
 			yR_fac			=> yR_fac,
 			yG_fac			=> yG_fac,
