@@ -58,15 +58,15 @@ architecture rtl of multiplier is
 	signal rstint : std_ulogic;
 
 
-	signal opa, opa_next			: std_logic_vector(31 downto 0);
-	signal opb, opb_next			: std_logic_vector(31 downto 0);
-	signal res, res_next			: std_logic_vector(31 downto 0);
+	--signal opa, opa_next			: std_logic_vector(31 downto 0);
+	--signal opb, opb_next			: std_logic_vector(31 downto 0);
+	--signal res, res_next			: std_logic_vector(31 downto 0);
 begin
 
-	domult: process(opa, opb)
-	begin
-		res_next <= signed_mul(opa, opb)(31 downto 0);
-	end process;
+	--domult: process(opa, opb)
+	--begin
+	--	res_next <= signed_mul(opa, opb)(31 downto 0);
+	--end process;
 
 	----------------------------------------------------------------------------
 	-- SCARTS extension
@@ -128,8 +128,8 @@ begin
     end if;
     
     -- module specific part
-		opa_next <= reg.ifacereg(REG_OPA2H) & reg.ifacereg(REG_OPA2L) & reg.ifacereg(REG_OPA1H) & reg.ifacereg(REG_OPA1L); 
-		opb_next <= reg.ifacereg(REG_OPB2H) & reg.ifacereg(REG_OPB2L) & reg.ifacereg(REG_OPB1H) & reg.ifacereg(REG_OPB1L); 
+		--opa_next <= reg.ifacereg(REG_OPA2H) & reg.ifacereg(REG_OPA2L) & reg.ifacereg(REG_OPA1H) & reg.ifacereg(REG_OPA1L); 
+		--opb_next <= reg.ifacereg(REG_OPB2H) & reg.ifacereg(REG_OPB2L) & reg.ifacereg(REG_OPB1H) & reg.ifacereg(REG_OPB1L); 
 
 		opa := reg.ifacereg(REG_OPA2H) & reg.ifacereg(REG_OPA2L) & reg.ifacereg(REG_OPA1H) & reg.ifacereg(REG_OPA1L); 
 		opb := reg.ifacereg(REG_OPB2H) & reg.ifacereg(REG_OPB2L) & reg.ifacereg(REG_OPB1H) & reg.ifacereg(REG_OPB1L); 
@@ -194,14 +194,14 @@ begin
 	-- Set registers
 	----------------------------------------------------------------------------
 
-	clk_reg : process(rst, clk)
+	clk_reg : process(rst, clk, rstint)
 	begin
 		if rising_edge(clk) then
       reg <= reg_next;
 
-			opa <= opa_next;
-			opb <= opb_next;
-			res <= res_next;
+			--opa <= opa_next;
+			--opb <= opb_next;
+			--res <= res_next;
 		end if;
 
 		if rstint = RST_ACT or rst = '0' then
@@ -209,9 +209,9 @@ begin
         	reg.ifacereg(i) <= (others => '0');
 				end loop;
 
-				opa <= (others => '0');
-				opb <= (others => '0');
-				res <= (others => '0');
+				--opa <= (others => '0');
+				--opb <= (others => '0');
+				--res <= (others => '0');
 		end if;
 	end process;
 end;

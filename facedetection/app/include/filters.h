@@ -3,10 +3,6 @@
 
 #include "image.h"
 
-#define FRAME_WIDTH					800
-#define FRAME_HEIGHT				480
-#define FRAME_SKIP					10
-
 #define FRAME_WIDTH						800
 #define FRAME_HEIGHT					480
 #define FRAME_SKIP						10
@@ -14,7 +10,7 @@
 #define IMAGE_WIDTH						(FRAME_WIDTH/FRAME_SKIP)
 #define IMAGE_HEIGHT					(FRAME_HEIGHT/FRAME_SKIP)
 
-#define WINDOW_LENGTH					7
+#define WINDOW_LENGTH					5
 #define WINDOW_OFFSET					((WINDOW_LENGTH-1)/2)
 
 #define DILATE_WINDOW_LENGTH	3

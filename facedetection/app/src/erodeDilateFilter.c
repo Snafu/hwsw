@@ -23,9 +23,9 @@ void erodeFilter(volatile uint32_t *framebuffer, image_t *outputImage)
   int x, y, dx, dy;
   uint8_t foundMatch;
 	
-	volatile uin32_t *pLineIn = framebuffer->data + (FRAME_SKIP - WINDOW_LENGTH)/2;
-	volatile uin32_t *pWinStart;
-	volatile uin32_t *pWindow;
+	volatile uint32_t *pLineIn = framebuffer + (FRAME_SKIP - WINDOW_LENGTH)/2;
+	volatile uint32_t *pWinStart;
+	volatile uint32_t *pWindow;
 
 	unsigned char *pOut = outputImage->data;
 

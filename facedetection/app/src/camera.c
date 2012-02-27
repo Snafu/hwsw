@@ -39,13 +39,13 @@ void initCamera(void)
 	i2c_write(0x2e, (10<<8) | (0<<6) | 29);
 	*/
 	// red
-	i2c_write(GAIN_RED_REG, (1<<8) | (1<<6) | 32);
+	i2c_write(GAIN_RED_REG, (1<<8) | (1<<6) | 0x20);
 	// green 1
-	i2c_write(GAIN_GREEN1_REG, (1<<8) | (1<<6) | 32);
+	i2c_write(GAIN_GREEN1_REG, (1<<8) | (1<<6) | 0x20);
 	// green 2
-	i2c_write(GAIN_GREEN2_REG, (1<<8) | (1<<6) | 32);
+	i2c_write(GAIN_GREEN2_REG, (1<<8) | (1<<6) | 0x20);
 	// blue
-	i2c_write(GAIN_BLUE_REG, (9<<8) | (1<<6) | 32);
+	i2c_write(GAIN_BLUE_REG, (3<<8) | (1<<6) | 0x20);
 
 		
 	// pause restart
@@ -62,7 +62,7 @@ void initCamera(void)
 	i2c_write(COL_ADDRESS_MODE_REG, 2);
 	// shutter width - lower byte
 	// default 0x797
-	i2c_write(SHUTTERW_LOWER_REG, 300);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
+	i2c_write(SHUTTERW_LOWER_REG, 0xe0);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
 	i2c_write(SHUTTER_DELAY_REG, 0);					// schaut halbwegs OK aus! hoher wert --> kleinere framerate
 
 

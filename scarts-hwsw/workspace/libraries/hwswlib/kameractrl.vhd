@@ -348,7 +348,7 @@ begin
 	-- Set registers
 	----------------------------------------------------------------------------
 
-	clk_reg : process(rst, clk)
+	clk_reg : process(rst, clk, rstint)
 	begin
 		if rising_edge(clk) then
       reg <= reg_next;

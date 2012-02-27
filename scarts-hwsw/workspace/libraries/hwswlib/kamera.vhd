@@ -97,7 +97,7 @@ architecture rtl of kamera is
 	type colors_t is (SKIN, R, G, B);
 	type pixel_t is array (colors_t'left to colors_t'right) of std_logic_vector(7 downto 0);
 
-	signal init_old, init_old_n							: std_logic := '0';
+	--signal init_old, init_old_n							: std_logic := '0';
 
 	signal state, state_next								: state_t;
 	signal linecount, linecount_next				: std_logic_vector(9 downto 0);
@@ -135,8 +135,8 @@ architecture rtl of kamera is
 	signal byteCount												: std_logic_vector(2 downto 0);
 	signal byteCount_n											: std_logic_vector(2 downto 0);
 
-	signal yDBG, cbDBG, crDBG								: integer;
-	signal yDBGV, cbDBGV, crDBGV						: std_logic_vector(8 downto 0);
+	--signal yDBG, cbDBG, crDBG								: integer;
+	--signal yDBGV, cbDBGV, crDBGV						: std_logic_vector(8 downto 0);
 	
 begin
 
@@ -196,7 +196,7 @@ begin
 	-- Bayer converter FSM Control
 	----------------------------------------------------------------------------
 
-	fsm_control: process(rst, state, linecount, bb_wrreq, bb_rdreq, bb_clearfifo, colcount, fval, lval, init_old, init_ready)
+	fsm_control: process(rst, state, linecount, bb_wrreq, bb_rdreq, bb_clearfifo, colcount, fval, lval)
 	begin
 
 		state_next <= state;
@@ -212,9 +212,9 @@ begin
 			bb_wrreq_next <= '0';
 			bb_rdreq_next <= '0';
 			
-			if init_old /= init_ready and init_ready = '1' then
-				state_next <= NOINIT;
-			end if;
+--			if init_old /= init_ready and init_ready = '1' then
+--				state_next <= NOINIT;
+--			end if;
 
 		when NOINIT =>
 			if fval = '0' then
@@ -406,12 +406,12 @@ begin
 			crVal := crVal + crOFFSET;
 
 			-- debug
-			yDBGV <= yResult(16 downto 8);
-			yDBG <= yVal;
-			cbDBGV <= cbResult(16 downto 8);
-			cbDBG <= cbVal;
-			crDBGV <= crResult(16 downto 8);
-			crDBG <= crVal;
+			--yDBGV <= yResult(16 downto 8);
+			--yDBG <= yVal;
+			--cbDBGV <= cbResult(16 downto 8);
+			--cbDBG <= cbVal;
+			--crDBGV <= crResult(16 downto 8);
+			--crDBG <= crVal;
 
 			if (yVal > yMin and yVal < yMax)
 				and (cbVal > cbMin and cbVal < cbMax)
@@ -458,7 +458,7 @@ begin
 			pixelcount <= pixelcount_next;
 			pixelburstReady <= pixelburstReady_next;
 
-			init_old <= init_old_n;
+			--init_old <= init_old_n;
 
 			dotmatrix(1)(0) <= dotmatrix(1)(1);
 			dotmatrix(1)(1) <= bb_out_next;
@@ -488,7 +488,7 @@ begin
 		end if;
 
 		if rst = '0' then
-			init_old <= '0';
+			--init_old <= '0';
 
 
 			bb_clearfifo <= '1';

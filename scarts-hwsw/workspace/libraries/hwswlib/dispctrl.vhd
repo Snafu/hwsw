@@ -441,7 +441,7 @@ begin
   -- Registers in system clock domain
   -----------------------------------------------------------------------------
 
-  reg_proc : process(rst,clk)
+  reg_proc : process(rst,clk, rstint)
   begin
     if rising_edge(clk) then
 			writeState <= writeState_n;

@@ -76,9 +76,9 @@ entity top is
 		-- I2C
 		i2c_scl		:	out std_logic;
 		i2c_sda		:	out std_logic;
-		i2c_scl_dbg:	out std_logic;
-		i2c_sda_dbg:	out std_logic;
-		i2c_trigger:	out std_logic;
+--		i2c_scl_dbg:	out std_logic;
+--		i2c_sda_dbg:	out std_logic;
+--		i2c_trigger:	out std_logic;
 		-- CAM
 		cam_pixclk		: in std_logic;
 		cam_fval			: in std_logic;
@@ -114,21 +114,21 @@ entity top is
 
 		-- TESTSIGNALE
 		blockrdy_dbg			: out std_logic;
-		whichLine_top_dbg	: out std_logic;
+--		whichLine_top_dbg	: out std_logic;
 		sysclk						:	out std_logic;
 		clk_pixel_dbg			:	out std_logic;
-		cam_resetN_dbg		: out std_logic;
+--		cam_resetN_dbg		: out std_logic;
 
-		wren_sig_dbg			: out std_logic;
+--		wren_sig_dbg			: out std_logic;
 		
 		ahbready_dbg			: out std_logic;
 		
 		cam_fval_dbg			: out std_logic;
 		cam_lval_dbg			: out std_logic;
-		cam_pixdata_dbg		: out std_logic_vector(11 downto 0);
+--		cam_pixdata_dbg		: out std_logic_vector(11 downto 0);
 		
 		-- DEBUG
-		camstate					: out state_t;
+--		camstate					: out state_t;
 		rdreq_dbg					: out std_logic;
 		wrreq_dbg					: out std_logic;
 		clearfifo_dbg			: out std_logic
@@ -647,10 +647,10 @@ begin
 	i2c_scl <= i2co_pin.scl;
 	i2c_sda <= i2co_pin.sda;
 	
-	i2c_scl_dbg <= i2co_pin.scl;
-	i2c_sda_dbg <= i2co_pin.sda;
+	--i2c_scl_dbg <= i2co_pin.scl;
+	--i2c_sda_dbg <= i2co_pin.sda;
 	
-	i2c_trigger <= i2c_config_sel;
+	--i2c_trigger <= i2c_config_sel;
 
 
 	-----------------------------------------------------------------------------
@@ -849,7 +849,7 @@ begin
     port map
     (
 			-- DEBUG
-			camstate					=> camstate,
+			--camstate					=> camstate,
 			bb_rdreq_dbg			=> rdreq_dbg,
 			bb_wrreq_dbg			=> wrreq_dbg,
 			bb_clearfifo_dbg	=> clearfifo_dbg,
@@ -902,11 +902,11 @@ begin
 	clk_pixel_dbg <= clk_pixel;
 	cam_fval_dbg  <= cam_fval_sync;
 	cam_lval_dbg  <= cam_lval_sync;
-	cam_pixdata_dbg <= cam_pixdata_sync;	
-	cam_resetN_dbg <= syncrst;		
+	--cam_pixdata_dbg <= cam_pixdata_sync;	
+	--cam_resetN_dbg <= syncrst;		
 	blockrdy_dbg <= pxReady_sig;
-	whichLine_top_dbg <= whichLine_sig;
-	wren_sig_dbg <= wren_sig;
+	--whichLine_top_dbg <= whichLine_sig;
+--	wren_sig_dbg <= wren_sig;
 	
 	-----------------------------------------------------------------------------
 	-- Scarts extension modules
@@ -944,7 +944,7 @@ begin
       RxD    => aux_uart_rx,
       TxD    => aux_uart_tx);
   
-  comb : process(scarts_o, debugo_if, D_RxD, dis7segexto, counter_exto, aux_uart_exto, buttons_exto, cam_exto)  --extend!
+  comb : process(scarts_o, debugo_if, D_RxD, dis7segexto, counter_exto, aux_uart_exto, buttons_exto, cam_exto, mult_exto, disp_exto)  --extend!
     variable extdata : std_logic_vector(31 downto 0);
   begin   
     exti.reset    <= scarts_o.reset;

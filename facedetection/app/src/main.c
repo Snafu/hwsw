@@ -156,7 +156,6 @@ int main(int argc, char **argv)
 
 	// CAM initialization
 	initCamera();
-	/*
 	setYFactors(66, 129, 25);
 	setCbFactors(-38, -74, 112);
 	setCrFactors(112, -94, -18);
@@ -164,7 +163,7 @@ int main(int argc, char **argv)
 	setYBounds(38, 235);
 	setCbBounds(94, 139);
 	setCrBounds(139, 173);
-	*/
+	/*
 	setYFactors(66, 129, 25);
 	setCbFactors(-38, -74, 112);
 	setCrFactors(112, -94, -18);
@@ -172,6 +171,7 @@ int main(int argc, char **argv)
 	setYBounds(120, 235);
 	setCbBounds(74, 139);
 	setCrBounds(139, 173);
+	*/
 
 	setCamMode(MODE_COLOR);
 
@@ -251,6 +251,11 @@ int main(int argc, char **argv)
 				// toggle between free running & snapshot mode
 				if(keys & (1<<KEY2))
 					mode = 1 - mode;
+
+
+				// set exposure
+				if(keys & (1<<KEY1))
+					i2c_write(SHUTTERW_LOWER_REG, (value & 0xffff));
 			}
 		}
 		keys_old = keys;
